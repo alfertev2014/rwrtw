@@ -1,2 +1,3 @@
 # lmnt
-Simplified MVVM library for brouser's DOM
+
+Simplified MVVM library for browser's DOM.
