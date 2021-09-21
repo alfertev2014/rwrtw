@@ -3,33 +3,23 @@ type DOMPlace = Node | { parent: Node }
 
 type Place = DOMPlace | Controller
 
-class Component {
-    constructor() {
-        
-    }
-
-    render(place: Place): Controller {
-        throw new Error("Method not implemented.")
-    }
-}
-
 type ContentElement = Controller | Node
 
 class Controller {
     place: Place
     dom: Node[]
-    controllers: ContentElement[]
+    children: ContentElement[]
     mounted: boolean
-    constructor(place: Place, dom: Node[], controllers: ContentElement[]) {
+    constructor(place: Place, dom: Node[], children: ContentElement[]) {
         this.place = place
         this.dom = dom
-        this.controllers = controllers
+        this.children = children
         this.mounted = false
     }
 
     get lastNode(): DOMPlace {
-        if (this.controllers.length > 0) {
-            const last = this.controllers[this.controllers.length - 1]
+        if (this.children.length > 0) {
+            const last = this.children[this.children.length - 1]
             if (last instanceof Node) {
                 return last
             }
@@ -43,7 +33,11 @@ class Controller {
 
     mount() {
         if (! this.mounted) {
-            this.controllers.filter(c => c instanceof Controller).forEach(c => c.mount())
+            for (const c of this.children) {
+                if (c instanceof Controller) {
+                    c.mount()
+                }
+            }
             this.mounted = true
             this.onMount()
         }
@@ -53,8 +47,12 @@ class Controller {
         if (this.mounted) {
             this.onUnmount()
             this.mounted = false
-            this.controllers.filter(c => c instanceof Controller).forEach(c => c.unmount())
-            this.controllers.length = 0
+            for (const c of this.children) {
+                if (c instanceof Controller) {
+                    c.unmount()
+                }
+            }
+            this.children.length = 0
         }
     }
 
@@ -63,26 +61,39 @@ class Controller {
     onUnmount() {}
 }
 
+class Component {
+    constructor() {
+        
+    }
+
+    render(place: Place): Controller {
+        throw new Error("Method not implemented.")
+    }
+}
+
+
 type TemplateElement = Component | boolean | string | number | null | undefined
 
-const renderChildren = (children: TemplateElement[], place: Place): ContentElement[] => {
+type Template = TemplateElement | TemplateElement[]
+
+const renderTemplate = (template: Template, place: Place): ContentElement[] => {
 
     const controllers: ContentElement[] = []
     
     let currentPlace: Place = place
 
-    for (const child of children) {
+    for (const child of Array.isArray(template) ? template : [template]) {
         if (typeof child === 'boolean' || child === null || typeof child === 'undefined') {
             continue;
         }
         
-        let node = null
         if (typeof child === 'string' || typeof child === 'number') {
-            node = document.createTextNode(String(child))
+            const node = document.createTextNode(String(child))
             controllers.push(node)
+            currentPlace = node
         } else if (child instanceof HTMLElement) {
-            node = child
-            controllers.push(node)
+            controllers.push(child)
+            currentPlace = child
         } else if (child instanceof Component) {
             const controller = child.render(currentPlace)
             controllers.push(controller)
@@ -106,7 +117,7 @@ class ElementComponent extends Component {
 
     render(place: Place) {
         const element = document.createElement(this.tag)
-        const renderedChildren = renderChildren(this.children, { parent: element })
+        const renderedChildren = renderTemplate(this.children, { parent: element })
 
         if (this.props && typeof this.props === 'object') {
             Object.entries(this.props).forEach(([key, val]) => {
@@ -118,7 +129,7 @@ class ElementComponent extends Component {
         }
 
         if (place instanceof Node) {
-            place.appendChild(element)
+            place.parentNode?.insertBefore(element, place.nextSibling)
         } else if (place instanceof Controller) {
             const domPlace = place.lastNode
             if (domPlace instanceof Node) {
@@ -126,6 +137,8 @@ class ElementComponent extends Component {
             } else {
                 domPlace.parent.appendChild(element)
             }
+        } else {
+            place.parent.appendChild(element)
         }
 
         return new Controller(place, [element], renderedChildren)
@@ -134,15 +147,15 @@ class ElementComponent extends Component {
 
 class TemplateComponent extends Component {
 
-    template(): TemplateElement[] {
-        return []
+    template(): Template {
+        return null
     }
 
     render(place: Place) {
 
         const template = this.template()
 
-        return new Controller(place, [], renderChildren(template, place))
+        return new Controller(place, [], renderTemplate(template, place))
     }
 }
 
