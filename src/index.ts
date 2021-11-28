@@ -1,108 +1,73 @@
 
 class Controller {
-    controllers: Controller[]
     mounted: boolean
-    constructor(controllers: Controller[]) {
-        this.controllers = controllers
+    constructor() {
         this.mounted = false
     }
 
     mount() {
         if (! this.mounted) {
-            for (const c of this.controllers) {
-                c.mount()
-            }
+            this.onMounting()
             this.mounted = true
-            this.onMount()
+            this.onMounted()
         }
     }
 
     unmount() {
         if (this.mounted) {
-            this.onUnmount()
+            this.onUnmounting()
             this.mounted = false
-            for (const c of this.controllers) {
-                c.unmount()
-            }
-            this.controllers.length = 0
+            this.onUnmounted()
         }
     }
 
-    onMount() {}
+    onMounting() {}
+    onMounted() {}
 
-    onUnmount() {}
+    onUnmounting() {}
+    onUnmounted() {}
+}
+
+class ParentController extends Controller {
+    controllers: Controller[]
+    constructor(controllers: Controller[]) {
+        super()
+        this.controllers = controllers
+    }
+
+    onMounting() {
+        for (const c of this.controllers) {
+            c.mount()
+        }
+    }
+
+    onUnmounted() {
+        for (const c of this.controllers) {
+            c.unmount()
+        }
+        this.controllers.length = 0
+    }
 }
 
 type DOMPlace = Node | { parent: Node }
 
 type Place = DOMPlace | ComponentController
 
-const renderNode = (node: Node, place: Place) => {
-    if (place instanceof Node) {
-        place.parentNode?.insertBefore(node, place.nextSibling)
-    } else if (place instanceof ComponentController) {
-        const domPlace = place.lastNode
-        if (domPlace instanceof Node) {
-            domPlace.parentNode?.insertBefore(node, domPlace.nextSibling)
-        } else {
-            domPlace.parent.appendChild(node)
-        }
-    } else {
-        place.parent.appendChild(node)
-    }
-}
-
-type Rendered = { controllers: Controller[], lastPlace: Place }
-
 class Component {
     constructor() {
         
     }
 
-    render(place: Place): ComponentController | Rendered {
+    render(place: Place): ComponentController {
         throw new Error("Method not implemented.")
     }
 }
 
-type TemplateElement = Component | boolean | string | number | null | undefined
 
-type Template = TemplateElement | TemplateElement[]
-
-const renderTemplate = (template: Template, place: Place): Rendered => {
-
-    const controllers: Controller[] = []
-    
-    let currentPlace: Place = place
-
-    for (const child of Array.isArray(template) ? template : [template]) {
-        if (typeof child === 'boolean' || child === null || typeof child === 'undefined') {
-            continue;
-        }
-        
-        if (typeof child === 'string' || typeof child === 'number') {
-            const node = document.createTextNode(String(child))
-            renderNode(node, currentPlace)
-            currentPlace = node
-        } else if (child instanceof Component) {
-            const rendered = child.render(currentPlace)
-            if (rendered instanceof ComponentController) { 
-                controllers.push(rendered)
-                currentPlace = rendered
-            } else {
-                controllers.push(...rendered.controllers)
-                currentPlace = rendered.lastPlace
-            }
-        }
-    }
-
-    return { controllers, lastPlace: currentPlace }
-}
-
-class ComponentController extends Controller {
+class ComponentController extends ParentController {
     place: Place
     lastPlace: Place
-    constructor(place: Place, children: Template) {
-        const { controllers, lastPlace } = renderTemplate(children, place)
+    constructor(place: Place, controllers: Controller[], lastPlace: Place) {
         super(controllers)
         this.place = place
         this.lastPlace = lastPlace
@@ -116,11 +81,87 @@ class ComponentController extends Controller {
     }
 }
 
+type TemplateElement = Component | boolean | string | number | null | undefined
+
+type Template = TemplateElement | Template[]
+
+const insertNode = (node: Node, place: Place) => {
+    if (place instanceof Node) {
+        place.parentNode?.insertBefore(node, place.nextSibling)
+    } else if (place instanceof ComponentController) {
+        insertNode(node, place.lastNode)
+    } else {
+        place.parent.appendChild(node)
+    }
+}
+
+class TemplateController extends ComponentController {
+    constructor(place: Place, template: Template) {
+        const controllers: Controller[] = []
+    
+        let currentPlace: Place = place
+
+        for (const child of Array.isArray(template) ? template : [template]) {
+            if (typeof child === 'boolean' || child === null || typeof child === 'undefined') {
+                continue;
+            }
+            
+            if (typeof child === 'string' || typeof child === 'number') {
+                const node = document.createTextNode(String(child))
+                insertNode(node, currentPlace)
+                currentPlace = node
+            } else if (child instanceof Component) {
+                const rendered = child.render(currentPlace)
+                controllers.push(rendered)
+                currentPlace = rendered
+            } else if (Array.isArray(child)) {
+                const subtemplate = new TemplateController(currentPlace, child);
+                controllers.push(subtemplate)
+                currentPlace = subtemplate
+            }
+        }
+
+        super(place, controllers, currentPlace)
+    }
+}
+
+type ElementPropValue = number | string | boolean | null | undefined
+
+type EventHandlersProps = {
+    on?: {
+        [key: string]: EventListenerOrEventListenerObject
+    }
+}
+
+type ElementProps = {
+    [key: string]: ElementPropValue,
+} & EventHandlersProps
+
+class EventHandlerController extends Controller {
+    element: Element
+    eventName: string
+    handler: EventListenerOrEventListenerObject
+    constructor(element: Element, eventName: string, handler: EventListenerOrEventListenerObject) {
+        super()
+        this.element = element
+        this.eventName = eventName
+        this.handler = handler
+    }
+
+    onMounted() {
+        this.element.addEventListener(this.eventName, this.handler)
+    }
+
+    onUnmounted() {
+        this.element.removeEventListener(this.eventName, this.handler)
+    }
+}
+
 class ElementComponent extends Component {
     tag: string
-    props: object | null
+    props: ElementProps | null
     children: Template
-    constructor(tag: string, props: object | null, children: Template) {
+    constructor(tag: string, props: ElementProps | null, children: Template) {
         super()
         this.tag = tag
         this.props = props
@@ -129,54 +170,47 @@ class ElementComponent extends Component {
 
     render(place: Place) {
         const element = document.createElement(this.tag)
-        const { controllers } = renderTemplate(this.children, { parent: element })
+        const childrenController = new TemplateController({ parent: element }, this.children)
+        const controllers: Controller[] = [childrenController];
 
         if (this.props && typeof this.props === 'object') {
+            if (this.props.on && typeof this.props.on === 'object') {
+                Object.entries(this.props.on).forEach(([eventName, handler]) => {
+                    controllers.push(new EventHandlerController(element, eventName, handler))
+                })
+            }
             Object.entries(this.props).forEach(([key, val]) => {
-                if (val !== false) {
+                if (key !== 'on' && typeof val !== 'object'
+                && val !== null && val !== undefined && val !== false) {
                     // TODO: adapt key for html attribute
-                    element.setAttribute(key, val === true ? "" : val)
+                    element.setAttribute(key, val === true ? "" : val.toString())
                 }
             })
         }
 
-        renderNode(element, place)
+        insertNode(element, place)
 
-        return { controllers, lastPlace: element }
+        return new ComponentController(place, controllers, element);
     }
 }
 
 class TemplateComponent extends Component {
-
-    template(): Template {
-        return null
+    template: Template
+    constructor(template: Template) {
+        super()
+        this.template = template
     }
 
     render(place: Place) {
-
-        const template = this.template()
-
-        return new ComponentController(place, template)
+        return new TemplateController(place, this.template)
     }
 }
 
-class FragmentComponent extends TemplateComponent {
-    children: TemplateElement[]
-    constructor(...children: TemplateElement[]) {
-        super()
-        this.children = children
-    }
-
-    template() {
-        return this.children
-    }
-}
-
-const el = (tag: string, props: object | null, ...children: TemplateElement[]) => {
+export const el = (tag: string, props: ElementProps | null = null) => (...children: TemplateElement[]) => {
     return new ElementComponent(tag, props, children);
 }
 
-const fr = (...children: TemplateElement[]) => {
-    return new FragmentComponent(...children)
+export const fr = (...children: TemplateElement[]) => {
+    return new TemplateComponent(children)
 }
 
