@@ -125,23 +125,11 @@ class TemplateController extends ComponentController {
     }
 }
 
-type ElementPropValue = number | string | boolean | null | undefined
-
-type EventHandlersProps = {
-    on?: {
-        [key: string]: EventListenerOrEventListenerObject
-    }
-}
-
-type ElementProps = {
-    [key: string]: ElementPropValue,
-} & EventHandlersProps
-
-class EventHandlerController extends Controller {
-    element: Element
+class EventHandlerController<E extends Element = Element> extends Controller {
+    element: E
     eventName: string
     handler: EventListenerOrEventListenerObject
-    constructor(element: Element, eventName: string, handler: EventListenerOrEventListenerObject) {
+    constructor(element: E, eventName: string, handler: EventListenerOrEventListenerObject) {
         super()
         this.element = element
         this.eventName = eventName
@@ -157,11 +145,44 @@ class EventHandlerController extends Controller {
     }
 }
 
+
+type ElementAttrValue = number | string | boolean | null | undefined
+
+interface EventHandlersMap {
+    [key: string]: EventListenerOrEventListenerObject
+}
+
+type EventHandlersConfig = {
+    on: EventHandlersMap
+}
+
+interface ElementAttrsMap {
+    [key: string]: ElementAttrValue
+}
+
+type ElementAttrsConfig = {
+    attrs: ElementAttrsMap
+}
+
+interface ElementProcessor {
+    (element: HTMLElement): void
+}
+
+type ElementConfig = EventHandlersConfig | ElementAttrsConfig | ElementProcessor
+
+export class ElementController extends ComponentController {
+    element: HTMLElement
+    constructor(place: Place, controllers: Controller[], element: HTMLElement) {
+        super(place, controllers, element)
+        this.element = element
+    }
+}
+
 class ElementComponent extends Component {
     tag: string
-    props: ElementProps | null
+    props: ElementConfig[]
     children: Template
-    constructor(tag: string, props: ElementProps | null, children: Template) {
+    constructor(tag: string, props: ElementConfig[], children: Template) {
         super()
         this.tag = tag
         this.props = props
@@ -173,24 +194,25 @@ class ElementComponent extends Component {
         const childrenController = new TemplateController({ parent: element }, this.children)
         const controllers: Controller[] = [childrenController];
 
-        if (this.props && typeof this.props === 'object') {
-            if (this.props.on && typeof this.props.on === 'object') {
-                Object.entries(this.props.on).forEach(([eventName, handler]) => {
-                    controllers.push(new EventHandlerController(element, eventName, handler))
-                })
-            }
-            Object.entries(this.props).forEach(([key, val]) => {
-                if (key !== 'on' && typeof val !== 'object'
-                && val !== null && val !== undefined && val !== false) {
-                    // TODO: adapt key for html attribute
-                    element.setAttribute(key, val === true ? "" : val.toString())
+        for (const prop of this.props) {
+            if ('on' in prop) {
+                for (const [type, listener] of Object.entries(prop.on)) {
+                    controllers.push(new EventHandlerController(element, type, listener))
                 }
-            })
+            } else if ('attrs' in prop) {
+                for (const [name, value] of Object.entries(prop.attrs)) {
+                    if (value) {
+                        element.setAttribute(name, value === true ? '' : value.toString());
+                    }
+                }
+            } else {
+                prop(element)
+            }
         }
 
         insertNode(element, place)
 
-        return new ComponentController(place, controllers, element);
+        return new ElementController(place, controllers, element);
     }
 }
 
@@ -206,7 +228,7 @@ class TemplateComponent extends Component {
     }
 }
 
-export const el = (tag: string, props: ElementProps | null = null) => (...children: TemplateElement[]) => {
+export const el = (tag: string, ...props: ElementConfig[]) => (...children: TemplateElement[]) => {
     return new ElementComponent(tag, props, children);
 }
 
