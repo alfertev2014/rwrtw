@@ -53,16 +53,13 @@ type DOMPlace = Node | { parent: Node }
 
 type Place = DOMPlace | ComponentController
 
-class Component {
-    constructor() {
-        
-    }
-
-    render(place: Place): ComponentController {
-        throw new Error("Method not implemented.")
+const lastPlaceNode = (place: Place) => {
+    if (place instanceof ComponentController) {
+        return place.lastNode
+    } else {
+        return place
     }
 }
-
 
 class ComponentController extends ParentController {
     place: Place
@@ -72,12 +69,36 @@ class ComponentController extends ParentController {
         this.place = place
         this.lastPlace = lastPlace
     }
+    
     get lastNode(): DOMPlace {
-        if (this.lastPlace instanceof ComponentController) {
-            return this.lastPlace.lastNode
-        } else {
-            return this.lastPlace
+        return lastPlaceNode(this.lastPlace)
+    }
+
+    unrender() {
+        if (this.mounted) {
+            this.unmount()
         }
+        
+        let domPlace: DOMPlace | null = this.lastNode
+        if (domPlace instanceof Node) {
+            const firstDomPlace = lastPlaceNode(this.place)
+            const firstNode = firstDomPlace instanceof Node ? firstDomPlace : null;
+            while (domPlace && domPlace !== firstNode) {
+                const toRemove = domPlace
+                domPlace = domPlace.previousSibling
+                toRemove.parentNode?.removeChild(toRemove)
+            }
+        }
+    }
+}
+
+class Component {
+    constructor() {
+        
+    }
+
+    render(place: Place): ComponentController {
+        throw new Error("Method not implemented.")
     }
 }
 
