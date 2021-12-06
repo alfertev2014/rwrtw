@@ -9,14 +9,12 @@ if (root) {
             el('h1')(
                 'It Works!'
             ),
-            el('p', { attrs: { class: 'paragraph' } })(
+            el('p', { class: 'paragraph' })(
                 helloText = plh('Hello world!')
             ),
-            el('button', {
-                on: {
-                    click: () => {
-                        helloText.setContent(`Hello world ${counter++} times!`)
-                    }
+            el('button', null, {
+                click: () => {
+                    helloText.setContent(`Hello world ${counter++} times!`)
                 }
             })('Increment')
         )

@@ -163,72 +163,57 @@ export class Placeholder extends Component {
     }
 }
 
+interface EventHandlersMap {
+    [key: string]: EventListenerOrEventListenerObject
+}
+
 class EventHandlerController<E extends Element = Element> extends Controller {
     element: E
-    eventName: string
-    handler: EventListenerOrEventListenerObject
-    constructor(element: E, eventName: string, handler: EventListenerOrEventListenerObject) {
+    eventsMap: EventHandlersMap
+    constructor(element: E, eventsMap: EventHandlersMap) {
         super()
         this.element = element
-        this.eventName = eventName
-        this.handler = handler
+        this.eventsMap = eventsMap
     }
 
     onMounted() {
-        this.element.addEventListener(this.eventName, this.handler)
+        for (const [eventName, handler] of Object.entries(this.eventsMap)) {
+            this.element.addEventListener(eventName, handler)
+        }
     }
 
     onUnmounting() {
-        this.element.removeEventListener(this.eventName, this.handler)
+        for (const [eventName, handler] of Object.entries(this.eventsMap)) {
+            this.element.removeEventListener(eventName, handler)
+        }
     }
 }
 
 type ElementAttrValue = number | string | boolean | null | undefined
 
-interface EventHandlersMap {
-    [key: string]: EventListenerOrEventListenerObject
-}
-
-type EventHandlersConfig = {
-    on: EventHandlersMap
-}
-
 interface ElementAttrsMap {
     [key: string]: ElementAttrValue
 }
 
-type ElementAttrsConfig = {
-    attrs: ElementAttrsMap
-}
-
-interface ElementProcessor {
-    (element: HTMLElement): void
-}
-
-type ElementConfig = EventHandlersConfig | ElementAttrsConfig | ElementProcessor
 
 export class ElementComponent extends Component {
     element: HTMLElement
-    constructor(tag: string, props: ElementConfig[], children: Template) {
+    constructor(tag: string, attrs: ElementAttrsMap | null, on: EventHandlersMap | null, children: Template) {
         const element = document.createElement(tag)
         const { controllers } = renderTemplate({ parent: element }, children);
 
-        for (const prop of props) {
-            if ('on' in prop) {
-                for (const [type, listener] of Object.entries(prop.on)) {
-                    controllers.push(new EventHandlerController(element, type, listener))
+        if (attrs) {
+            for (const [name, value] of Object.entries(attrs)) {
+                if (value) {
+                    element.setAttribute(name, value === true ? '' : value.toString());
                 }
-            } else if ('attrs' in prop) {
-                for (const [name, value] of Object.entries(prop.attrs)) {
-                    if (value) {
-                        element.setAttribute(name, value === true ? '' : value.toString());
-                    }
-                }
-            } else {
-                prop(element)
             }
         }
         
+        if (on) {
+            controllers.push(new EventHandlerController(element, on))
+        }
+
         super(controllers)
         this.element = element
     }
@@ -242,8 +227,8 @@ export class ElementComponent extends Component {
     }
 }
 
-export const el = (tag: string, ...props: ElementConfig[]) => (...children: Template[]) => {
-    return new ElementComponent(tag, props, children);
+export const el = (tag: string, attrs: ElementAttrsMap | null = null, on: EventHandlersMap | null = null) => (...children: Template[]) => {
+    return new ElementComponent(tag, attrs, on, children);
 }
 
 export const plh = (...children: Template[]) => {
