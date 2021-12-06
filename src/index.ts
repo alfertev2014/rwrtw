@@ -29,27 +29,45 @@ class Controller {
 }
 
 class ParentController extends Controller {
-    controllers: Controller[]
-    constructor(controllers: Controller[]) {
+    controllers: Controller[] | null
+    constructor(controllers: Controller[] | null = null) {
         super()
         this.controllers = controllers
     }
 
     onMounting() {
-        for (const c of this.controllers) {
-            c.mount()
+        if (this.controllers) {
+            for (const c of this.controllers) {
+                c.mount()
+            }
         }
     }
 
     onUnmounted() {
-        for (const c of this.controllers) {
-            c.unmount()
+        if (this.controllers) {
+            for (const c of this.controllers) {
+                c.unmount()
+            }
+            this.controllers = null
         }
-        this.controllers.length = 0
     }
 }
 
 type DOMPlace = Node | { parent: Node }
+
+class ComponentController extends ParentController {
+    constructor(controllers: Controller[] | null = null) {
+        super(controllers)
+    }
+
+    render(place: Place) {
+        throw Error("Not implemented")
+    }
+
+    get lastNode(): DOMPlace {
+        throw Error("Not implemented")
+    }
+}
 
 type Place = DOMPlace | ComponentController
 
@@ -61,88 +79,93 @@ const lastPlaceNode = (place: Place) => {
     }
 }
 
-class ComponentController extends ParentController {
-    place: Place
-    lastPlace: Place
-    constructor(place: Place, controllers: Controller[], lastPlace: Place) {
-        super(controllers)
-        this.place = place
-        this.lastPlace = lastPlace
-    }
-    
-    get lastNode(): DOMPlace {
-        return lastPlaceNode(this.lastPlace)
-    }
-
-    unrender() {
-        if (this.mounted) {
-            this.unmount()
-        }
-        
-        let domPlace: DOMPlace | null = this.lastNode
-        if (domPlace instanceof Node) {
-            const firstDomPlace = lastPlaceNode(this.place)
-            const firstNode = firstDomPlace instanceof Node ? firstDomPlace : null;
-            while (domPlace && domPlace !== firstNode) {
-                const toRemove = domPlace
-                domPlace = domPlace.previousSibling
-                toRemove.parentNode?.removeChild(toRemove)
-            }
-        }
-    }
-}
-
-class Component {
-    constructor() {
-        
-    }
-
-    render(place: Place): ComponentController {
-        throw new Error("Method not implemented.")
-    }
-}
-
-type TemplateElement = Component | boolean | string | number | null | undefined
+type TemplateElement = ComponentController | boolean | string | number | null | undefined
 
 type Template = TemplateElement | Template[]
 
 const insertNode = (node: Node, place: Place) => {
-    if (place instanceof Node) {
-        place.parentNode?.insertBefore(node, place.nextSibling)
-    } else if (place instanceof ComponentController) {
-        insertNode(node, place.lastNode)
+    const domPlace = lastPlaceNode(place)
+    if (domPlace instanceof Node) {
+        domPlace.parentNode?.insertBefore(node, domPlace.nextSibling)
     } else {
-        place.parent.appendChild(node)
+        domPlace.parent.appendChild(node)
+    }
+}
+
+const renderTemplate = (place: Place, template: Template) => {
+    const controllers: Controller[] = []
+    
+    let currentPlace: Place = place
+
+    if (typeof template === 'boolean' || template === null || typeof template === 'undefined') {
+      return { controllers: [], lastPlace: place }
+    }
+    
+    if (typeof template === 'string' || typeof template === 'number') {
+        const node = document.createTextNode(String(template))
+        insertNode(node, currentPlace)
+        currentPlace = node
+    } else if (template instanceof ComponentController) {
+        template.render(currentPlace)
+        controllers.push(template)
+        currentPlace = template
+    } else if (Array.isArray(template)) {
+        for (const child of template) {
+            const { controllers: subcontrollers, lastPlace } = renderTemplate(currentPlace, child)
+            controllers.push(...subcontrollers)
+            currentPlace = lastPlace
+        }
+    }
+
+    return { controllers, lastPlace: currentPlace }
+}
+
+const unrenderNodes = (place: Place, lastNode: DOMPlace) => {
+    let domPlace: DOMPlace | null = lastNode
+    if (domPlace instanceof Node) {
+        const firstDomPlace = lastPlaceNode(place)
+        const firstNode = firstDomPlace instanceof Node ? firstDomPlace : null;
+        while (domPlace && domPlace !== firstNode) {
+            const toRemove = domPlace
+            domPlace = domPlace.previousSibling
+            toRemove.parentNode?.removeChild(toRemove)
+        }
     }
 }
 
 class TemplateController extends ComponentController {
-    constructor(place: Place, template: Template) {
-        const controllers: Controller[] = []
+    place: Place | null
+    lastPlace: Place | null
+    constructor() {
+        super()
+        this.place = null
+        this.lastPlace = null
+    }
     
-        let currentPlace: Place = place
+    render(place: Place) {
+        this.place = place
+        this.lastPlace = place
+    }
 
-        for (const child of Array.isArray(template) ? template : [template]) {
-            if (typeof child === 'boolean' || child === null || typeof child === 'undefined') {
-                continue;
-            }
-            
-            if (typeof child === 'string' || typeof child === 'number') {
-                const node = document.createTextNode(String(child))
-                insertNode(node, currentPlace)
-                currentPlace = node
-            } else if (child instanceof Component) {
-                const rendered = child.render(currentPlace)
-                controllers.push(rendered)
-                currentPlace = rendered
-            } else if (Array.isArray(child)) {
-                const subtemplate = new TemplateController(currentPlace, child);
-                controllers.push(subtemplate)
-                currentPlace = subtemplate
-            }
+    get lastNode(): DOMPlace {
+        if (! this.lastPlace) {
+            throw Error("lastNode of unrendered template")
         }
+        return lastPlaceNode(this.lastPlace)
+    }
 
-        super(place, controllers, currentPlace)
+    setContent(template: Template) {
+        if (! this.place) {
+            throw Error("setContent of unrendered template")
+        }
+        this.unmount()
+        unrenderNodes(this.place, this.lastNode)
+        
+        const { controllers, lastPlace } = renderTemplate(this.place, template)
+        this.controllers = controllers
+        this.lastPlace = lastPlace
+
+        this.mount()
     }
 }
 
@@ -193,29 +216,11 @@ type ElementConfig = EventHandlersConfig | ElementAttrsConfig | ElementProcessor
 
 export class ElementController extends ComponentController {
     element: HTMLElement
-    constructor(place: Place, controllers: Controller[], element: HTMLElement) {
-        super(place, controllers, element)
-        this.element = element
-    }
-}
-
-class ElementComponent extends Component {
-    tag: string
-    props: ElementConfig[]
-    children: Template
     constructor(tag: string, props: ElementConfig[], children: Template) {
-        super()
-        this.tag = tag
-        this.props = props
-        this.children = children
-    }
+        const element = document.createElement(tag)
+        const { controllers } = renderTemplate({ parent: element }, children);
 
-    render(place: Place) {
-        const element = document.createElement(this.tag)
-        const childrenController = new TemplateController({ parent: element }, this.children)
-        const controllers: Controller[] = [childrenController];
-
-        for (const prop of this.props) {
+        for (const prop of props) {
             if ('on' in prop) {
                 for (const [type, listener] of Object.entries(prop.on)) {
                     controllers.push(new EventHandlerController(element, type, listener))
@@ -230,30 +235,27 @@ class ElementComponent extends Component {
                 prop(element)
             }
         }
-
-        insertNode(element, place)
-
-        return new ElementController(place, controllers, element);
-    }
-}
-
-class TemplateComponent extends Component {
-    template: Template
-    constructor(template: Template) {
-        super()
-        this.template = template
+        
+        super(controllers)
+        this.element = element
     }
 
     render(place: Place) {
-        return new TemplateController(place, this.template)
+        insertNode(this.element, place)
+    }
+
+    get lastNode() {
+        return this.element
     }
 }
 
-export const el = (tag: string, ...props: ElementConfig[]) => (...children: TemplateElement[]) => {
-    return new ElementComponent(tag, props, children);
+export const el = (tag: string, ...props: ElementConfig[]) => (...children: Template[]) => {
+    return new ElementController(tag, props, children);
 }
 
-export const fr = (...children: TemplateElement[]) => {
-    return new TemplateComponent(children)
+export const plh = (place: DOMPlace) => {
+    const res = new TemplateController()
+    res.render(place)
+    res.mount()
+    return res
 }
-
