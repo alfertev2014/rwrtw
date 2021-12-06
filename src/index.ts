@@ -28,7 +28,7 @@ class Controller {
     onUnmounted() {}
 }
 
-class ComponentController extends Controller {
+class Component extends Controller {
     controllers: Controller[] | null
     constructor(controllers: Controller[] | null = null) {
         super()
@@ -63,17 +63,17 @@ class ComponentController extends Controller {
 
 type DOMPlace = Node | { parent: Node }
 
-type Place = DOMPlace | ComponentController
+type Place = DOMPlace | Component
 
 const lastPlaceNode = (place: Place) => {
-    if (place instanceof ComponentController) {
+    if (place instanceof Component) {
         return place.lastNode
     } else {
         return place
     }
 }
 
-type TemplateElement = ComponentController | boolean | string | number | null | undefined
+type TemplateElement = Component | boolean | string | number | null | undefined
 
 type Template = TemplateElement | Template[]
 
@@ -99,7 +99,7 @@ const renderTemplate = (place: Place, template: Template) => {
         const node = document.createTextNode(String(template))
         insertNode(node, currentPlace)
         currentPlace = node
-    } else if (template instanceof ComponentController) {
+    } else if (template instanceof Component) {
         template.render(currentPlace)
         controllers.push(template)
         currentPlace = template
@@ -127,7 +127,7 @@ const unrenderNodes = (place: Place, lastNode: DOMPlace) => {
     }
 }
 
-class TemplateController extends ComponentController {
+class Placeholder extends Component {
     place: Place | null
     lastPlace: Place | null
     constructor() {
@@ -178,11 +178,10 @@ class EventHandlerController<E extends Element = Element> extends Controller {
         this.element.addEventListener(this.eventName, this.handler)
     }
 
-    onUnmounted() {
+    onUnmounting() {
         this.element.removeEventListener(this.eventName, this.handler)
     }
 }
-
 
 type ElementAttrValue = number | string | boolean | null | undefined
 
@@ -208,7 +207,7 @@ interface ElementProcessor {
 
 type ElementConfig = EventHandlersConfig | ElementAttrsConfig | ElementProcessor
 
-export class ElementController extends ComponentController {
+export class ElementComponent extends Component {
     element: HTMLElement
     constructor(tag: string, props: ElementConfig[], children: Template) {
         const element = document.createElement(tag)
@@ -244,11 +243,11 @@ export class ElementController extends ComponentController {
 }
 
 export const el = (tag: string, ...props: ElementConfig[]) => (...children: Template[]) => {
-    return new ElementController(tag, props, children);
+    return new ElementComponent(tag, props, children);
 }
 
 export const plh = (place: DOMPlace) => {
-    const res = new TemplateController()
+    const res = new Placeholder()
     res.render(place)
     res.mount()
     return res
