@@ -28,7 +28,7 @@ class Controller {
     onUnmounted() {}
 }
 
-class ParentController extends Controller {
+class ComponentController extends Controller {
     controllers: Controller[] | null
     constructor(controllers: Controller[] | null = null) {
         super()
@@ -51,14 +51,6 @@ class ParentController extends Controller {
             this.controllers = null
         }
     }
-}
-
-type DOMPlace = Node | { parent: Node }
-
-class ComponentController extends ParentController {
-    constructor(controllers: Controller[] | null = null) {
-        super(controllers)
-    }
 
     render(place: Place) {
         throw Error("Not implemented")
@@ -68,6 +60,8 @@ class ComponentController extends ParentController {
         throw Error("Not implemented")
     }
 }
+
+type DOMPlace = Node | { parent: Node }
 
 type Place = DOMPlace | ComponentController
 
