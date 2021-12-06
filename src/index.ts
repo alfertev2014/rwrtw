@@ -29,27 +29,23 @@ class Controller {
 }
 
 class Component extends Controller {
-    controllers: Controller[] | null
-    constructor(controllers: Controller[] | null = null) {
+    controllers: Controller[]
+    constructor(controllers: Controller[] = []) {
         super()
         this.controllers = controllers
     }
 
     onMounting() {
-        if (this.controllers) {
-            for (const c of this.controllers) {
-                c.mount()
-            }
+        for (const c of this.controllers) {
+            c.mount()
         }
     }
 
     onUnmounted() {
-        if (this.controllers) {
-            for (const c of this.controllers) {
-                c.unmount()
-            }
-            this.controllers = null
+        for (const c of this.controllers) {
+            c.unmount()
         }
+        this.controllers = []
     }
 
     render(place: Place) {
@@ -127,24 +123,28 @@ const unrenderNodes = (place: Place, lastNode: DOMPlace) => {
     }
 }
 
-class Placeholder extends Component {
+export class Placeholder extends Component {
     place: Place | null
-    lastPlace: Place | null
-    constructor() {
-        super()
+    lastPlace: Place
+    fragment: DocumentFragment | null
+    constructor(template: Template) {
+        const fragment = document.createDocumentFragment()
+        const { controllers, lastPlace } = renderTemplate({ parent: fragment }, template)
+        super(controllers)
         this.place = null
-        this.lastPlace = null
+        this.lastPlace = lastPlace
+        this.fragment = fragment
     }
     
     render(place: Place) {
         this.place = place
-        this.lastPlace = place
+        if (this.fragment) {
+            insertNode(this.fragment, place)
+            this.fragment = null
+        }
     }
 
     get lastNode(): DOMPlace {
-        if (! this.lastPlace) {
-            throw Error("lastNode of unrendered template")
-        }
         return lastPlaceNode(this.lastPlace)
     }
 
@@ -246,9 +246,6 @@ export const el = (tag: string, ...props: ElementConfig[]) => (...children: Temp
     return new ElementComponent(tag, props, children);
 }
 
-export const plh = (place: DOMPlace) => {
-    const res = new Placeholder()
-    res.render(place)
-    res.mount()
-    return res
+export const plh = (...children: Template[]) => {
+    return new Placeholder(children)
 }

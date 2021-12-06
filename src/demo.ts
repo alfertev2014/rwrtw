@@ -1,24 +1,26 @@
-import { el, plh } from './index'
+import { el, Placeholder, plh } from './index'
 
 const root = document.getElementById('root')
 if (root) {
     let counter = 0
-    let hello: HTMLElement
-    plh(root).setContent(
+    let helloText: Placeholder
+    const app = plh(
         el('div')(
             el('h1')(
                 'It Works!'
             ),
-            el('p', (p) => { hello = p; }, { attrs: { class: 'paragraph' } })(
-                'Hello world!'
+            el('p', { attrs: { class: 'paragraph' } })(
+                helloText = plh('Hello world!')
             ),
             el('button', {
                 on: {
                     click: () => {
-                        hello.innerText = `Hello world ${counter++} times!`
+                        helloText.setContent(`Hello world ${counter++} times!`)
                     }
-                },
+                }
             })('Increment')
         )
     )
+    app.render(root)
+    app.mount()
 }   
