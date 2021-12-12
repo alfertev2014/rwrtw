@@ -1,4 +1,45 @@
 
+export type ElementAttrValue = number | string | boolean | null | undefined
+
+export const setAttr = (element: Element, name: string, value: ElementAttrValue) => {
+    if (value) {
+        element.setAttribute(name, value === true ? '' : value.toString())
+    } else if (value === null || value === false) {
+        element.removeAttribute(name)
+    }
+}
+
+export interface ElementAttrsMap {
+    [key: string]: ElementAttrValue
+}
+
+export const setAttrs = (element: Element, attrs: ElementAttrsMap) => {
+    for (const [name, value] of Object.entries(attrs)) {
+        setAttr(element, name, value)   
+    }
+}
+
+export const dce = (tag: string) => {
+    return document.createElement(tag)
+}
+
+export const ach = (element: Element, node: Node) => {
+    element.appendChild(node)
+}
+
+export const e = (tag: string, attrs?: ElementAttrsMap | null, ...children: Node[]) => {
+    const element = dce(tag)
+    if (attrs) {
+        setAttrs(element, attrs)   
+    }
+    for (const node of children) {
+        ach(element, node)
+    }
+    return element
+}
+
+
+
 class Controller {
     mounted: boolean
     constructor() {
@@ -69,7 +110,7 @@ const lastPlaceNode = (place: Place) => {
     }
 }
 
-type TemplateElement = Component | boolean | string | number | null | undefined
+type TemplateElement = Component | Node | boolean | string | number | null | undefined
 
 type Template = TemplateElement | Template[]
 
@@ -91,14 +132,17 @@ const renderTemplate = (place: Place, template: Template) => {
       return { controllers: [], lastPlace: place }
     }
     
-    if (typeof template === 'string' || typeof template === 'number') {
-        const node = document.createTextNode(String(template))
-        insertNode(node, currentPlace)
-        currentPlace = node
-    } else if (template instanceof Component) {
+    if (template instanceof Component) {
         template.render(currentPlace)
         controllers.push(template)
         currentPlace = template
+    } else if (template instanceof Node) {
+        insertNode(template, currentPlace)
+        currentPlace = template
+    } else if (typeof template === 'string' || typeof template === 'number') {
+        const node = document.createTextNode(String(template))
+        insertNode(node, currentPlace)
+        currentPlace = node
     } else if (Array.isArray(template)) {
         for (const child of template) {
             const { controllers: subcontrollers, lastPlace } = renderTemplate(currentPlace, child)
@@ -189,26 +233,17 @@ class EventHandlerController<E extends Element = Element> extends Controller {
     }
 }
 
-type ElementAttrValue = number | string | boolean | null | undefined
 
-interface ElementAttrsMap {
-    [key: string]: ElementAttrValue
-}
 
 
 export class ElementComponent extends Component {
     element: HTMLElement
     constructor(tag: string, attrs: ElementAttrsMap | null, on: EventHandlersMap | null, children: Template) {
-        const element = document.createElement(tag)
-        const { controllers } = renderTemplate({ parent: element }, children);
-
+        const element = dce(tag)
         if (attrs) {
-            for (const [name, value] of Object.entries(attrs)) {
-                if (value) {
-                    element.setAttribute(name, value === true ? '' : value.toString());
-                }
-            }
+            setAttrs(element, attrs)
         }
+        const { controllers } = renderTemplate({ parent: element }, children);
         
         if (on) {
             controllers.push(new EventHandlerController(element, on))
