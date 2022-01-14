@@ -54,7 +54,7 @@ const lastPlaceNode = (place: Place) => {
     }
 }
 
-abstract class Component implements Lifecycle {
+export abstract class Component implements Lifecycle {
     _parent: Component | null = null
     _place: Place | null = null
     _lastPlace: Place | null = null
@@ -77,14 +77,21 @@ abstract class Component implements Lifecycle {
         return lastPlaceNode(this._lastPlace)
     }
 
+    get isHidden() {
+        return this._place && this._lastPlace === this._place
+    }
+
     attach(place: Place, parent: Component | null = null) {
         this._place = place
+        this._lastPlace = place
         this._parent = parent
         this.renderNodes()
     }
 
     renderNodes() {
-        this._lastPlace = this.render()
+        if (this.isHidden) {
+            this._lastPlace = this.render()
+        }
     }
 
     abstract render(): Place
