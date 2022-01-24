@@ -20,6 +20,7 @@ export const setAttrs = (element: Element, attrs: ElementAttrsMap) => {
 }
 
 export const dce = (tag: string, attrs?: ElementAttrsMap | null, ...children: Node[]) => {
+    console.log(tag, attrs)
     const element = document.createElement(tag)
     if (attrs) {
         setAttrs(element, attrs)   
@@ -31,15 +32,6 @@ export const dce = (tag: string, attrs?: ElementAttrsMap | null, ...children: No
 }
 
 export const txt = (str: string) => document.createTextNode(str)
-
-export interface Lifecycle {
-    mount?: () => void
-    unmount?: () => void
-}
-
-const isLifecycle = (lifecycle: any): lifecycle is Lifecycle => {
-    return typeof lifecycle?.mount === 'function' || typeof lifecycle?.unmount === 'function'
-}
 
 
 type DOMPlace = Node | { parent: Node }
@@ -54,56 +46,40 @@ const lastPlaceNode = (place: Place) => {
     }
 }
 
+
+export interface Lifecycle {
+    mount?: () => void
+    unmount?: () => void
+}
+
 export abstract class Component implements Lifecycle {
-    _parent: Component | null = null
-    _place: Place | null = null
-    _lastPlace: Place | null = null
-
-    get place(): Place {
-        if (! this._place) {
-            throw new Error("Component is not attached (place is null)")
-        }
-        return this._place
-    }
-
-    get parent(): Component | null {
-        return this._parent
-    }
+    parent: Component | null
+    place: Place
+    lastPlace: Place
 
     get lastNode(): DOMPlace {
-        if (! this._lastPlace) {
-            throw new Error("Component is not attached (lastPlace is null)")
-        }
-        return lastPlaceNode(this._lastPlace)
+        return lastPlaceNode(this.lastPlace)
     }
 
     get isHidden() {
-        return this._place && this._lastPlace === this._place
+        return this.place && this.lastPlace === this.place
     }
 
-    attach(place: Place, parent: Component | null = null) {
-        this._place = place
-        this._lastPlace = place
-        this._parent = parent
-        this.renderNodes()
+    constructor(place: Place, parent: Component | null = null) {
+        this.place = place
+        this.lastPlace = place
+        this.parent = parent
     }
 
     renderNodes() {
         if (this.isHidden) {
-            this._lastPlace = this.render()
+            this.lastPlace = this.render()
         }
     }
 
     abstract render(): Place
     abstract mount(): void
     abstract unmount(): void
-
-    detach() {
-        this.unrenderNodes()
-        this._place = null
-        this._lastPlace = null
-        this._parent = null
-    }
 
     unrenderNodes() {
         let domPlace: DOMPlace | null = this.lastNode
@@ -116,23 +92,23 @@ export abstract class Component implements Lifecycle {
                 toRemove.parentNode?.removeChild(toRemove)
             }
         }
-        this._lastPlace = this._place
+        this.lastPlace = this.place
     }
 }
 
-interface ComponentFunction<T extends Element | Component> {
-    (renderer: Renderer): T;
+interface RenderFunction<T extends Component | Element = Component | Element> {
+    (renderer: Renderer): T
 }
 
-type TemplateElement = ComponentFunction<Element | Component> | TemplateRef<Element | Component> | Component | Lifecycle | Node | boolean | string | number | null | undefined
+type TemplateElement = RenderFunction | Lifecycle | Node | boolean | string | number | null | undefined
 
 type Template = TemplateElement | Template[]
 
 class Renderer {
-    parent: Component
+    parent: Component | null
     lastPlace: Place
     lifecycles: Lifecycle[]
-    constructor(parent: Component, place: Place, lifecycles: Lifecycle[] = []) {
+    constructor(place: Place, parent: Component | null = null, lifecycles: Lifecycle[] = []) {
         this.parent = parent
         this.lastPlace = place
         this.lifecycles = lifecycles
@@ -152,12 +128,8 @@ class Renderer {
                 domPlace.parent.appendChild(node)
             }
             this.lastPlace = lastInsertingNode
+            return lastInsertingNode
         }
-    }
-
-    insertComponent(component: Component) {
-        component.attach(this.lastPlace, this.parent)
-        this.lastPlace = component
     }
 
     pushLifecycle(lifecycle: Lifecycle) {
@@ -165,48 +137,60 @@ class Renderer {
         return lifecycle
     }
 
-    renderTemplate(template: Template) {
+    renderTemplate(template: Template): Node | Component | undefined {
         if (typeof template === 'boolean' || template === null || typeof template === 'undefined') {
             return;
         }
         if (typeof template === 'function') {
-            template(this)
+            return this.lastPlace = template(this)
         } else if (typeof template === 'string' || typeof template === 'number') {
             const node = document.createTextNode(String(template))
-            this.insertNode(node)
+            return this.insertNode(node)
         } else if (template instanceof Node) {
-            this.insertNode(template)
-        } else if (template instanceof Component) {
-            this.insertComponent(template)
-        } else if (template instanceof TemplateRef) {
-            template.render(this)
+            return this.insertNode(template)
         } else if (Array.isArray(template)) {
             for (const child of template) {
                 this.renderTemplate(child)
             }
-        } else if (isLifecycle(template)) {
+        } else if (typeof template === 'object') {
             this.pushLifecycle(template)
         }
     }
 
     renderElement(element: Element, children: Template) {
         this.insertNode(element)
-        const renderer = new Renderer(this.parent, { parent: element }, this.lifecycles)
+        const renderer = new Renderer({ parent: element }, this.parent, this.lifecycles)
         renderer.renderTemplate(children)
     }
+
+    renderComponent(component: Component) {
+        this.lastPlace = component
+        return component
+    }
+}
+
+export const renderTemplate = (place: Place, template: TemplateElement) => {
+    const renderer = new Renderer(place)
+    const rendered = renderer.renderTemplate(template)
+    console.log(rendered)
+    if (rendered instanceof Component) {
+        rendered.renderNodes()
+        rendered.mount()
+    }
+    return rendered
 }
 
 class TemplateComponent extends Component {
     readonly template: Template
     lifecycles: Lifecycle[]
-    constructor(template: Template) {
-        super()
+    constructor(template: Template, place: Place, parent: Component | null = null) {
+        super(place, parent)
         this.template = template
         this.lifecycles = []
     }
     
     render(): Place {
-        const renderer = new Renderer(this, this.place, this.lifecycles)
+        const renderer = new Renderer(this.place, this, this.lifecycles)
         renderer.renderTemplate(this.template)
         return renderer.lastPlace;
     }
@@ -228,6 +212,11 @@ class TemplateComponent extends Component {
         this.lifecycles.length = 0
     }
 }
+
+export const fr = (...children: Template[]) => (renderer: Renderer) => {
+    return renderer.renderComponent(new TemplateComponent(children, renderer.lastPlace, renderer.parent))
+};
+
 
 interface EventHandlersMap {
     [key: string]: EventListenerOrEventListenerObject
@@ -254,41 +243,33 @@ class EventHandlerController<E extends Element = Element> implements Lifecycle {
     }
 }
 
-export class TemplateRef<T extends Element | Component> {
-    _element: T | ((renderer: Renderer) => T)
-    constructor(element: (renderer: Renderer) => T) {
-        this._element = element
-    }
-
-    get element(): T {
-        if (typeof this._element === 'function') {
-            throw new Error("Invalid usage of TemplateRef, element is not rendered")
-        }
-        return this._element
-    }
-
-    render(renderer: Renderer): T {
-        if (typeof this._element === 'function') {
-            this._element = this._element(renderer)
-        }
-        return this._element
-    }
-}
-
 export const el = (tag: string, attrs: ElementAttrsMap | null = null, on: EventHandlersMap | null = null) => {
     return (...children: Template[]) => (renderer: Renderer) => {
         const element = dce(tag, attrs)
         if (on) {
             renderer.pushLifecycle(new EventHandlerController(element, on))
         }
-        
         renderer.renderElement(element, children);
         return element
     }
 }
 
-export const ref = <T extends Element | Component>(renderFunc: ComponentFunction<T>) => new TemplateRef<T>(renderFunc)
 
-export const fr = (...children: Template[]) => {
-    return new TemplateComponent(children);
-};
+export class TemplateRef<T extends Component | Element> {
+    _current: T | null = null
+    get current(): T {
+        if (! this._current) {
+            throw Error("Invalid usage of TemplateRef")
+        }
+        return this._current
+    }
+}
+
+export const createRef = <T extends Component | Element>() => new TemplateRef<T>()
+
+export const ref = <T extends Component | Element>(ref: TemplateRef<T>, renderFunc: RenderFunction<T>) => {
+    return (renderer: Renderer) => {
+        return ref._current = renderFunc(renderer)
+    }
+}
+
