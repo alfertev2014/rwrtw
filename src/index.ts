@@ -94,6 +94,20 @@ export abstract class Component implements Lifecycle {
         }
         this.lastPlace = this.place
     }
+
+    show() {
+        if (this.isHidden) {
+            this.renderNodes()
+            this.mount()
+        }
+    }
+
+    hide() {
+        if (! this.isHidden) {
+            this.unmount()
+            this.unrenderNodes()
+        }
+    }
 }
 
 interface RenderFunction<T extends Component | Element = Component | Element> {

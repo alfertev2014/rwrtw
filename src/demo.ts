@@ -19,11 +19,11 @@ if (root) {
                     click: () => {
                         hello.current.textContent = `Hello world ${counter++} times!`
                         if (counter % 2 === 0) {
-                            even.current.renderNodes()
-                            odd.current.unrenderNodes()
+                            even.current.show()
+                            odd.current.hide()
                         } else {
-                            even.current.unrenderNodes()
-                            odd.current.renderNodes()
+                            even.current.hide()
+                            odd.current.show()
                         }
                     }
                 })('Increment'),
