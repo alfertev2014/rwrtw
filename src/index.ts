@@ -4,7 +4,7 @@ export type ElementAttrValue = number | string | boolean | null | undefined
 export const setAttr = (element: Element, name: string, value: ElementAttrValue) => {
     if (value) {
         element.setAttribute(name, value === true ? '' : value.toString())
-    } else if (value === null || value === false) {
+    } else if (value === null || value === false || value === undefined) {
         element.removeAttribute(name)
     }
 }
@@ -158,7 +158,7 @@ class Renderer {
         if (typeof template === 'function') {
             return this.lastPlace = template(this)
         } else if (typeof template === 'string' || typeof template === 'number') {
-            const node = document.createTextNode(String(template))
+            const node = txt(String(template))
             return this.insertNode(node)
         } else if (template instanceof Node) {
             return this.insertNode(template)
@@ -181,17 +181,6 @@ class Renderer {
         this.lastPlace = component
         return component
     }
-}
-
-export const renderTemplate = (place: Place, template: TemplateElement) => {
-    const renderer = new Renderer(place)
-    const rendered = renderer.renderTemplate(template)
-    console.log(rendered)
-    if (rendered instanceof Component) {
-        rendered.renderNodes()
-        rendered.mount()
-    }
-    return rendered
 }
 
 class TemplateComponent extends Component {
@@ -230,6 +219,16 @@ class TemplateComponent extends Component {
 export const fr = (...children: Template[]) => (renderer: Renderer) => {
     return renderer.renderComponent(new TemplateComponent(children, renderer.lastPlace, renderer.parent))
 };
+
+export const renderTemplate = (place: Place, ...template: Template[]) => {
+    const renderer = new Renderer(place)
+    const rendered = renderer.renderTemplate(fr(template))
+    if (rendered instanceof Component) {
+        rendered.renderNodes()
+        rendered.mount()
+    }
+    return rendered
+}
 
 
 interface EventHandlersMap {
