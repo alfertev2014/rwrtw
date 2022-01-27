@@ -1,12 +1,16 @@
 {
-  "name": "lmnt",
+  "name": "rwrtw",
   "version": "0.0.1",
-  "description": "Thin library layer of DOM helpers and MVVM components",
+  "description": "Thin library layer of tiny DOM helpers and building blocks for MVVM components",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "webpack serve --mode development --open",
     "build": "webpack"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:alfertev2014/rwrtw.git"
   },
   "keywords": ["DOM", "dom", "components", "typescript", "MVVM", "mvvm"],
   "author": "Vasiliy Alfertev <alfertev2012@gmail.com> (https://github.com/alfertev2014)",
