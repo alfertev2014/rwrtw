@@ -1,14 +1,14 @@
 {
   "compilerOptions": {
-    "outDir": "./dist/",
+    "outDir": "./dist",
     "strict": true,
     "module": "esnext",
     "moduleResolution": "node",
     "sourceMap": true,
-    "target": "es6",
-    "typeRoots": [
-      "node_modules/@types"
-    ],
+    "target": "es2016",
+    "declaration": true,
+    "declarationDir": "./types",
+    "declarationMap": true,
     "baseUrl": "./src",
     "lib": [
       "dom",
@@ -16,11 +16,5 @@
       "esnext"
     ],
   },
-  "include": ["src"],
-  "exclude": [
-    "node_modules",
-    "node_modules/*",
-    "./node_modules",
-    "./node_modules/*",
-  ]
+  "include": ["src"]
 }
