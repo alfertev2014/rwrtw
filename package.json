@@ -12,6 +12,9 @@
   ],
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "eslint src",
+    "prettier": "prettier --write src",
+    "prepack": "npm run prettier && npm run lint && npm run build",
     "build": "tsc"
   },
   "repository": {
@@ -30,6 +33,11 @@
   "author": "Vasiliy Alfertev <alfertev2012@gmail.com> (https://github.com/alfertev2014)",
   "license": "ISC",
   "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^5.10.1",
+    "@typescript-eslint/parser": "^5.10.1",
+    "eslint": "^8.8.0",
+    "eslint-config-prettier": "^8.3.0",
+    "prettier": "^2.5.1",
     "typescript": "^4.5.2"
   }
 }

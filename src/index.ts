@@ -1,9 +1,8 @@
-
 export type ElementAttrValue = number | string | boolean | null | undefined
 
 export const setAttr = (element: Element, name: string, value: ElementAttrValue) => {
     if (value) {
-        element.setAttribute(name, value === true ? '' : value.toString())
+        element.setAttribute(name, value === true ? "" : value.toString())
     } else if (value === null || value === false || value === undefined) {
         element.removeAttribute(name)
     }
@@ -15,7 +14,7 @@ export interface ElementAttrsMap {
 
 export const setAttrs = (element: Element, attrs: ElementAttrsMap) => {
     for (const [name, value] of Object.entries(attrs)) {
-        setAttr(element, name, value)   
+        setAttr(element, name, value)
     }
 }
 
@@ -23,7 +22,7 @@ export const dce = (tag: string, attrs?: ElementAttrsMap | null, ...children: No
     console.log(tag, attrs)
     const element = document.createElement(tag)
     if (attrs) {
-        setAttrs(element, attrs)   
+        setAttrs(element, attrs)
     }
     for (const node of children) {
         element.appendChild(node)
@@ -32,7 +31,6 @@ export const dce = (tag: string, attrs?: ElementAttrsMap | null, ...children: No
 }
 
 export const txt = (str: string) => document.createTextNode(str)
-
 
 type DOMPlace = Node | { parent: Node }
 
@@ -45,7 +43,6 @@ const lastPlaceNode = (place: Place) => {
         return place
     }
 }
-
 
 export interface Lifecycle {
     mount?: () => void
@@ -85,7 +82,7 @@ export abstract class Component implements Lifecycle {
         let domPlace: DOMPlace | null = this.lastNode
         if (domPlace instanceof Node) {
             const firstDomPlace = this.place ? lastPlaceNode(this.place) : null
-            const firstNode = firstDomPlace instanceof Node ? firstDomPlace : null;
+            const firstNode = firstDomPlace instanceof Node ? firstDomPlace : null
             while (domPlace && domPlace !== firstNode) {
                 const toRemove = domPlace
                 domPlace = domPlace.previousSibling
@@ -103,7 +100,7 @@ export abstract class Component implements Lifecycle {
     }
 
     hide() {
-        if (! this.isHidden) {
+        if (!this.isHidden) {
             this.unmount()
             this.unrenderNodes()
         }
@@ -152,12 +149,12 @@ class Renderer {
     }
 
     renderTemplate(template: Template): Node | Component | undefined {
-        if (typeof template === 'boolean' || template === null || typeof template === 'undefined') {
-            return;
+        if (typeof template === "boolean" || template === null || typeof template === "undefined") {
+            return
         }
-        if (typeof template === 'function') {
-            return this.lastPlace = template(this)
-        } else if (typeof template === 'string' || typeof template === 'number') {
+        if (typeof template === "function") {
+            return (this.lastPlace = template(this))
+        } else if (typeof template === "string" || typeof template === "number") {
             const node = txt(String(template))
             return this.insertNode(node)
         } else if (template instanceof Node) {
@@ -166,7 +163,7 @@ class Renderer {
             for (const child of template) {
                 this.renderTemplate(child)
             }
-        } else if (typeof template === 'object') {
+        } else if (typeof template === "object") {
             this.pushLifecycle(template)
         }
     }
@@ -191,11 +188,11 @@ class TemplateComponent extends Component {
         this.template = template
         this.lifecycles = []
     }
-    
+
     render(): Place {
         const renderer = new Renderer(this.place, this, this.lifecycles)
         renderer.renderTemplate(this.template)
-        return renderer.lastPlace;
+        return renderer.lastPlace
     }
 
     mount() {
@@ -216,9 +213,11 @@ class TemplateComponent extends Component {
     }
 }
 
-export const fr = (...children: Template[]) => (renderer: Renderer) => {
-    return renderer.renderComponent(new TemplateComponent(children, renderer.lastPlace, renderer.parent))
-};
+export const fr =
+    (...children: Template[]) =>
+    (renderer: Renderer) => {
+        return renderer.renderComponent(new TemplateComponent(children, renderer.lastPlace, renderer.parent))
+    }
 
 export const renderTemplate = (place: Place, ...template: Template[]) => {
     const renderer = new Renderer(place)
@@ -229,7 +228,6 @@ export const renderTemplate = (place: Place, ...template: Template[]) => {
     }
     return rendered
 }
-
 
 interface EventHandlersMap {
     [key: string]: EventListenerOrEventListenerObject
@@ -257,21 +255,21 @@ class EventHandlerController<E extends Element = Element> implements Lifecycle {
 }
 
 export const el = (tag: string, attrs: ElementAttrsMap | null = null, on: EventHandlersMap | null = null) => {
-    return (...children: Template[]) => (renderer: Renderer) => {
-        const element = dce(tag, attrs)
-        if (on) {
-            renderer.pushLifecycle(new EventHandlerController(element, on))
+    return (...children: Template[]) =>
+        (renderer: Renderer) => {
+            const element = dce(tag, attrs)
+            if (on) {
+                renderer.pushLifecycle(new EventHandlerController(element, on))
+            }
+            renderer.renderElement(element, children)
+            return element
         }
-        renderer.renderElement(element, children);
-        return element
-    }
 }
-
 
 export class TemplateRef<T extends Component | Element> {
     _current: T | null = null
     get current(): T {
-        if (! this._current) {
+        if (!this._current) {
             throw Error("Invalid usage of TemplateRef")
         }
         return this._current
@@ -282,7 +280,6 @@ export const createRef = <T extends Component | Element>() => new TemplateRef<T>
 
 export const ref = <T extends Component | Element>(ref: TemplateRef<T>, renderFunc: RenderFunction<T>) => {
     return (renderer: Renderer) => {
-        return ref._current = renderFunc(renderer)
+        return (ref._current = renderFunc(renderer))
     }
 }
-
