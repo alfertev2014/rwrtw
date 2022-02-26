@@ -1,12 +1,12 @@
-import { Lifecycle } from "component"
+import { Lifecycle } from 'component'
 
 export interface EventHandlersMap {
     [key: string]: EventListenerOrEventListenerObject
 }
 
 export class EventHandlerController<E extends Element = Element> implements Lifecycle {
-    element: E
-    eventsMap: EventHandlersMap
+    readonly element: E
+    readonly eventsMap: EventHandlersMap
     constructor(element: E, eventsMap: EventHandlersMap) {
         this.element = element
         this.eventsMap = eventsMap
