@@ -1,7 +1,7 @@
-import { Component, ComponentFactory, Hidable, ParentComponent } from 'component'
-import { dce, ElementAttrsMap, txt } from 'dom'
-import { EventHandlerController, EventHandlersMap } from 'events'
-import { DOMPlace, Place, renderNode } from 'place'
+import { Component, ComponentFactory, Hidable, ParentComponent } from './component'
+import { dce, ElementAttrsMap, txt } from './dom'
+import { EventHandlerController, EventHandlersMap } from './events'
+import { DOMPlace, Place, renderNode } from './place'
 
 class ElementFactory {
     readonly tag: string
@@ -126,5 +126,7 @@ export const ref = <T extends Component>(
 }
 
 export const renderTo = (place: DOMPlace, ...children: Template[]): Component => {
-    return new TemplateComponent(children, place, null)
+    const component = new TemplateComponent(children, place, null)
+    component.render()
+    return component
 }

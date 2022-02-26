@@ -1,4 +1,4 @@
-import { Lifecycle } from 'component'
+import { Lifecycle } from './component'
 
 export interface EventHandlersMap {
     [key: string]: EventListenerOrEventListenerObject

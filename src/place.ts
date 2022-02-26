@@ -1,4 +1,4 @@
-import { Component } from 'component'
+import { Component } from './component'
 
 export type DOMPlace = Node | { parent: Node }
 

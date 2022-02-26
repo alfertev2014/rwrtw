@@ -1,4 +1,4 @@
-import { Place, unrenderNodes } from 'place'
+import { Place, unrenderNodes } from './place'
 
 export interface Lifecycle {
     readonly mount?: () => void
