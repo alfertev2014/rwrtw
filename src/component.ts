@@ -5,31 +5,9 @@ export interface Lifecycle {
     readonly unmount?: () => void
 }
 
-export abstract class Component implements Lifecycle {
-    readonly parent: Component | null
-    readonly place: Place
-    lastPlace: Place
-
-    constructor(place: Place, parent: Component | null = null) {
-        this.place = place
-        this.lastPlace = place
-        this.parent = parent
-    }
-
-    abstract render(): void
-    abstract mount(): void
-    abstract unmount(): void
-
-    unrender() {
-        unrenderNodes(this.place, this.lastPlace)
-        this.lastPlace = this.place
-    }
-}
-
-export abstract class ParentComponent extends Component {
+export class ParentComponent implements Lifecycle {
     readonly lifecycles: Lifecycle[]
-    constructor(place: Place, parent: Component | null = null) {
-        super(place, parent)
+    constructor() {
         this.lifecycles = []
     }
 
@@ -55,54 +33,83 @@ export abstract class ParentComponent extends Component {
     }
 }
 
-export interface ComponentFactory<T extends Component = Component> {
-    (place: Place, parent: Component | null): T
+export abstract class Component implements Lifecycle {
+    abstract get lastPlace(): Place
+    abstract mount(): void
+    abstract unmount(): void
 }
 
-export class Hidable<T extends Component = Component> extends Component {
-    readonly componentFunc: ComponentFactory<T>
-    rendered: T | null
+export interface ComponentFactory<T extends Component = Component> {
+    (place: Place, parent: ParentComponent): { lastPlace: Place, component: T | null }
+}
+
+export class Placeholder extends Component {
+    place: Place
+    readonly lifecycles: ParentComponent
+    lastPlace: Place
     visible: boolean
-    constructor(componentFunc: ComponentFactory<T>, place: Place, parent: Component | null = null) {
-        super(place, parent)
-        this.componentFunc = componentFunc
-        this.rendered = null
+    constructor(place: Place) {
+        super()
+        this.place = place
+        this.lifecycles = new ParentComponent()
+        this.lastPlace = place
         this.visible = false
     }
 
-    render(): void {
-        this.rendered = this.componentFunc(this.place, this.parent)
-        this.lastPlace = this.rendered.lastPlace
+    renderContent<T extends Component = Component>(componentFunc: ComponentFactory<T>) {
+        const { lastPlace, component } = componentFunc(this.place, this.lifecycles)
+        if (component) {
+            this.lifecycles.addLifecycle(component)
+        }
+        this.lastPlace = lastPlace
+    }
+
+    mount() {
+        this.lifecycles.mount()
         this.visible = true
     }
 
-    show() {
-        if (!this.visible && this.rendered) {
-            this.rendered.render()
-            this.lastPlace = this.rendered.lastPlace
-            this.rendered.mount()
+    unmount() {
+        this.lifecycles.unmount()
+    }
+
+    spawnBefore(): Placeholder {
+        const spawned = new Placeholder(this.place)
+        this.place = spawned
+        return spawned
+    }
+
+    setContent<T extends Component = Component>(componentFunc: ComponentFactory<T>) {
+        this.hide()
+        if (!this.visible) {
+            this.renderContent(componentFunc)
+            this.lifecycles.mount()
             this.visible = true
         }
     }
 
     hide() {
-        if (this.visible && this.rendered) {
-            this.rendered.unmount()
-            this.rendered.unrender()
+        if (this.visible) {
+            this.lifecycles.unmount()
+            unrenderNodes(this.place, this.lastPlace)
             this.lastPlace = this.place
             this.visible = false
         }
     }
+}
 
-    mount(): void {
-        if (this.rendered) {
-            this.rendered.mount()
-        }
+export class Hidable<T extends Component = Component> extends Placeholder {
+    readonly componentFunc: ComponentFactory<T>
+    
+    constructor(place: Place, componentFunc: ComponentFactory<T>) {
+        super(place)
+        this.componentFunc = componentFunc
+        this.renderContent(componentFunc)
     }
 
-    unmount(): void {
-        if (this.rendered) {
-            this.rendered.unmount()
+    show() {
+        if (!this.visible) {
+            super.setContent(this.componentFunc)
         }
     }
 }

@@ -1,7 +1,7 @@
-import { Component, ComponentFactory, Hidable, ParentComponent } from './component'
+import { Component, ComponentFactory, Hidable, ParentComponent, Placeholder } from './component'
 import { dce, ElementAttrsMap, txt } from './dom'
 import { EventHandlerController, EventHandlersMap } from './events'
-import { DOMPlace, Place, renderNode } from './place'
+import { Place, renderNode } from './place'
 
 class ElementFactory {
     readonly tag: string
@@ -35,17 +35,6 @@ export type TemplateElement = ComponentFactory | ElementFactory | Node | string 
 
 export type Template = TemplateElement | Template[]
 
-const renderComponent = <T extends Component>(
-    place: Place,
-    parent: ParentComponent,
-    componentFunc: ComponentFactory<T>
-): T => {
-    const component = componentFunc(place, parent)
-    component.render()
-    parent.addLifecycle(component)
-    return component
-}
-
 const renderTemplate = (place: Place, parent: ParentComponent, template: Template): Place => {
     if (typeof template === 'boolean' || !template) {
         return place
@@ -57,8 +46,6 @@ const renderTemplate = (place: Place, parent: ParentComponent, template: Templat
         lastPlace = renderNode(lastPlace, txt(template.toString()))
     } else if (template instanceof Node) {
         lastPlace = renderNode(lastPlace, template)
-    } else if (typeof template === 'function') {
-        lastPlace = renderComponent(lastPlace, parent, template)
     } else if (Array.isArray(template)) {
         for (const subtemplate of template) {
             lastPlace = renderTemplate(lastPlace, parent, subtemplate)
@@ -66,33 +53,39 @@ const renderTemplate = (place: Place, parent: ParentComponent, template: Templat
     } else if (template instanceof ElementFactory) {
         lastPlace = template.render(lastPlace, parent)
     } else {
-        parent.addLifecycle(template)
+        const rendered = template(lastPlace, parent)
+        if (rendered.component) {
+            parent.addLifecycle(rendered.component)
+        }
+        lastPlace = rendered.lastPlace
     }
     return lastPlace
-}
-
-export class TemplateComponent extends ParentComponent {
-    template: Template
-    constructor(template: Template, place: Place, parent: Component | null) {
-        super(place, parent)
-        this.template = template
-    }
-
-    render(): void {
-        this.lastPlace = renderTemplate(this.place, this, this.template)
-    }
 }
 
 export const el = (tag: string, attrs: ElementAttrsMap | null = null, on: EventHandlersMap | null = null) => {
     return (...children: Template[]) => new ElementFactory(tag, attrs, on, children)
 }
 
-export const fr = (...children: Template[]): ComponentFactory<TemplateComponent> => {
-    return (place: Place, parent: Component | null) => new TemplateComponent(children, place, parent)
+export const fr = (...children: Template[]): ComponentFactory => {
+    return (place: Place, parent: ParentComponent) => ({
+        lastPlace: renderTemplate(place, parent, children),
+        component: null
+    })
+}
+
+export const plh = (componentFunc: ComponentFactory): ComponentFactory<Placeholder> => {
+    return (place: Place) => {
+        const h = new Placeholder(place)
+        h.renderContent(componentFunc)
+        return { lastPlace: h, component: h }
+    }
 }
 
 export const hidable = <T extends Component>(componentFunc: ComponentFactory<T>): ComponentFactory<Hidable<T>> => {
-    return (place: Place, parent: Component | null) => new Hidable(componentFunc, place, parent)
+    return (place: Place) => {
+        const h = new Hidable<T>(place, componentFunc)
+        return { lastPlace: h, component: h }
+    }
 }
 
 export class TemplateRef<T extends Component | HTMLElement> {
@@ -120,13 +113,9 @@ export const ref = <T extends Component>(
         Object.setPrototypeOf(proxy, renderFunc)
         return proxy as ElementFactory // TODO: Need to avoid the cast
     }
-    return (place: Place, parent: Component | null) => {
-        return (ref._current = renderFunc(place, parent))
+    return (place: Place, parent: ParentComponent) => {
+        const rendered = renderFunc(place, parent)
+        ref._current = rendered.component
+        return rendered
     }
-}
-
-export const renderTo = (place: DOMPlace, ...children: Template[]): Component => {
-    const component = new TemplateComponent(children, place, null)
-    component.render()
-    return component
 }

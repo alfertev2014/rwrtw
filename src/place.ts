@@ -1,11 +1,11 @@
-import { Component } from './component'
+import { Placeholder } from './component'
 
 export type DOMPlace = Node | { parent: Node }
 
-export type Place = DOMPlace | Component
+export type Place = DOMPlace | Placeholder
 
 export const lastPlaceNode = (place: Place): DOMPlace => {
-    if (place instanceof Component) {
+    if (place instanceof Placeholder) {
         return lastPlaceNode(place.lastPlace)
     } else {
         return place
