@@ -43,7 +43,7 @@ export class Component implements Lifecycle {
 }
 
 export interface ComponentFactory<T extends Component | HTMLElement = Component | HTMLElement> {
-    (place: Place, parent: ParentComponent): { lastPlace: Place, component: T | null }
+    (place: Place, parent: ParentComponent): { lastPlace: Place; component: T | null }
 }
 
 export class Placeholder extends Component {
@@ -94,7 +94,7 @@ export class Hidable<T extends Component | HTMLElement = Component | HTMLElement
     readonly renderFunc: ComponentFactory<T>
     readonly placeholder: Placeholder
     visible: boolean
-    
+
     constructor(place: Place, parent: ParentComponent, componentFunc: ComponentFactory<T>) {
         super()
         this.placeholder = new Placeholder(place)
