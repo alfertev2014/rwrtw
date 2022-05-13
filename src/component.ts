@@ -33,13 +33,16 @@ export class ParentComponent implements Lifecycle {
     }
 }
 
-export abstract class Component implements Lifecycle {
-    abstract get lastPlace(): Place
-    abstract mount(): void
-    abstract unmount(): void
+export class Component implements Lifecycle {
+    mount(): void {
+        // do nothing
+    }
+    unmount(): void {
+        // do nothing
+    }
 }
 
-export interface ComponentFactory<T extends Component = Component> {
+export interface ComponentFactory<T extends Component | HTMLElement = Component | HTMLElement> {
     (place: Place, parent: ParentComponent): { lastPlace: Place, component: T | null }
 }
 
@@ -47,26 +50,25 @@ export class Placeholder extends Component {
     place: Place
     readonly lifecycles: ParentComponent
     lastPlace: Place
-    visible: boolean
     constructor(place: Place) {
         super()
         this.place = place
         this.lifecycles = new ParentComponent()
         this.lastPlace = place
-        this.visible = false
     }
 
-    renderContent<T extends Component = Component>(componentFunc: ComponentFactory<T>) {
-        const { lastPlace, component } = componentFunc(this.place, this.lifecycles)
-        if (component) {
-            this.lifecycles.addLifecycle(component)
+    renderContent<T extends Component | HTMLElement>(componentFunc: ComponentFactory<T> | null) {
+        if (componentFunc) {
+            const { lastPlace, component } = componentFunc(this.place, this.lifecycles)
+            if (component instanceof Component) {
+                this.lifecycles.addLifecycle(component)
+            }
+            this.lastPlace = lastPlace
         }
-        this.lastPlace = lastPlace
     }
 
     mount() {
         this.lifecycles.mount()
-        this.visible = true
     }
 
     unmount() {
@@ -79,37 +81,44 @@ export class Placeholder extends Component {
         return spawned
     }
 
-    setContent<T extends Component = Component>(componentFunc: ComponentFactory<T>) {
-        this.hide()
-        if (!this.visible) {
-            this.renderContent(componentFunc)
-            this.lifecycles.mount()
-            this.visible = true
-        }
+    setContent<T extends Component | HTMLElement>(componentFunc: ComponentFactory<T> | null) {
+        this.lifecycles.unmount()
+        unrenderNodes(this.place, this.lastPlace)
+        this.lastPlace = this.place
+        this.renderContent(componentFunc)
+        this.lifecycles.mount()
+    }
+}
+
+export class Hidable<T extends Component | HTMLElement = Component | HTMLElement> extends Component {
+    readonly renderFunc: ComponentFactory<T>
+    readonly placeholder: Placeholder
+    visible: boolean
+    
+    constructor(place: Place, parent: ParentComponent, componentFunc: ComponentFactory<T>) {
+        super()
+        this.placeholder = new Placeholder(place)
+        this.renderFunc = componentFunc
+        this.placeholder.renderContent(componentFunc)
+        parent.addLifecycle(this.placeholder)
+        this.visible = true
+    }
+
+    get lastPlace() {
+        return this.placeholder
     }
 
     hide() {
         if (this.visible) {
-            this.lifecycles.unmount()
-            unrenderNodes(this.place, this.lastPlace)
-            this.lastPlace = this.place
+            this.placeholder.setContent(null)
             this.visible = false
         }
-    }
-}
-
-export class Hidable<T extends Component = Component> extends Placeholder {
-    readonly componentFunc: ComponentFactory<T>
-    
-    constructor(place: Place, componentFunc: ComponentFactory<T>) {
-        super(place)
-        this.componentFunc = componentFunc
-        this.renderContent(componentFunc)
     }
 
     show() {
         if (!this.visible) {
-            super.setContent(this.componentFunc)
+            this.placeholder.setContent(this.renderFunc)
+            this.visible = true
         }
     }
 }
