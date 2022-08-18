@@ -1,16 +1,15 @@
-import { Place } from '../place'
-import { ComponentFactory, Lifecycles, Placeholder } from '../component'
+import { ComponentFactory, Placeholder, Renderer } from '../component'
 
 export class Hidable<T = unknown> {
     readonly renderFunc: ComponentFactory<T>
     readonly placeholder: Placeholder
     visible: boolean
 
-    constructor(place: Place, parent: Lifecycles, componentFunc: ComponentFactory<T>) {
-        this.placeholder = new Placeholder(place)
+    constructor(renderer: Renderer, componentFunc: ComponentFactory<T>) {
+        this.placeholder = new Placeholder(renderer.place)
         this.renderFunc = componentFunc
         this.placeholder.renderContent(componentFunc)
-        parent.addLifecycle(this.placeholder)
+        renderer.addLifecycle(this.placeholder)
         this.visible = true
     }
 
@@ -33,9 +32,7 @@ export class Hidable<T = unknown> {
     }
 }
 
-export const hidable = <T>(componentFunc: ComponentFactory<T>): ComponentFactory<Hidable<T>> => {
-    return (place: Place, parent: Lifecycles) => {
-        const h = new Hidable<T>(place, parent, componentFunc)
-        return { lastPlace: h.lastPlace, component: h }
-    }
-}
+export const hidable =
+    <T>(componentFunc: ComponentFactory<T>): ComponentFactory<Hidable<T>> =>
+    (renderer: Renderer) =>
+        new Hidable<T>(renderer, componentFunc)

@@ -1,4 +1,5 @@
-import { Place, unrenderNodes } from './place'
+import { txt } from './dom'
+import { Place, renderNode, unrenderNodes } from './place'
 
 export interface Lifecycle {
     readonly mount?: () => void
@@ -33,8 +34,35 @@ export class Lifecycles implements Lifecycle {
     }
 }
 
+export class Renderer {
+    place: Place
+    parent: Lifecycles
+    constructor(place: Place, parent: Lifecycles) {
+        this.place = place
+        this.parent = parent
+    }
+
+    renderText(text: string) {
+        this.place = renderNode(this.place, txt(text))
+    }
+
+    renderDomNode(node: Node) {
+        this.place = renderNode(this.place, node)
+    }
+
+    renderElement(element: Element): Renderer {
+        const rendered = renderNode(this.place, element)
+        this.place = rendered
+        return new Renderer({ parent: element }, this.parent)
+    }
+
+    addLifecycle(lifecycle: Lifecycle) {
+        this.parent.addLifecycle(lifecycle)
+    }
+}
+
 export interface ComponentFactory<T = unknown> {
-    (place: Place, parent: Lifecycles): { lastPlace: Place; component: T }
+    (renderer: Renderer): T
 }
 
 export class Placeholder extends Lifecycles {
@@ -48,11 +76,12 @@ export class Placeholder extends Lifecycles {
 
     renderContent<T>(componentFunc: ComponentFactory<T> | null) {
         if (componentFunc) {
-            const { lastPlace, component } = componentFunc(this.place, this)
+            const renderer = new Renderer(this.place, this)
+            const component = componentFunc(renderer)
             if (component instanceof Lifecycles) {
                 this.addLifecycle(component)
             }
-            this.lastPlace = lastPlace
+            this.lastPlace = renderer.place
         }
     }
 

@@ -1,68 +1,60 @@
-import { ComponentFactory, Lifecycles, Placeholder } from './component'
-import { dce, ElementAttrsMap, txt } from './dom'
+import { ComponentFactory, Lifecycles, Placeholder, Renderer } from './component'
+import { dce, ElementAttrsMap } from './dom'
 import { EventHandlerController, EventHandlersMap } from './events'
-import { Place, renderNode } from './place'
 
 export type TemplateElement = ComponentFactory | Node | string | number | boolean | null | undefined
 
 export type Template = TemplateElement | Template[]
 
-const renderTemplate = (place: Place, parent: Lifecycles, template: Template): Place => {
+const renderTemplate = (renderer: Renderer, template: Template) => {
     if (typeof template === 'boolean' || !template) {
-        return place
+        return
     }
-    let lastPlace = place
     if (typeof template === 'string') {
-        lastPlace = renderNode(lastPlace, txt(template))
+        renderer.renderText(template)
     } else if (typeof template === 'number') {
-        lastPlace = renderNode(lastPlace, txt(template.toString()))
+        renderer.renderText(template.toString())
     } else if (template instanceof Node) {
-        lastPlace = renderNode(lastPlace, template)
+        renderer.renderDomNode(template)
     } else if (Array.isArray(template)) {
         for (const subtemplate of template) {
-            lastPlace = renderTemplate(lastPlace, parent, subtemplate)
+            renderTemplate(renderer, subtemplate)
         }
     } else {
-        const rendered = template(lastPlace, parent)
-        if (rendered.component instanceof Lifecycles) {
-            parent.addLifecycle(rendered.component)
+        const rendered = template(renderer)
+        if (rendered instanceof Lifecycles) {
+            renderer.addLifecycle(rendered)
         }
-        lastPlace = rendered.lastPlace
     }
-    return lastPlace
 }
 
-export const el = (
-    tag: string,
-    attrs: ElementAttrsMap | null = null,
-    on: EventHandlersMap | null = null
-) => {
-    return (...children: Template[]): ComponentFactory<HTMLElement> =>
-        (place: Place, parent: Lifecycles) => {
-            const element = dce(tag, attrs)
-            const rendered = renderNode(place, element)
-            renderTemplate({ parent: rendered }, parent, children)
-            if (on) {
-                parent.addLifecycle(new EventHandlerController(element, on))
-            }
-            return { lastPlace: rendered, component: rendered }
+export const el =
+    (tag: string, attrs: ElementAttrsMap | null = null, on: EventHandlersMap | null = null) =>
+    (...children: Template[]): ComponentFactory<HTMLElement> =>
+    (renderer: Renderer) => {
+        const element = dce(tag, attrs)
+        const subrenderer = renderer.renderElement(element)
+        renderTemplate(subrenderer, children)
+        if (on) {
+            renderer.addLifecycle(new EventHandlerController(element, on))
         }
-}
+        return element
+    }
 
 export const fr = (...children: Template[]): ComponentFactory => {
-    return (place: Place, parent: Lifecycles) => ({
-        lastPlace: renderTemplate(place, parent, children),
-        component: null,
-    })
-}
-
-export const plh = (componentFunc: ComponentFactory): ComponentFactory<Placeholder> => {
-    return (place: Place) => {
-        const h = new Placeholder(place)
-        h.renderContent(componentFunc)
-        return { lastPlace: h, component: h }
+    return (renderer: Renderer) => {
+        renderTemplate(renderer, children)
+        return null
     }
 }
+
+export const plh =
+    (componentFunc: ComponentFactory): ComponentFactory<Placeholder> =>
+    (renderer: Renderer) => {
+        const h = new Placeholder(renderer.place)
+        h.renderContent(componentFunc)
+        return h
+    }
 
 export class TemplateRef<T> {
     _current: T | null = null
@@ -76,13 +68,10 @@ export class TemplateRef<T> {
 
 export const createRef = <T>() => new TemplateRef<T>()
 
-export const ref = <T>(
-    ref: TemplateRef<T>,
-    renderFunc: ComponentFactory<T>
-): ComponentFactory<T> => {
-    return (place: Place, parent: Lifecycles) => {
-        const rendered = renderFunc(place, parent)
-        ref._current = rendered.component
+export const ref =
+    <T>(ref: TemplateRef<T>, renderFunc: ComponentFactory<T>): ComponentFactory<T> =>
+    (renderer: Renderer) => {
+        const rendered = renderFunc(renderer)
+        ref._current = rendered
         return rendered
     }
-}
