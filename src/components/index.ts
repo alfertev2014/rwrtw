@@ -1,1 +1,1 @@
-export * from './hidable';
+export * from './hidable'

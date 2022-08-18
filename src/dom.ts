@@ -18,7 +18,11 @@ export const setAttrs = (element: Element, attrs: ElementAttrsMap) => {
     }
 }
 
-export const dce = (tag: string, attrs?: ElementAttrsMap | null, ...children: (string | Node)[]) => {
+export const dce = (
+    tag: string,
+    attrs?: ElementAttrsMap | null,
+    ...children: (string | Node)[]
+) => {
     const element = document.createElement(tag)
     if (attrs) {
         setAttrs(element, attrs)

@@ -32,7 +32,11 @@ const renderTemplate = (place: Place, parent: Lifecycles, template: Template): P
     return lastPlace
 }
 
-export const el = (tag: string, attrs: ElementAttrsMap | null = null, on: EventHandlersMap | null = null) => {
+export const el = (
+    tag: string,
+    attrs: ElementAttrsMap | null = null,
+    on: EventHandlersMap | null = null
+) => {
     return (...children: Template[]): ComponentFactory<HTMLElement> =>
         (place: Place, parent: Lifecycles) => {
             const element = dce(tag, attrs)

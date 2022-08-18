@@ -1,7 +1,7 @@
 import { Place } from '../place'
 import { ComponentFactory, Lifecycles, Placeholder } from '../component'
 
-export class Hidable<T> {
+export class Hidable<T = unknown> {
     readonly renderFunc: ComponentFactory<T>
     readonly placeholder: Placeholder
     visible: boolean
@@ -33,9 +33,7 @@ export class Hidable<T> {
     }
 }
 
-export const hidable = <T>(
-    componentFunc: ComponentFactory<T>
-): ComponentFactory<Hidable<T>> => {
+export const hidable = <T>(componentFunc: ComponentFactory<T>): ComponentFactory<Hidable<T>> => {
     return (place: Place, parent: Lifecycles) => {
         const h = new Hidable<T>(place, parent, componentFunc)
         return { lastPlace: h.lastPlace, component: h }
