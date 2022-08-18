@@ -1,5 +1,6 @@
 export * from './dom'
 export * from './place'
 export * from './component'
+export * from './components'
 export * from './events'
 export * from './template'

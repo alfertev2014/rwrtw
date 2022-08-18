@@ -5,7 +5,7 @@ export interface Lifecycle {
     readonly unmount?: () => void
 }
 
-export class ParentComponent implements Lifecycle {
+export class Lifecycles implements Lifecycle {
     readonly lifecycles: Lifecycle[]
     constructor() {
         this.lifecycles = []
@@ -33,46 +33,27 @@ export class ParentComponent implements Lifecycle {
     }
 }
 
-export class Component implements Lifecycle {
-    mount(): void {
-        // do nothing
-    }
-    unmount(): void {
-        // do nothing
-    }
+export interface ComponentFactory<T = unknown> {
+    (place: Place, parent: Lifecycles): { lastPlace: Place; component: T }
 }
 
-export interface ComponentFactory<T extends Component | HTMLElement = Component | HTMLElement> {
-    (place: Place, parent: ParentComponent): { lastPlace: Place; component: T | null }
-}
-
-export class Placeholder extends Component {
+export class Placeholder extends Lifecycles {
     place: Place
-    readonly lifecycles: ParentComponent
     lastPlace: Place
     constructor(place: Place) {
         super()
         this.place = place
-        this.lifecycles = new ParentComponent()
         this.lastPlace = place
     }
 
-    renderContent<T extends Component | HTMLElement>(componentFunc: ComponentFactory<T> | null) {
+    renderContent<T>(componentFunc: ComponentFactory<T> | null) {
         if (componentFunc) {
-            const { lastPlace, component } = componentFunc(this.place, this.lifecycles)
-            if (component instanceof Component) {
-                this.lifecycles.addLifecycle(component)
+            const { lastPlace, component } = componentFunc(this.place, this)
+            if (component instanceof Lifecycles) {
+                this.addLifecycle(component)
             }
             this.lastPlace = lastPlace
         }
-    }
-
-    mount() {
-        this.lifecycles.mount()
-    }
-
-    unmount() {
-        this.lifecycles.unmount()
     }
 
     spawnBefore(): Placeholder {
@@ -81,44 +62,11 @@ export class Placeholder extends Component {
         return spawned
     }
 
-    setContent<T extends Component | HTMLElement>(componentFunc: ComponentFactory<T> | null) {
-        this.lifecycles.unmount()
+    setContent<T>(componentFunc: ComponentFactory<T> | null) {
+        this.unmount()
         unrenderNodes(this.place, this.lastPlace)
         this.lastPlace = this.place
         this.renderContent(componentFunc)
-        this.lifecycles.mount()
-    }
-}
-
-export class Hidable<T extends Component | HTMLElement = Component | HTMLElement> extends Component {
-    readonly renderFunc: ComponentFactory<T>
-    readonly placeholder: Placeholder
-    visible: boolean
-
-    constructor(place: Place, parent: ParentComponent, componentFunc: ComponentFactory<T>) {
-        super()
-        this.placeholder = new Placeholder(place)
-        this.renderFunc = componentFunc
-        this.placeholder.renderContent(componentFunc)
-        parent.addLifecycle(this.placeholder)
-        this.visible = true
-    }
-
-    get lastPlace() {
-        return this.placeholder
-    }
-
-    hide() {
-        if (this.visible) {
-            this.placeholder.setContent(null)
-            this.visible = false
-        }
-    }
-
-    show() {
-        if (!this.visible) {
-            this.placeholder.setContent(this.renderFunc)
-            this.visible = true
-        }
+        this.mount()
     }
 }
