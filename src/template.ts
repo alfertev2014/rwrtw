@@ -1,4 +1,4 @@
-import { ComponentFactory, Lifecycles, Placeholder, Renderer } from './component'
+import { ComponentFactory, Lifecycles, Renderer } from './component'
 import { dce, ElementAttrsMap } from './dom'
 import { EventHandlerController, EventHandlersMap } from './events'
 
@@ -7,7 +7,7 @@ export type TemplateElement = ComponentFactory | Node | string | number | boolea
 export type Template = TemplateElement | Template[]
 
 const renderTemplate = (renderer: Renderer, template: Template) => {
-    if (typeof template === 'boolean' || !template) {
+    if (typeof template === 'boolean' || template === null || typeof template === 'undefined') {
         return
     }
     if (typeof template === 'string') {
@@ -47,14 +47,6 @@ export const fr = (...children: Template[]): ComponentFactory => {
         return null
     }
 }
-
-export const plh =
-    (componentFunc: ComponentFactory): ComponentFactory<Placeholder> =>
-    (renderer: Renderer) => {
-        const h = new Placeholder(renderer.place)
-        h.renderContent(componentFunc)
-        return h
-    }
 
 export class TemplateRef<T> {
     _current: T | null = null

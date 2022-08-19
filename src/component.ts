@@ -34,7 +34,15 @@ export class Lifecycles implements Lifecycle {
     }
 }
 
-export class Renderer {
+export interface Renderer {
+    renderText(text: string): void;
+    renderDomNode(node: Node): void;
+    renderElement(element: Element): Renderer;
+    renderPlaceholder(): Placeholder;
+    addLifecycle(lifecycle: Lifecycle): void;
+}
+
+class RendererImpl implements Renderer {
     place: Place
     parent: Lifecycles
     constructor(place: Place, parent: Lifecycles) {
@@ -53,7 +61,13 @@ export class Renderer {
     renderElement(element: Element): Renderer {
         const rendered = renderNode(this.place, element)
         this.place = rendered
-        return new Renderer({ parent: element }, this.parent)
+        return new RendererImpl({ parent: element }, this.parent)
+    }
+
+    renderPlaceholder(): Placeholder {
+        const p = new Placeholder(this.place)
+        this.addLifecycle(p)
+        return p
     }
 
     addLifecycle(lifecycle: Lifecycle) {
@@ -76,7 +90,7 @@ export class Placeholder extends Lifecycles {
 
     renderContent<T>(componentFunc: ComponentFactory<T> | null) {
         if (componentFunc) {
-            const renderer = new Renderer(this.place, this)
+            const renderer = new RendererImpl(this.place, this)
             const component = componentFunc(renderer)
             if (component instanceof Lifecycles) {
                 this.addLifecycle(component)
@@ -99,3 +113,11 @@ export class Placeholder extends Lifecycles {
         this.mount()
     }
 }
+
+export const plh =
+    (componentFunc: ComponentFactory): ComponentFactory<Placeholder> =>
+    (renderer: Renderer) => {
+        const h = renderer.renderPlaceholder()
+        h.renderContent(componentFunc)
+        return h
+    }

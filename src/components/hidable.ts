@@ -1,4 +1,4 @@
-import { ComponentFactory, Placeholder, Renderer } from '../component'
+import { ComponentFactory, Placeholder, plh, Renderer } from '../component'
 
 export class Hidable<T = unknown> {
     readonly renderFunc: ComponentFactory<T>
@@ -6,9 +6,8 @@ export class Hidable<T = unknown> {
     visible: boolean
 
     constructor(renderer: Renderer, componentFunc: ComponentFactory<T>) {
-        this.placeholder = new Placeholder(renderer.place)
         this.renderFunc = componentFunc
-        this.placeholder.renderContent(componentFunc)
+        this.placeholder = plh(componentFunc)(renderer)
         renderer.addLifecycle(this.placeholder)
         this.visible = true
     }
