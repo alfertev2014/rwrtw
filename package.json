@@ -1,7 +1,7 @@
 {
   "name": "rwrtw",
   "version": "0.0.5",
-  "description": "Tiny DOM helpers and building blocks for MVVM components",
+  "description": "Tiny DOM helpers and building blocks for MVVM and UI components",
   "main": "dist/index.js",
   "module": "dist/index.js",
   "types": "types/index.d.ts",
@@ -13,8 +13,9 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "lint": "eslint src",
     "prettier": "prettier --write src",
-    "prepack": "npm run prettier && npm run lint && npm run build",
-    "build": "tsc"
+    "prepack": "npm run clean && npm run prettier && npm run lint && npm run build",
+    "build": "tsc",
+    "clean": "rm -rf dist types"
   },
   "repository": {
     "type": "git",
@@ -22,10 +23,11 @@
   },
   "keywords": [
     "tiny",
-    "dom",
+    "DOM",
     "helpers",
+    "UI",
     "library",
-    "mvvm",
+    "MVVM",
     "components",
     "typescript"
   ],
