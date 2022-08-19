@@ -1,5 +1,5 @@
 import { ComponentFactory, Renderer } from './component'
-import { dce, ElementAttrsMap } from './dom'
+import { ElementAttrsMap } from './dom'
 import { EventHandlerController, EventHandlersMap } from './events'
 
 export type TemplateElement = ComponentFactory | Node | string | number | boolean | null | undefined
@@ -29,8 +29,7 @@ export const el =
     (tag: string, attrs: ElementAttrsMap | null = null, on: EventHandlersMap | null = null) =>
     (...children: Template[]): ComponentFactory<HTMLElement> =>
     (renderer: Renderer) => {
-        const element = dce(tag, attrs)
-        const subrenderer = renderer.renderElement(element)
+        const { element, subrenderer } = renderer.renderElement(tag, attrs)
         renderTemplate(subrenderer, children)
         if (on) {
             renderer.addLifecycle(new EventHandlerController(element, on))

@@ -1,4 +1,4 @@
-import { txt } from './dom'
+import { dce, ElementAttrsMap, txt } from './dom'
 
 export interface Lifecycle {
     readonly mount?: () => void
@@ -8,7 +8,10 @@ export interface Lifecycle {
 export interface Renderer {
     renderText(text: string): void
     renderDomNode(node: Node): void
-    renderElement(element: Element): Renderer
+    renderElement(
+        tag: string,
+        attrs: ElementAttrsMap | null
+    ): { element: HTMLElement; subrenderer: Renderer }
     renderPlaceholder(componentFunc?: ComponentFactory | null): Placeholder
     addLifecycle(lifecycle: Lifecycle): void
 }
@@ -57,10 +60,13 @@ class RendererImpl implements Renderer {
         this.place = renderNode(this.place, node)
     }
 
-    renderElement(element: Element): Renderer {
-        const rendered = renderNode(this.place, element)
-        this.place = rendered
-        return new RendererImpl({ parent: element }, this.parent)
+    renderElement(
+        tag: string,
+        attrs: ElementAttrsMap | null = null
+    ): { element: HTMLElement; subrenderer: Renderer } {
+        const element = dce(tag, attrs)
+        this.place = renderNode(this.place, element)
+        return { element, subrenderer: new RendererImpl({ parent: element }, this.parent) }
     }
 
     renderPlaceholder(componentFunc: ComponentFactory | null = null): Placeholder {
