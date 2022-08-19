@@ -9,7 +9,7 @@ export interface Renderer {
     renderText(text: string): void;
     renderDomNode(node: Node): void;
     renderElement(element: Element): Renderer;
-    renderPlaceholder(): Placeholder;
+    renderPlaceholder(componentFunc?: ComponentFactory | null): Placeholder;
     addLifecycle(lifecycle: Lifecycle): void;
 }
 
@@ -63,9 +63,10 @@ class RendererImpl implements Renderer {
         return new RendererImpl({ parent: element }, this.parent)
     }
 
-    renderPlaceholder(): Placeholder {
-        const p = new Placeholder(this.place)
+    renderPlaceholder(componentFunc: ComponentFactory | null = null): Placeholder {
+        const p = new PlaceholderImpl(this.place)
         this.addLifecycle(p)
+        p.renderContent(componentFunc);
         return p
     }
 
@@ -78,7 +79,11 @@ export interface ComponentFactory<T = unknown> {
     (renderer: Renderer): T
 }
 
-export class Placeholder extends Lifecycles {
+export interface Placeholder {
+    setContent<T>(componentFunc: ComponentFactory<T> | null): void;
+}
+
+class PlaceholderImpl extends Lifecycles {
     place: Place
     lastPlace: Place
     constructor(place: Place) {
@@ -87,7 +92,7 @@ export class Placeholder extends Lifecycles {
         this.lastPlace = place
     }
 
-    renderContent<T>(componentFunc: ComponentFactory<T> | null) {
+    renderContent<T>(componentFunc: ComponentFactory<T> | null = null) {
         if (componentFunc) {
             const renderer = new RendererImpl(this.place, this)
             componentFunc(renderer)
@@ -96,12 +101,12 @@ export class Placeholder extends Lifecycles {
     }
 
     spawnBefore(): Placeholder {
-        const spawned = new Placeholder(this.place)
+        const spawned = new PlaceholderImpl(this.place)
         this.place = spawned
         return spawned
     }
 
-    setContent<T>(componentFunc: ComponentFactory<T> | null) {
+    setContent<T>(componentFunc: ComponentFactory<T> | null = null) {
         this.unmount()
         unrenderNodes(this.place, this.lastPlace)
         this.lastPlace = this.place
@@ -110,21 +115,20 @@ export class Placeholder extends Lifecycles {
     }
 }
 
+export const createRootPlaceholder = (element: Element): Placeholder =>
+    new PlaceholderImpl({ parent: element })
+
 export const plh =
-    (componentFunc: ComponentFactory): ComponentFactory<Placeholder> =>
-    (renderer: Renderer) => {
-        const h = renderer.renderPlaceholder()
-        h.renderContent(componentFunc)
-        return h
-    }
+    (componentFunc: ComponentFactory | null = null): ComponentFactory<Placeholder> =>
+    (renderer: Renderer) => renderer.renderPlaceholder(componentFunc)
 
 
 type DOMPlace = Node | { parent: Node }
 
-type Place = DOMPlace | Placeholder
+type Place = DOMPlace | PlaceholderImpl
 
 const lastPlaceNode = (place: Place): DOMPlace => {
-    if (place instanceof Placeholder) {
+    if (place instanceof PlaceholderImpl) {
         return lastPlaceNode(place.lastPlace)
     } else {
         return place
