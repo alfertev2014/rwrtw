@@ -1,18 +1,20 @@
 import { ComponentFactory, Placeholder, plh, Renderer } from '../component'
 
-export class Hidable<T = unknown> {
-    readonly renderFunc: ComponentFactory<T>
+export interface Hidable {
+    hide(): void
+    show(): void
+    readonly visible: boolean
+}
+
+class HidableImpl<T = unknown> implements Hidable {
+    readonly componentFunc: ComponentFactory<T>
     readonly placeholder: Placeholder
     visible: boolean
 
     constructor(renderer: Renderer, componentFunc: ComponentFactory<T>) {
-        this.renderFunc = componentFunc
+        this.componentFunc = componentFunc
         this.placeholder = plh(componentFunc)(renderer)
         this.visible = true
-    }
-
-    get lastPlace() {
-        return this.placeholder
     }
 
     hide() {
@@ -24,13 +26,13 @@ export class Hidable<T = unknown> {
 
     show() {
         if (!this.visible) {
-            this.placeholder.setContent(this.renderFunc)
+            this.placeholder.setContent(this.componentFunc)
             this.visible = true
         }
     }
 }
 
 export const hidable =
-    <T>(componentFunc: ComponentFactory<T>): ComponentFactory<Hidable<T>> =>
+    <T>(componentFunc: ComponentFactory<T>): ComponentFactory<Hidable> =>
     (renderer: Renderer) =>
-        new Hidable<T>(renderer, componentFunc)
+        new HidableImpl(renderer, componentFunc)
