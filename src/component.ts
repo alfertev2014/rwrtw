@@ -6,11 +6,11 @@ export interface Lifecycle {
 }
 
 export interface Renderer {
-    renderText(text: string): void;
-    renderDomNode(node: Node): void;
-    renderElement(element: Element): Renderer;
-    renderPlaceholder(componentFunc?: ComponentFactory | null): Placeholder;
-    addLifecycle(lifecycle: Lifecycle): void;
+    renderText(text: string): void
+    renderDomNode(node: Node): void
+    renderElement(element: Element): Renderer
+    renderPlaceholder(componentFunc?: ComponentFactory | null): Placeholder
+    addLifecycle(lifecycle: Lifecycle): void
 }
 
 class Lifecycles implements Lifecycle {
@@ -66,7 +66,7 @@ class RendererImpl implements Renderer {
     renderPlaceholder(componentFunc: ComponentFactory | null = null): Placeholder {
         const p = new PlaceholderImpl(this.place)
         this.addLifecycle(p)
-        p.renderContent(componentFunc);
+        p.renderContent(componentFunc)
         return p
     }
 
@@ -80,7 +80,7 @@ export interface ComponentFactory<T = unknown> {
 }
 
 export interface Placeholder {
-    setContent<T>(componentFunc: ComponentFactory<T> | null): void;
+    setContent<T>(componentFunc: ComponentFactory<T> | null): void
 }
 
 class PlaceholderImpl extends Lifecycles {
@@ -120,8 +120,8 @@ export const createRootPlaceholder = (element: Element): Placeholder =>
 
 export const plh =
     (componentFunc: ComponentFactory | null = null): ComponentFactory<Placeholder> =>
-    (renderer: Renderer) => renderer.renderPlaceholder(componentFunc)
-
+    (renderer: Renderer) =>
+        renderer.renderPlaceholder(componentFunc)
 
 type DOMPlace = Node | { parent: Node }
 
