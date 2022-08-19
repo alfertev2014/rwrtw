@@ -1,5 +1,4 @@
 import { txt } from './dom'
-import { Place, renderNode, unrenderNodes } from './place'
 
 export interface Lifecycle {
     readonly mount?: () => void
@@ -118,3 +117,42 @@ export const plh =
         h.renderContent(componentFunc)
         return h
     }
+
+
+type DOMPlace = Node | { parent: Node }
+
+type Place = DOMPlace | Placeholder
+
+const lastPlaceNode = (place: Place): DOMPlace => {
+    if (place instanceof Placeholder) {
+        return lastPlaceNode(place.lastPlace)
+    } else {
+        return place
+    }
+}
+
+const renderNode = <T extends Node>(place: Place, node: T): T => {
+    const domPlace = lastPlaceNode(place)
+    if (domPlace instanceof Node) {
+        if (domPlace.parentNode) {
+            return domPlace.parentNode.insertBefore(node, domPlace.nextSibling)
+        } else {
+            return node
+        }
+    } else {
+        return domPlace.parent.appendChild(node)
+    }
+}
+
+const unrenderNodes = (place: Place, lastPlace: Place) => {
+    let domPlace: DOMPlace | null = lastPlaceNode(lastPlace)
+    if (domPlace instanceof Node) {
+        const firstDomPlace = place ? lastPlaceNode(place) : null
+        const firstNode = firstDomPlace instanceof Node ? firstDomPlace : null
+        while (domPlace && domPlace !== firstNode) {
+            const toRemove = domPlace
+            domPlace = domPlace.previousSibling
+            toRemove.parentNode?.removeChild(toRemove)
+        }
+    }
+}
