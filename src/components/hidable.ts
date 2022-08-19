@@ -8,7 +8,6 @@ export class Hidable<T = unknown> {
     constructor(renderer: Renderer, componentFunc: ComponentFactory<T>) {
         this.renderFunc = componentFunc
         this.placeholder = plh(componentFunc)(renderer)
-        renderer.addLifecycle(this.placeholder)
         this.visible = true
     }
 

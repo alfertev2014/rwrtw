@@ -1,4 +1,4 @@
-import { ComponentFactory, Lifecycles, Renderer } from './component'
+import { ComponentFactory, Renderer } from './component'
 import { dce, ElementAttrsMap } from './dom'
 import { EventHandlerController, EventHandlersMap } from './events'
 
@@ -21,10 +21,7 @@ const renderTemplate = (renderer: Renderer, template: Template) => {
             renderTemplate(renderer, subtemplate)
         }
     } else {
-        const rendered = template(renderer)
-        if (rendered instanceof Lifecycles) {
-            renderer.addLifecycle(rendered)
-        }
+        template(renderer)
     }
 }
 

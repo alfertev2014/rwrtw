@@ -6,7 +6,15 @@ export interface Lifecycle {
     readonly unmount?: () => void
 }
 
-export class Lifecycles implements Lifecycle {
+export interface Renderer {
+    renderText(text: string): void;
+    renderDomNode(node: Node): void;
+    renderElement(element: Element): Renderer;
+    renderPlaceholder(): Placeholder;
+    addLifecycle(lifecycle: Lifecycle): void;
+}
+
+class Lifecycles implements Lifecycle {
     readonly lifecycles: Lifecycle[]
     constructor() {
         this.lifecycles = []
@@ -32,14 +40,6 @@ export class Lifecycles implements Lifecycle {
     addLifecycle(lifecycle: Lifecycle) {
         this.lifecycles.push(lifecycle)
     }
-}
-
-export interface Renderer {
-    renderText(text: string): void;
-    renderDomNode(node: Node): void;
-    renderElement(element: Element): Renderer;
-    renderPlaceholder(): Placeholder;
-    addLifecycle(lifecycle: Lifecycle): void;
 }
 
 class RendererImpl implements Renderer {
@@ -91,10 +91,7 @@ export class Placeholder extends Lifecycles {
     renderContent<T>(componentFunc: ComponentFactory<T> | null) {
         if (componentFunc) {
             const renderer = new RendererImpl(this.place, this)
-            const component = componentFunc(renderer)
-            if (component instanceof Lifecycles) {
-                this.addLifecycle(component)
-            }
+            componentFunc(renderer)
             this.lastPlace = renderer.place
         }
     }
