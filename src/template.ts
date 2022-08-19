@@ -44,23 +44,3 @@ export const fr = (...children: Template[]): ComponentFactory => {
         return null
     }
 }
-
-export class TemplateRef<T> {
-    _current: T | null = null
-    get current(): T {
-        if (!this._current) {
-            throw Error('Invalid usage of TemplateRef')
-        }
-        return this._current
-    }
-}
-
-export const createRef = <T>() => new TemplateRef<T>()
-
-export const ref =
-    <T>(ref: TemplateRef<T>, renderFunc: ComponentFactory<T>): ComponentFactory<T> =>
-    (renderer: Renderer) => {
-        const rendered = renderFunc(renderer)
-        ref._current = rendered
-        return rendered
-    }
