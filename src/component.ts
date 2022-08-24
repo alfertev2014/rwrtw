@@ -17,7 +17,7 @@ export interface Renderer {
 }
 
 class Lifecycles implements Lifecycle {
-    readonly lifecycles: Lifecycle[]
+    lifecycles: Lifecycle[]
     constructor() {
         this.lifecycles = []
     }
@@ -53,11 +53,13 @@ class RendererImpl implements Renderer {
     }
 
     renderText(text: string) {
-        this.place = renderNode(this.place, txt(text))
+        const node = renderNode(this.place, txt(text))
+        this.place = { type: PlaceType.Node, node }
     }
 
     renderDomNode(node: Node) {
-        this.place = renderNode(this.place, node)
+        const rendered = renderNode(this.place, node)
+        this.place = { type: PlaceType.Node, node: rendered }
     }
 
     renderElement(
@@ -65,8 +67,15 @@ class RendererImpl implements Renderer {
         attrs: ElementAttrsMap | null = null
     ): { element: HTMLElement; subrenderer: Renderer } {
         const element = dce(tag, attrs)
-        this.place = renderNode(this.place, element)
-        return { element, subrenderer: new RendererImpl({ parent: element }, this.parent) }
+        const rendered = renderNode(this.place, element)
+        this.place = { type: PlaceType.Node, node: rendered }
+        return {
+            element,
+            subrenderer: new RendererImpl(
+                { type: PlaceType.ParentNode, parent: element },
+                this.parent
+            ),
+        }
     }
 
     renderPlaceholder(componentFunc: ComponentFactory | null = null): Placeholder {
@@ -100,16 +109,13 @@ class PlaceholderImpl extends Lifecycles {
 
     renderContent<T>(componentFunc: ComponentFactory<T> | null = null) {
         if (componentFunc) {
-            const renderer = new RendererImpl(this.place, this)
+            const renderer = new RendererImpl(
+                { type: PlaceType.ParentPlaceholder, parent: this },
+                this
+            )
             componentFunc(renderer)
             this.lastPlace = renderer.place
         }
-    }
-
-    spawnBefore(): Placeholder {
-        const spawned = new PlaceholderImpl(this.place)
-        this.place = spawned
-        return spawned
     }
 
     setContent<T>(componentFunc: ComponentFactory<T> | null = null) {
@@ -119,33 +125,81 @@ class PlaceholderImpl extends Lifecycles {
         this.renderContent(componentFunc)
         this.mount()
     }
+
+    spawnBefore<T>(componentFunc: ComponentFactory<T> | null = null): Placeholder {
+        const spawned = new PlaceholderImpl(this.place)
+        spawned.renderContent(componentFunc)
+        this.place = { type: PlaceType.Placeholder, placeholder: spawned }
+        return spawned
+    }
+
+    spawnAfter<T>(componentFunc: ComponentFactory<T> | null = null): Placeholder {
+        const spawned = new PlaceholderImpl(this.place)
+        spawned.lifecycles = this.lifecycles
+        spawned.lastPlace = this.lastPlace
+        this.place = { type: PlaceType.Placeholder, placeholder: spawned }
+        this.lastPlace = this.place
+        this.lifecycles = []
+        this.renderContent(componentFunc)
+        return spawned
+    }
+
+    swapWith(placeholder: PlaceholderImpl) {
+        const thisFragment = takeNodes(this.place, this.lastPlace)
+        const otherFragment = takeNodes(placeholder.place, placeholder.lastPlace)
+        const lifecycles = this.lifecycles
+        const place = this.place
+        const lastPlace = this.lastPlace
+        this.lifecycles = placeholder.lifecycles
+        this.place = placeholder.place
+        this.lastPlace = placeholder.lastPlace
+        placeholder.lifecycles = lifecycles
+        placeholder.place = place
+        placeholder.lastPlace = lastPlace
+        renderNode(this.place, thisFragment)
+        renderNode(placeholder.place, otherFragment)
+    }
 }
 
 export const createRootPlaceholder = (element: Element): Placeholder =>
-    new PlaceholderImpl({ parent: element })
+    new PlaceholderImpl({ type: PlaceType.ParentNode, parent: element })
 
 export const plh =
     (componentFunc: ComponentFactory | null = null): ComponentFactory<Placeholder> =>
     (renderer: Renderer) =>
         renderer.renderPlaceholder(componentFunc)
 
-type DOMPlace = Node | { parent: Node }
+enum PlaceType {
+    Node,
+    ParentNode,
+    Placeholder,
+    ParentPlaceholder,
+}
 
-type Place = DOMPlace | PlaceholderImpl
+type DOMPlace = { type: PlaceType.Node; node: Node } | { type: PlaceType.ParentNode; parent: Node }
+
+type Place =
+    | DOMPlace
+    | { type: PlaceType.Placeholder; placeholder: PlaceholderImpl }
+    | { type: PlaceType.ParentPlaceholder; parent: PlaceholderImpl }
 
 const lastPlaceNode = (place: Place): DOMPlace => {
-    if (place instanceof PlaceholderImpl) {
-        return lastPlaceNode(place.lastPlace)
-    } else {
-        return place
+    switch (place.type) {
+        case PlaceType.Placeholder:
+            return lastPlaceNode(place.placeholder.lastPlace)
+        case PlaceType.ParentPlaceholder:
+            return lastPlaceNode(place.parent.place)
+        default:
+            return place
     }
 }
 
 const renderNode = <T extends Node>(place: Place, node: T): T => {
     const domPlace = lastPlaceNode(place)
-    if (domPlace instanceof Node) {
-        if (domPlace.parentNode) {
-            return domPlace.parentNode.insertBefore(node, domPlace.nextSibling)
+    if (domPlace.type === PlaceType.Node) {
+        const domNode = domPlace.node
+        if (domNode.parentNode) {
+            return domNode.parentNode.insertBefore(node, domNode.nextSibling)
         } else {
             return node
         }
@@ -155,14 +209,33 @@ const renderNode = <T extends Node>(place: Place, node: T): T => {
 }
 
 const unrenderNodes = (place: Place, lastPlace: Place) => {
-    let domPlace: DOMPlace | null = lastPlaceNode(lastPlace)
-    if (domPlace instanceof Node) {
+    const lastDomPlace: DOMPlace | null = lastPlaceNode(lastPlace)
+    if (lastDomPlace && lastDomPlace.type === PlaceType.Node) {
+        let lastDomNode: Node | null = lastDomPlace.node
         const firstDomPlace = place ? lastPlaceNode(place) : null
-        const firstNode = firstDomPlace instanceof Node ? firstDomPlace : null
-        while (domPlace && domPlace !== firstNode) {
-            const toRemove = domPlace
-            domPlace = domPlace.previousSibling
+        const firstDomNode = firstDomPlace?.type === PlaceType.Node ? firstDomPlace.node : null
+        while (lastDomNode && lastDomNode !== firstDomNode) {
+            const toRemove = lastDomNode
+            lastDomNode = lastDomNode.previousSibling
             toRemove.parentNode?.removeChild(toRemove)
         }
     }
+}
+
+const takeNodes = (place: Place, lastPlace: Place): DocumentFragment => {
+    const lastDomPlace: DOMPlace | null = lastPlaceNode(lastPlace)
+    const fragment = document.createDocumentFragment()
+    if (lastDomPlace && lastDomPlace.type === PlaceType.Node) {
+        let lastDomNode: Node | null = lastDomPlace.node
+        const firstDomPlace = place ? lastPlaceNode(place) : null
+        const firstDomNode = firstDomPlace?.type === PlaceType.Node ? firstDomPlace.node : null
+        while (lastDomNode && lastDomNode !== firstDomNode) {
+            const toRemove = lastDomNode
+            lastDomNode = lastDomNode.previousSibling
+            if (toRemove.parentNode) {
+                fragment.prepend(toRemove.parentNode.removeChild(toRemove))
+            }
+        }
+    }
+    return fragment
 }
