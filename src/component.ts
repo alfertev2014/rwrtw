@@ -239,3 +239,70 @@ const takeNodes = (place: Place, lastPlace: Place): DocumentFragment => {
     }
     return fragment
 }
+
+class List implements Lifecycle {
+    place: Place
+    elements: PlaceholderImpl[]
+    constructor(place: Place, ...componentFuncs: ComponentFactory[]) {
+        this.place = place
+        this.elements = []
+        let index = 0
+        for (const componentFunc of componentFuncs) {
+            const placeholder = new PlaceholderImpl(
+                index > 0 ? {
+                    type: PlaceType.Placeholder,
+                    placeholder: this.elements[index - 1]
+                } : this.place)
+            placeholder.renderContent(componentFunc)
+            ++index
+            this.elements.push(placeholder)
+        }
+    }
+
+    get lastPlace(): Place {
+        if (this.elements.length > 0) {
+            return { type: PlaceType.Placeholder, placeholder: this.elements[this.elements.length - 1] }
+        } else {
+            return this.place
+        }
+    }
+
+    insert<T>(index: number, componentFunc: ComponentFactory<T>) {
+        if (index > this.elements.length) {
+            index = this.elements.length
+        }
+        const placeholder = new PlaceholderImpl(
+            index > 0 ? {
+                type: PlaceType.Placeholder,
+                placeholder: this.elements[index - 1]
+            } : this.place)
+        if (index < this.elements.length) {
+            this.elements[index].place = { type: PlaceType.Placeholder, placeholder }
+        }
+        this.elements.splice(index, 0, placeholder)
+        placeholder.setContent(componentFunc)
+    }
+
+    removeAt(index: number) {
+        if (index >= this.elements.length) {
+            return
+        }
+        if (index > 0 && index < this.elements.length - 1) {
+            this.elements[index + 1].place = { type: PlaceType.Placeholder, placeholder: this.elements[index - 1] }
+        }
+        this.elements[index].setContent(null)
+        this.elements.splice(index, 1)
+    }
+
+    mount() {
+        for (const element of this.elements) {
+            element.mount()
+        }
+    }
+
+    unmount() {
+        for (const element of this.elements) {
+            element.unmount()
+        }
+    }
+}
