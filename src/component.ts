@@ -6,13 +6,13 @@ export interface Lifecycle {
 }
 
 export interface Renderer {
+    readonly place: Place // TODO: Hide this from public API
     renderText(text: string): void
     renderDomNode(node: Node): void
     renderElement(
         tag: string,
         attrs: ElementAttrsMap | null
     ): { element: HTMLElement; subrenderer: Renderer }
-    renderPlaceholder(componentFunc?: ComponentFactory | null): Placeholder
     addLifecycle(lifecycle: Lifecycle): void
 }
 
@@ -76,13 +76,6 @@ class RendererImpl implements Renderer {
                 this.parent
             ),
         }
-    }
-
-    renderPlaceholder(componentFunc: ComponentFactory | null = null): Placeholder {
-        const p = new PlaceholderImpl(this.place)
-        this.addLifecycle(p)
-        p.renderContent(componentFunc)
-        return p
     }
 
     addLifecycle(lifecycle: Lifecycle) {
@@ -159,6 +152,12 @@ class PlaceholderImpl extends Lifecycles {
         renderNode(this.place, thisFragment)
         renderNode(placeholder.place, otherFragment)
     }
+
+    moveToPlace(place: Place) {
+        const fragment = takeNodes(this.place, this.lastPlace)
+        this.place = place
+        renderNode(this.place, fragment)
+    }
 }
 
 export const createRootPlaceholder = (element: Element): Placeholder =>
@@ -166,8 +165,12 @@ export const createRootPlaceholder = (element: Element): Placeholder =>
 
 export const plh =
     (componentFunc: ComponentFactory | null = null): ComponentFactory<Placeholder> =>
-    (renderer: Renderer) =>
-        renderer.renderPlaceholder(componentFunc)
+    (renderer: Renderer) => {
+        const p = new PlaceholderImpl(renderer.place)
+        renderer.addLifecycle(p)
+        p.renderContent(componentFunc)
+        return p
+    }
 
 enum PlaceType {
     Node,
@@ -240,19 +243,28 @@ const takeNodes = (place: Place, lastPlace: Place): DocumentFragment => {
     return fragment
 }
 
-class List implements Lifecycle {
+interface List extends Lifecycle {
+    get lastPlace(): Place
+    insert<T>(index: number, componentFunc: ComponentFactory<T>): void
+    removeAt(index: number): void
+}
+
+class ListImpl implements List {
     place: Place
     elements: PlaceholderImpl[]
-    constructor(place: Place, ...componentFuncs: ComponentFactory[]) {
+    constructor(place: Place, componentFuncs: ComponentFactory[]) {
         this.place = place
         this.elements = []
         let index = 0
         for (const componentFunc of componentFuncs) {
             const placeholder = new PlaceholderImpl(
-                index > 0 ? {
-                    type: PlaceType.Placeholder,
-                    placeholder: this.elements[index - 1]
-                } : this.place)
+                index > 0
+                    ? {
+                          type: PlaceType.Placeholder,
+                          placeholder: this.elements[index - 1],
+                      }
+                    : this.place
+            )
             placeholder.renderContent(componentFunc)
             ++index
             this.elements.push(placeholder)
@@ -261,7 +273,10 @@ class List implements Lifecycle {
 
     get lastPlace(): Place {
         if (this.elements.length > 0) {
-            return { type: PlaceType.Placeholder, placeholder: this.elements[this.elements.length - 1] }
+            return {
+                type: PlaceType.Placeholder,
+                placeholder: this.elements[this.elements.length - 1],
+            }
         } else {
             return this.place
         }
@@ -272,10 +287,13 @@ class List implements Lifecycle {
             index = this.elements.length
         }
         const placeholder = new PlaceholderImpl(
-            index > 0 ? {
-                type: PlaceType.Placeholder,
-                placeholder: this.elements[index - 1]
-            } : this.place)
+            index > 0
+                ? {
+                      type: PlaceType.Placeholder,
+                      placeholder: this.elements[index - 1],
+                  }
+                : this.place
+        )
         if (index < this.elements.length) {
             this.elements[index].place = { type: PlaceType.Placeholder, placeholder }
         }
@@ -288,10 +306,40 @@ class List implements Lifecycle {
             return
         }
         if (index > 0 && index < this.elements.length - 1) {
-            this.elements[index + 1].place = { type: PlaceType.Placeholder, placeholder: this.elements[index - 1] }
+            this.elements[index + 1].place = {
+                type: PlaceType.Placeholder,
+                placeholder: this.elements[index - 1],
+            }
         }
         this.elements[index].setContent(null)
         this.elements.splice(index, 1)
+    }
+
+    moveFromTo(fromIndex: number, toIndex: number) {
+        if (fromIndex === toIndex) {
+            return
+        }
+        const placeholder = this.elements[fromIndex]
+
+        if (fromIndex < toIndex) {
+            for (let i = fromIndex; i < toIndex - 1; ++i) {
+                this.elements[i] = this.elements[i + 1]
+            }
+        } else {
+            for (let i = fromIndex; i > toIndex + 1; --i) {
+                this.elements[i] = this.elements[i - 1]
+            }
+        }
+        this.elements[toIndex] = placeholder
+
+        placeholder.moveToPlace(
+            toIndex === 0
+                ? this.place
+                : { type: PlaceType.Placeholder, placeholder: this.elements[toIndex - 1] }
+        )
+        if (toIndex < this.elements.length - 1) {
+            this.elements[toIndex + 1].place = { type: PlaceType.Placeholder, placeholder }
+        }
     }
 
     mount() {
@@ -306,3 +354,11 @@ class List implements Lifecycle {
         }
     }
 }
+
+export const list =
+    (...componentFuncs: ComponentFactory[]): ComponentFactory<List> =>
+    (renderer: Renderer) => {
+        const l = new ListImpl(renderer.place, componentFuncs)
+        renderer.addLifecycle(l)
+        return l
+    }
