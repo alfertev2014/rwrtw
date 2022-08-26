@@ -1,34 +1,33 @@
-import { ComponentFactory, Placeholder, plh, Renderer } from '../component'
+import { ComponentFactory, Renderer } from '../component'
+import { ifElse, IfElse } from './ifElse'
 
 export interface Hidable {
     hide(): void
     show(): void
-    readonly visible: boolean
+    visible: boolean
 }
 
 class HidableImpl<T = unknown> implements Hidable {
-    readonly componentFunc: ComponentFactory<T>
-    readonly placeholder: Placeholder
-    visible: boolean
+    ifElse: IfElse
 
     constructor(renderer: Renderer, componentFunc: ComponentFactory<T>) {
-        this.componentFunc = componentFunc
-        this.placeholder = plh(componentFunc)(renderer)
-        this.visible = true
+        this.ifElse = ifElse(true, componentFunc, null)(renderer)
+    }
+
+    get visible() {
+        return this.ifElse.condition
+    }
+
+    set visible(value: boolean) {
+        this.ifElse.condition = value
     }
 
     hide() {
-        if (this.visible) {
-            this.placeholder.setContent(null)
-            this.visible = false
-        }
+        this.visible = false
     }
 
     show() {
-        if (!this.visible) {
-            this.placeholder.setContent(this.componentFunc)
-            this.visible = true
-        }
+        this.visible = true
     }
 }
 
