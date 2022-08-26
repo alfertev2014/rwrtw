@@ -1,5 +1,5 @@
-import { ComponentFactory, Renderer } from './component'
-import { ElementAttrsMap } from './dom'
+import { ComponentFactory, Lifecycle, Renderer } from './component'
+import { ElementAttrValue, setAttr } from './dom'
 import { EventHandlerController, EventHandlersMap } from './events'
 
 export type TemplateElement = ComponentFactory | Node | string | number | boolean | null | undefined
@@ -25,14 +25,34 @@ const renderTemplate = (renderer: Renderer, template: Template) => {
     }
 }
 
+export type ElementHandler = (element: HTMLElement) => Lifecycle | undefined
+export type AttributeHandler = (element: HTMLElement, attr: string) => Lifecycle | undefined
+
+export interface TemplateElementAttrsMap {
+    [key: string]: ElementAttrValue | AttributeHandler
+}
+
+export const on =
+    (handlers: EventHandlersMap): ElementHandler =>
+    (element) =>
+        new EventHandlerController(element, handlers)
+
 export const el =
-    (tag: string, attrs: ElementAttrsMap | null = null, on: EventHandlersMap | null = null) =>
+    (tag: string, attrs: TemplateElementAttrsMap | null = null, ...handlers: ElementHandler[]) =>
     (...children: Template[]): ComponentFactory<HTMLElement> =>
     (renderer: Renderer) => {
-        const { element, subrenderer } = renderer.renderElement(tag, attrs)
-        renderTemplate(subrenderer, children)
-        if (on) {
-            renderer.addLifecycle(new EventHandlerController(element, on))
+        const element = renderer.renderElement(tag, fr(children))
+        if (attrs) {
+            for (const [name, value] of Object.entries(attrs)) {
+                if (typeof value === 'function') {
+                    renderer.addLifecycle(value(element, name))
+                } else {
+                    setAttr(element, name, value)
+                }
+            }
+        }
+        for (const handler of handlers) {
+            renderer.addLifecycle(handler(element))
         }
         return element
     }

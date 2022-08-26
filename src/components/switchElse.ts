@@ -6,30 +6,28 @@ export interface Switch<T> {
 
 export type CaseBranch<T> = [T, ComponentFactory | null]
 
-
 class SwitchImpl<T> implements Switch<T> {
     _value: T
     branches: CaseBranch<T>[]
     defaultBranch: ComponentFactory | null
     readonly placeholder: Placeholder
-    
+
     constructor(
         renderer: Renderer,
         value: T,
         branches: CaseBranch<T>[],
         defaultBranch: ComponentFactory | null
-        ) {
-            this._value = value
-            this.branches = branches
-            this.defaultBranch = defaultBranch
+    ) {
+        this._value = value
+        this.branches = branches
+        this.defaultBranch = defaultBranch
         this.placeholder = plh(this._selectBranch())(renderer)
     }
-    
+
     get value() {
         return this._value
     }
-    
-    
+
     set value(value: T) {
         if (this._value !== value) {
             this.placeholder.setContent(this._selectBranch())
@@ -46,7 +44,6 @@ class SwitchImpl<T> implements Switch<T> {
         return this.defaultBranch
     }
 }
-
 
 export const switchElse =
     <T>(

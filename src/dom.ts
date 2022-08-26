@@ -12,23 +12,6 @@ export interface ElementAttrsMap {
     [key: string]: ElementAttrValue
 }
 
-export const setAttrs = (element: Element, attrs: ElementAttrsMap) => {
-    for (const [name, value] of Object.entries(attrs)) {
-        setAttr(element, name, value)
-    }
-}
-
-export const dce = (
-    tag: string,
-    attrs?: ElementAttrsMap | null,
-    ...children: (string | Node)[]
-) => {
-    const element = document.createElement(tag)
-    if (attrs) {
-        setAttrs(element, attrs)
-    }
-    element.append(...children)
-    return element
-}
+export const dce = (tag: string) => document.createElement(tag)
 
 export const txt = (str: string) => document.createTextNode(str)

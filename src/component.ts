@@ -1,4 +1,4 @@
-import { dce, ElementAttrsMap, txt } from './dom'
+import { dce, txt } from './dom'
 
 export interface Lifecycle {
     readonly mount?: () => void
@@ -9,11 +9,8 @@ export interface Renderer {
     readonly place: Place // TODO: Hide this from public API
     renderText(text: string): void
     renderDomNode(node: Node): void
-    renderElement(
-        tag: string,
-        attrs: ElementAttrsMap | null
-    ): { element: HTMLElement; subrenderer: Renderer }
-    addLifecycle(lifecycle: Lifecycle): void
+    renderElement(tag: string, childrenFunc?: ComponentFactory): HTMLElement
+    addLifecycle(lifecycle: Lifecycle | null | undefined): void
 }
 
 class Lifecycles implements Lifecycle {
@@ -62,24 +59,22 @@ class RendererImpl implements Renderer {
         this.place = { type: PlaceType.Node, node: rendered }
     }
 
-    renderElement(
-        tag: string,
-        attrs: ElementAttrsMap | null = null
-    ): { element: HTMLElement; subrenderer: Renderer } {
-        const element = dce(tag, attrs)
+    renderElement(tag: string, childrenFunc?: ComponentFactory): HTMLElement {
+        const element = dce(tag)
         const rendered = renderNode(this.place, element)
         this.place = { type: PlaceType.Node, node: rendered }
-        return {
-            element,
-            subrenderer: new RendererImpl(
-                { type: PlaceType.ParentNode, parent: element },
-                this.parent
-            ),
+        if (childrenFunc) {
+            childrenFunc(
+                new RendererImpl({ type: PlaceType.ParentNode, parent: element }, this.parent)
+            )
         }
+        return element
     }
 
-    addLifecycle(lifecycle: Lifecycle) {
-        this.parent.addLifecycle(lifecycle)
+    addLifecycle(lifecycle: Lifecycle | null | undefined) {
+        if (lifecycle) {
+            this.parent.addLifecycle(lifecycle)
+        }
     }
 }
 
