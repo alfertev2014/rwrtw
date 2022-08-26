@@ -57,6 +57,16 @@ export const el =
         return element
     }
 
+export const text =
+    (data: string, handler?: (node: Text) => Lifecycle | undefined): ComponentFactory<Text> =>
+    (renderer: Renderer) => {
+        const node = renderer.renderText(data)
+        if (handler) {
+            renderer.addLifecycle(handler(node))
+        }
+        return node
+    }
+
 export const fr = (...children: Template[]): ComponentFactory => {
     return (renderer: Renderer) => {
         renderTemplate(renderer, children)

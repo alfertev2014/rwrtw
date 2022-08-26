@@ -7,8 +7,8 @@ export interface Lifecycle {
 
 export interface Renderer {
     readonly place: Place // TODO: Hide this from public API
-    renderText(text: string): void
-    renderDomNode(node: Node): void
+    renderText(text: string): Text
+    renderDomNode(node: Node): Node
     renderElement(tag: string, childrenFunc?: ComponentFactory): HTMLElement
     addLifecycle(lifecycle: Lifecycle | null | undefined): void
 }
@@ -52,11 +52,13 @@ class RendererImpl implements Renderer {
     renderText(text: string) {
         const node = renderNode(this.place, txt(text))
         this.place = { type: PlaceType.Node, node }
+        return node
     }
 
     renderDomNode(node: Node) {
         const rendered = renderNode(this.place, node)
         this.place = { type: PlaceType.Node, node: rendered }
+        return rendered
     }
 
     renderElement(tag: string, childrenFunc?: ComponentFactory): HTMLElement {
