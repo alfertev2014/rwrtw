@@ -247,8 +247,8 @@ interface List extends Lifecycle {
 }
 
 class ListImpl implements List {
-    place: Place
-    elements: PlaceholderImpl[]
+    readonly place: Place
+    readonly elements: PlaceholderImpl[]
     constructor(place: Place, componentFuncs: ComponentFactory[]) {
         this.place = place
         this.elements = []
