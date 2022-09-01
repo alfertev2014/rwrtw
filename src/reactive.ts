@@ -17,7 +17,7 @@ class Observable<T = unknown> {
     }
 
     current() {
-        if (inTransaction && dependenciesStack.length > 0) {
+        if (dependenciesStack.length > 0) {
             const observable = dependenciesStack[dependenciesStack.length - 1]
             observable._dependencies.push(this)
             this._deriveds.push(observable)
@@ -27,17 +27,23 @@ class Observable<T = unknown> {
     }
 
     change(computeFunc: () => T) {
-        this._dirty = true
-        this._computeFunc = computeFunc
-        this._recompute()
+        transactionQueue.push(() => {
+            this._dirty = true
+            this._computeFunc = computeFunc
+            this._recompute()
+        })
+        if (!inTransaction) {
+            commitTransaction()
+        }
     }
 
     _recompute() {
         if (this._dirty) {
             if (this._computeFunc) {
-                dependenciesStack.push(this)
                 this._clearDependencies()
+                dependenciesStack.push(this)
                 const value = this._computeFunc()
+                dependenciesStack.pop()
                 if (value !== this._current) {
                     this._makeDirty()
                 }
@@ -47,36 +53,59 @@ class Observable<T = unknown> {
         }
     }
 
-    disconnect(derived: Observable) {
+    _disconnect(derived: Observable) {
         this._deriveds = this._deriveds.filter((d) => d !== derived)
     }
 
     _makeDirty() {
-        if (this._dirty) {
-            return
-        }
-        this._dirty = true
-        if (this.isEffect) {
-            observerQueue.push(this)
-        }
-        for (const derived of this._deriveds) {
-            derived._makeDirty()
+        if (!this._dirty) {
+            this._dirty = true
+            if (this.isEffect) {
+                observerQueue.push(this)
+            }
+            for (const derived of this._deriveds) {
+                derived._makeDirty()
+            }
         }
     }
 
     _clearDependencies(): void {
         for (const dependency of this._dependencies) {
-            dependency.disconnect(this)
+            dependency._disconnect(this)
         }
         this._dependencies.length = 0
     }
 }
 
-const observerQueue: Observable[] = []
-
 const dependenciesStack: Observable[] = []
 
+const observerQueue: Observable[] = []
+let observersAreRunning = false
+
+const runObservers = () => {
+    observersAreRunning = true
+    for (const observer of observerQueue) {
+        observer.current()
+    }
+    observerQueue.length = 0
+    observersAreRunning = false
+}
+
 let inTransaction = false
+
+const transactionQueue: (() => void)[] = []
+
+const commitTransaction = () => {
+    if (observersAreRunning) {
+        throw new Error('Trying to run transaction when observers are running')
+    }
+
+    for (const action of transactionQueue) {
+        action()
+    }
+    transactionQueue.length = 0
+    runObservers()
+}
 
 export const source = <T>(initValue: T): Observable<T> => {
     return new Observable(() => initValue)
@@ -94,4 +123,5 @@ export const transaction = (func: () => void) => {
     inTransaction = true
     func()
     inTransaction = false
+    commitTransaction()
 }
