@@ -1,4 +1,5 @@
-import { ComponentFactory, Placeholder, plh, Renderer } from '../component'
+import { Placeholder, plh } from '../internal/placeholder'
+import { ComponentFactory, Renderer } from '../internal/renderer'
 
 export interface IfElse {
     condition: boolean

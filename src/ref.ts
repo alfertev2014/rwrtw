@@ -1,4 +1,4 @@
-import { ComponentFactory, Renderer } from './component'
+import { ComponentFactory, Renderer } from './internal/renderer'
 
 export interface TemplateRef<T> {
     readonly current: T

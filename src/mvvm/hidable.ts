@@ -1,4 +1,4 @@
-import { ComponentFactory, Renderer } from '../component'
+import { ComponentFactory, Renderer } from '../internal/renderer'
 import { ifElse, IfElse } from './ifElse'
 
 export interface Hidable {

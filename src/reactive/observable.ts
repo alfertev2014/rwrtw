@@ -1,4 +1,3 @@
-
 class Observable<T = unknown> {
     _computeFunc: () => T
     _current: T

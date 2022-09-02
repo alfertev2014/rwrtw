@@ -1,6 +1,7 @@
-import { ComponentFactory, Lifecycle, Renderer } from './component'
+import { Lifecycle } from './lifecycle'
 import { ElementAttrValue, setAttr } from './dom'
 import { EventHandlerController, EventHandlersMap } from './events'
+import { ComponentFactory, Renderer } from './internal/renderer'
 
 export type TemplateElement = ComponentFactory | Node | string | number | boolean | null | undefined
 

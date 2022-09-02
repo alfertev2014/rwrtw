@@ -1,4 +1,3 @@
-
 export const defaultElementsEquality = <T>(e1: T, e2: T) => {
     return e1 === e2
 }
