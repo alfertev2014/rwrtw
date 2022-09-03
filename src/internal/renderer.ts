@@ -1,12 +1,15 @@
 import { Lifecycle, Lifecycles } from '../lifecycle'
 import { dce, txt } from '../dom'
 import { Place, PlaceType, renderNode } from './place'
+import { Placeholder, PlaceholderImpl } from './placeholder'
+import { List, ListImpl } from './list'
 
 export interface Renderer {
-    readonly place: Place // TODO: Hide this from public API
     renderText(text: string): Text
     renderDomNode(node: Node): Node
     renderElement(tag: string, childrenFunc?: ComponentFactory): HTMLElement
+    renderPlaceholder(componentFunc: ComponentFactory | null): Placeholder
+    renderList(componentFuncs: ComponentFactory[]): List
     addLifecycle(lifecycle: Lifecycle | null | undefined): void
 }
 
@@ -40,6 +43,20 @@ export class RendererImpl implements Renderer {
             )
         }
         return element
+    }
+
+    renderPlaceholder(componentFunc: ComponentFactory | null = null): Placeholder {
+        const p = new PlaceholderImpl(this.place)
+        this.place = { type: PlaceType.Placeholder, placeholder: p }
+        this.addLifecycle(p)
+        p.renderContent(componentFunc)
+        return p
+    }
+
+    renderList(componentFuncs: ComponentFactory[]): List {
+        const l = new ListImpl(this.place, componentFuncs)
+        this.addLifecycle(l)
+        return l
     }
 
     addLifecycle(lifecycle: Lifecycle | null | undefined) {

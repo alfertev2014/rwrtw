@@ -1,9 +1,8 @@
-import { ElementAttrsMap } from './dom'
-import { el, ElementHandler } from './template'
+import { el, ElementHandler, TemplateElementAttrsMap } from './template'
 
 const abbrev =
     (tag: string) =>
-    (attrs: ElementAttrsMap | null = null, ...handlers: ElementHandler[]) =>
+    (attrs: TemplateElementAttrsMap | null = null, ...handlers: ElementHandler[]) =>
         el(tag, attrs, ...handlers)
 
 export const p = abbrev('p')

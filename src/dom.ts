@@ -8,10 +8,6 @@ export const setAttr = (element: Element, name: string, value: ElementAttrValue)
     }
 }
 
-export interface ElementAttrsMap {
-    [key: string]: ElementAttrValue
-}
-
 export const dce = (tag: string) => document.createElement(tag)
 
 export const txt = (str: string) => document.createTextNode(str)

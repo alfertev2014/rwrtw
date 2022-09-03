@@ -117,8 +117,4 @@ export class ListImpl implements List {
 
 export const list =
     (...componentFuncs: ComponentFactory[]): ComponentFactory<List> =>
-    (renderer: Renderer) => {
-        const l = new ListImpl(renderer.place, componentFuncs)
-        renderer.addLifecycle(l)
-        return l
-    }
+    (renderer: Renderer) => renderer.renderList(componentFuncs)

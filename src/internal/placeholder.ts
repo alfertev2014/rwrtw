@@ -80,9 +80,4 @@ export const createRootPlaceholder = (element: Element): Placeholder =>
 
 export const plh =
     (componentFunc: ComponentFactory | null = null): ComponentFactory<Placeholder> =>
-    (renderer: Renderer) => {
-        const p = new PlaceholderImpl(renderer.place)
-        renderer.addLifecycle(p)
-        p.renderContent(componentFunc)
-        return p
-    }
+    (renderer: Renderer) => renderer.renderPlaceholder(componentFunc)
