@@ -23,7 +23,7 @@ class Observable<T = unknown> {
         }
         this._current = value
         if (transactionDepth === 0) {
-            commitTransaction()
+            runEffects()
         }
     }
 
@@ -147,16 +147,6 @@ const runEffects = () => {
 
 let transactionDepth = 0
 
-const transactionQueue: (() => void)[] = []
-
-const commitTransaction = () => {
-    for (const action of transactionQueue) {
-        action()
-    }
-    transactionQueue.length = 0
-    runEffects()
-}
-
 export const source = <T>(initValue: T): Observable<T> => {
     const res = new Observable<T>()
     res.change(initValue)
@@ -176,6 +166,6 @@ export const transaction = (func: () => void) => {
     func()
     transactionDepth--
     if (transactionDepth === 0) {
-        commitTransaction()
+        runEffects()
     }
 }
