@@ -1,126 +1,181 @@
 class Observable<T = unknown> {
-    _computeFunc: () => T
-    _current: T
-    _dependencies: Observable[]
-    _deriveds: Observable[]
+    _current: T | undefined
     _dirty: boolean
-    readonly isEffect: boolean
+    readonly _deriveds: Observable[]
 
-    constructor(computeFunc: () => T, isEffect = false) {
-        this._computeFunc = computeFunc
-        this._current = computeFunc()
-        this._dependencies = []
-        this._deriveds = []
+    constructor() {
+        this._current = undefined
         this._dirty = true
-        this.isEffect = isEffect
+        this._deriveds = []
     }
 
     current() {
-        if (dependenciesStack.length > 0) {
-            const observable = dependenciesStack[dependenciesStack.length - 1]
-            observable._dependencies.push(this)
-            this._deriveds.push(observable)
+        if (trakingStack.length > 0) {
+            trakingStack[trakingStack.length - 1]._subscribe(this)
         }
         this._recompute()
         return this._current
     }
 
-    change(computeFunc: () => T) {
-        transactionQueue.push(() => {
-            this._dirty = true
-            this._computeFunc = computeFunc
-            this._recompute()
-        })
-        if (!inTransaction) {
+    change(value: T) {
+        if (value !== this._current) {
+            this._makeDirty()
+        }
+        this._current = value
+        if (transactionDepth === 0) {
             commitTransaction()
         }
     }
 
-    _recompute() {
-        if (this._dirty) {
-            if (this._computeFunc) {
-                this._clearDependencies()
-                dependenciesStack.push(this)
-                const value = this._computeFunc()
-                dependenciesStack.pop()
-                if (value !== this._current) {
-                    this._makeDirty()
-                }
-                this._current = value
-            }
-            this._dirty = false
+    _recompute(): boolean {
+        const res = this._dirty
+        this._dirty = false
+        return res
+    }
+
+    _connect(derived: Computed) {
+        const index = this._deriveds.indexOf(derived)
+        if (index < 0) {
+            this._deriveds.push(derived)
         }
     }
 
     _disconnect(derived: Observable) {
-        this._deriveds = this._deriveds.filter((d) => d !== derived)
+        const index = this._deriveds.indexOf(derived)
+        if (index >= 0) {
+            this._deriveds.splice(index, 1)
+        }
     }
 
     _makeDirty() {
         if (!this._dirty) {
             this._dirty = true
-            if (this.isEffect) {
-                observerQueue.push(this)
-            }
+            this._onDirty()
             for (const derived of this._deriveds) {
                 derived._makeDirty()
             }
         }
     }
 
-    _clearDependencies(): void {
-        for (const dependency of this._dependencies) {
-            dependency._disconnect(this)
+    _onDirty(): void { return undefined }
+}
+
+class Computed<T = unknown> extends Observable<T> {
+    readonly _computeFunc: () => T
+    readonly _dependencies: Observable[]
+    _dependenciesCount: number
+
+    constructor(computeFunc: () => T) {
+        super()
+        this._computeFunc = computeFunc
+        this._dependencies = []
+        this._dependenciesCount = 0
+    }
+
+    _subscribe(dependency: Observable) {
+        const count = this._dependenciesCount
+        const index = this._dependencies.indexOf(dependency)
+        if (index < 0) {
+            this._dependencies.splice(count, 0, dependency)
+            dependency._connect(this)
+            this._dependenciesCount++
+        } else if (index >= count) {
+            if (index > count) {
+                const d = this._dependencies[count]
+                this._dependencies[count] = dependency
+                this._dependencies[index] = d
+            }
+            this._dependenciesCount++
         }
-        this._dependencies.length = 0
+    }
+
+    _recompute(): boolean {
+        if (this._dirty) {
+            const current = this._current
+            if (this._recomputeDependencies()) {
+                trakingStack.push(this)
+                this._current = this._computeFunc()
+                trakingStack.pop()
+                for (let i = this._dependenciesCount; i < this._dependencies.length; ++i) {
+                    this._dependencies[i]._disconnect(this)
+                }
+                this._dependencies.length = this._dependenciesCount
+            }
+            this._dirty = false
+            return this._current !== current
+        }
+        return false
+    }
+
+    _recomputeDependencies(): boolean {
+        for (let i = 0; i < this._dependenciesCount; ++i) {
+            const dependency = this._dependencies[i]
+            if (dependency._recompute()) {
+                this._dependenciesCount = i
+                return true
+            }
+        }
+        return this._dependenciesCount === 0
     }
 }
 
-const dependenciesStack: Observable[] = []
-
-const observerQueue: Observable[] = []
-let observersAreRunning = false
-
-const runObservers = () => {
-    observersAreRunning = true
-    for (const observer of observerQueue) {
-        observer.current()
+class Effect extends Computed<undefined> {
+    constructor(computeFunc: () => undefined) {
+        super(computeFunc)
     }
-    observerQueue.length = 0
-    observersAreRunning = false
+    _onDirty(): void {
+        effectsQueue.push(this)
+    }
 }
 
-let inTransaction = false
+const trakingStack: Computed[] = []
+
+let effectsQueue: Effect[] = []
+let runningEffects: Effect[] = []
+
+const runEffects = () => {
+    while (effectsQueue.length > 0) {
+        const tmp = runningEffects
+        runningEffects = effectsQueue
+        effectsQueue = tmp
+        for (const effect of runningEffects) {
+            effect.current()
+        }
+        runningEffects.length = 0
+    }
+}
+
+let transactionDepth = 0
 
 const transactionQueue: (() => void)[] = []
 
 const commitTransaction = () => {
-    if (observersAreRunning) {
-        throw new Error('Trying to run transaction when observers are running')
-    }
-
     for (const action of transactionQueue) {
         action()
     }
     transactionQueue.length = 0
-    runObservers()
+    runEffects()
 }
 
 export const source = <T>(initValue: T): Observable<T> => {
-    return new Observable(() => initValue)
+    const res = new Observable<T>()
+    res.change(initValue)
+    return res
 }
 
-export const derived = <T>(func: () => T): Observable<T> => {
-    return new Observable(func)
+export const derived = <T>(func: () => T): Computed<T> => {
+    return new Computed(func)
 }
 
-export const effect = <T>(func: () => T): Observable<T> => {
-    return new Observable(func, true)
+export const effect = (func: () => undefined): Effect => {
+    return new Effect(func)
 }
 
 export const transaction = (func: () => void) => {
-    inTransaction = true
+    transactionDepth++
     func()
-    inTransaction = false
-    commitTransaction()
+    transactionDepth--
+    if (transactionDepth === 0) {
+        commitTransaction()
+    }
 }
