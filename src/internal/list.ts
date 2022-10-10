@@ -1,64 +1,60 @@
 import { Lifecycle } from '../lifecycle'
-import { Place, PlaceType } from './place'
+import { RenderedContent, RenderedList } from '../template'
+import { DOMPlace, Place, PlaceholderNode } from './place'
 import { PlaceholderImpl } from './placeholder'
-import { ComponentFactory, Renderer } from './renderer'
 
 export interface List extends Lifecycle {
-    get lastPlace(): Place
-    insert<T>(index: number, componentFunc: ComponentFactory<T>): void
+    insert(index: number, content: RenderedContent): void
     removeAt(index: number): void
 }
 
-export class ListImpl implements List {
+export class ListImpl extends PlaceholderNode implements List {
     readonly place: Place
     readonly elements: PlaceholderImpl[]
-    constructor(place: Place, componentFuncs: ComponentFactory[]) {
+    constructor(place: Place, contents: RenderedContent[]) {
+        super()
         this.place = place
         this.elements = []
         let index = 0
-        for (const componentFunc of componentFuncs) {
+        for (const content of contents) {
             const placeholder = new PlaceholderImpl(
-                index > 0
-                    ? {
-                          type: PlaceType.Placeholder,
-                          placeholder: this.elements[index - 1],
-                      }
-                    : this.place
+                index > 0 ? this.elements[index - 1] : this.place,
+                content
             )
-            placeholder.renderContent(componentFunc)
             ++index
             this.elements.push(placeholder)
         }
     }
 
+    lastPlaceNode(): DOMPlace {
+        const place = this.lastPlace
+        if (place instanceof PlaceholderNode) {
+            return place.lastPlaceNode()
+        } else {
+            return place
+        }
+    }
+
     get lastPlace(): Place {
         if (this.elements.length > 0) {
-            return {
-                type: PlaceType.Placeholder,
-                placeholder: this.elements[this.elements.length - 1],
-            }
+            return this.elements[this.elements.length - 1]
         } else {
             return this.place
         }
     }
 
-    insert<T>(index: number, componentFunc: ComponentFactory<T>) {
+    insert(index: number, content: RenderedContent) {
         if (index > this.elements.length) {
             index = this.elements.length
         }
         const placeholder = new PlaceholderImpl(
-            index > 0
-                ? {
-                      type: PlaceType.Placeholder,
-                      placeholder: this.elements[index - 1],
-                  }
-                : this.place
+            index > 0 ? this.elements[index - 1] : this.place,
+            content
         )
         if (index < this.elements.length) {
-            this.elements[index].place = { type: PlaceType.Placeholder, placeholder }
+            this.elements[index].place = placeholder
         }
         this.elements.splice(index, 0, placeholder)
-        placeholder.setContent(componentFunc)
     }
 
     removeAt(index: number) {
@@ -66,10 +62,7 @@ export class ListImpl implements List {
             return
         }
         if (index > 0 && index < this.elements.length - 1) {
-            this.elements[index + 1].place = {
-                type: PlaceType.Placeholder,
-                placeholder: this.elements[index - 1],
-            }
+            this.elements[index + 1].place = this.elements[index - 1]
         }
         this.elements[index].setContent(null)
         this.elements.splice(index, 1)
@@ -92,13 +85,9 @@ export class ListImpl implements List {
         }
         this.elements[toIndex] = placeholder
 
-        placeholder.moveToPlace(
-            toIndex === 0
-                ? this.place
-                : { type: PlaceType.Placeholder, placeholder: this.elements[toIndex - 1] }
-        )
+        placeholder.moveToPlace(toIndex === 0 ? this.place : this.elements[toIndex - 1])
         if (toIndex < this.elements.length - 1) {
-            this.elements[toIndex + 1].place = { type: PlaceType.Placeholder, placeholder }
+            this.elements[toIndex + 1].place = placeholder
         }
     }
 
@@ -115,6 +104,7 @@ export class ListImpl implements List {
     }
 }
 
-export const list =
-    (...componentFuncs: ComponentFactory[]): ComponentFactory<List> =>
-    (renderer: Renderer) => renderer.renderList(componentFuncs)
+export const list = (
+    contents: RenderedContent[],
+    handler?: (list: ListImpl) => void
+): RenderedList => ({ type: 'list', contents, handler })

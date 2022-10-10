@@ -1,5 +1,5 @@
-import { ComponentFactory, Renderer } from '../internal/renderer'
-import { ifElse, IfElse } from './ifElse'
+import { cmpnt, RenderedComponent, RenderedContent } from '../template'
+import { ifElse } from './ifElse'
 
 export interface Hidable {
     hide(): void
@@ -7,31 +7,25 @@ export interface Hidable {
     visible: boolean
 }
 
-class HidableImpl<T = unknown> implements Hidable {
-    ifElse: IfElse
+export const hidable = cmpnt(
+    (content: () => RenderedContent, handler?: (ref: Hidable) => void): RenderedComponent =>
+        ifElse(true, content, null, (ref) => {
+            handler?.({
+                get visible() {
+                    return ref.condition
+                },
 
-    constructor(renderer: Renderer, componentFunc: ComponentFactory<T>) {
-        this.ifElse = ifElse(true, componentFunc, null)(renderer)
-    }
+                set visible(value: boolean) {
+                    ref.condition = value
+                },
 
-    get visible() {
-        return this.ifElse.condition
-    }
+                hide() {
+                    this.visible = false
+                },
 
-    set visible(value: boolean) {
-        this.ifElse.condition = value
-    }
-
-    hide() {
-        this.visible = false
-    }
-
-    show() {
-        this.visible = true
-    }
-}
-
-export const hidable =
-    <T>(componentFunc: ComponentFactory<T>): ComponentFactory<Hidable> =>
-    (renderer: Renderer) =>
-        new HidableImpl(renderer, componentFunc)
+                show() {
+                    this.visible = true
+                },
+            })
+        })
+)

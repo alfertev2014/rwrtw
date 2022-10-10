@@ -1,30 +1,61 @@
 import { Lifecycle } from './lifecycle'
-import { ElementAttrValue, setAttr } from './dom'
+import { ElementAttrValue } from './dom'
 import { EventHandlerController, EventHandlersMap } from './events'
-import { ComponentFactory, Renderer } from './internal/renderer'
+import { PlaceholderImpl } from './internal/placeholder'
+import { ListImpl } from './internal/list'
 
-export type TemplateElement = ComponentFactory | Node | string | number | boolean | null | undefined
+export type RenderedType = 'element' | 'text' | 'placeholder' | 'component' | 'lifecycle'
 
-export type Template = TemplateElement | Template[]
-
-const renderTemplate = (renderer: Renderer, template: Template) => {
-    if (typeof template === 'boolean' || template === null || typeof template === 'undefined') {
-        return
-    }
-    if (typeof template === 'string') {
-        renderer.renderText(template)
-    } else if (typeof template === 'number') {
-        renderer.renderText(template.toString())
-    } else if (template instanceof Node) {
-        renderer.renderDomNode(template)
-    } else if (Array.isArray(template)) {
-        for (const subtemplate of template) {
-            renderTemplate(renderer, subtemplate)
-        }
-    } else {
-        template(renderer)
-    }
+export interface RenderedElement {
+    type: 'element'
+    tag: string
+    attrs: TemplateElementAttrsMap | null
+    handlers: ElementHandler[]
+    children: RenderedContent
 }
+
+export interface RenderedText {
+    type: 'text'
+    data: string
+    handler?: (node: Text) => Lifecycle | undefined
+}
+
+export interface RenderedPlaceholder {
+    type: 'placeholder'
+    content: RenderedContent
+    handler?: (placeholder: PlaceholderImpl) => void
+}
+
+export interface RenderedList {
+    type: 'list'
+    contents: RenderedContent[]
+    handler?: (list: ListImpl) => void
+}
+
+export interface RenderedComponent {
+    type: 'component'
+    factory: (...args: unknown[]) => RenderedContent
+    args: unknown[]
+}
+
+export interface RenderedLifecycle extends Lifecycle {
+    type: 'lifecycle'
+}
+
+export type Rendered =
+    | RenderedElement
+    | RenderedText
+    | RenderedPlaceholder
+    | RenderedList
+    | RenderedComponent
+    | RenderedLifecycle
+    | string
+    | number
+    | boolean
+    | null
+    | undefined
+
+export type RenderedContent = Rendered | RenderedContent[]
 
 export type ElementHandler = (element: HTMLElement) => Lifecycle | undefined
 export type AttributeHandler = (element: HTMLElement, attr: string) => Lifecycle | undefined
@@ -40,37 +71,26 @@ export const on =
 
 export const el =
     (tag: string, attrs: TemplateElementAttrsMap | null = null, ...handlers: ElementHandler[]) =>
-    (...children: Template[]): ComponentFactory<HTMLElement> =>
-    (renderer: Renderer) => {
-        const element = renderer.renderElement(tag, fr(children))
-        if (attrs) {
-            for (const [name, value] of Object.entries(attrs)) {
-                if (typeof value === 'function') {
-                    renderer.addLifecycle(value(element, name))
-                } else {
-                    setAttr(element, name, value)
-                }
-            }
-        }
-        for (const handler of handlers) {
-            renderer.addLifecycle(handler(element))
-        }
-        return element
-    }
+    (...children: RenderedContent[]): RenderedElement => ({
+        type: 'element',
+        tag,
+        attrs,
+        handlers,
+        children,
+    })
 
-export const text =
-    (data: string, handler?: (node: Text) => Lifecycle | undefined): ComponentFactory<Text> =>
-    (renderer: Renderer) => {
-        const node = renderer.renderText(data)
-        if (handler) {
-            renderer.addLifecycle(handler(node))
-        }
-        return node
-    }
+export const text = (
+    data: string,
+    handler?: (node: Text) => Lifecycle | undefined
+): RenderedText => ({
+    type: 'text',
+    data,
+    handler,
+})
 
-export const fr = (...children: Template[]): ComponentFactory => {
-    return (renderer: Renderer) => {
-        renderTemplate(renderer, children)
-        return null
-    }
-}
+export const cmpnt = <Func extends (...args: any[]) => RenderedContent>(factory: Func) =>
+    (...args: Parameters<Func>): RenderedComponent => ({
+        type: 'component',
+        factory,
+        args,
+    })

@@ -1,28 +1,28 @@
 import { Placeholder, plh } from '../internal/placeholder'
-import { ComponentFactory, Renderer } from '../internal/renderer'
+import { cmpnt, RenderedContent } from '../template'
 
 export interface Switch<T> {
     value: T
 }
 
-export type CaseBranch<T> = [T, ComponentFactory | null]
+export type CaseBranch<T> = [T, (() => RenderedContent) | null]
 
 class SwitchImpl<T> implements Switch<T> {
     _value: T
     branches: CaseBranch<T>[]
-    defaultBranch: ComponentFactory | null
+    defaultBranch: (() => RenderedContent) | null
     readonly placeholder: Placeholder
 
     constructor(
-        renderer: Renderer,
+        placeholder: Placeholder,
         value: T,
         branches: CaseBranch<T>[],
-        defaultBranch: ComponentFactory | null
+        defaultBranch: (() => RenderedContent) | null
     ) {
+        this.placeholder = placeholder
         this._value = value
         this.branches = branches
         this.defaultBranch = defaultBranch
-        this.placeholder = plh(this._selectBranch())(renderer)
     }
 
     get value() {
@@ -37,20 +37,30 @@ class SwitchImpl<T> implements Switch<T> {
     }
 
     _selectBranch() {
-        for (const branch of this.branches) {
-            if (this.value === branch[0]) {
-                return branch[1]
-            }
-        }
-        return this.defaultBranch
+        return selectBranch(this.value, this.branches, this.defaultBranch)
     }
 }
 
-export const switchElse =
+const selectBranch = <T>(value: T,
+    branches: CaseBranch<T>[],
+    defaultBranch: (() => RenderedContent) | null): RenderedContent => {
+        for (const branch of branches) {
+            if (value === branch[0]) {
+                return branch[1]?.()
+            }
+        }
+        return defaultBranch?.()
+    }
+
+export const switchElse = cmpnt(
     <T>(
         value: T,
         branches: CaseBranch<T>[],
-        defaultBranch: ComponentFactory | null = null
-    ): ComponentFactory<Switch<T>> =>
-    (renderer: Renderer) =>
-        new SwitchImpl(renderer, value, branches, defaultBranch)
+        defaultBranch: (() => RenderedContent) | null = null,
+        handler?: (sw: Switch<T>) => void
+    ): RenderedContent => {
+        return plh(selectBranch(value, branches, defaultBranch), (placeholder: Placeholder) => {
+            handler?.(new SwitchImpl<T>(placeholder, value, branches, defaultBranch))
+        })
+    }
+)

@@ -1,54 +1,135 @@
-import { Lifecycles } from '../lifecycle'
-import { Place, PlaceType, renderNode, takeNodes, unrenderNodes } from './place'
-import { ComponentFactory, Renderer, RendererImpl } from './renderer'
+import { dce, setAttr, txt } from '../dom'
+import { Lifecycle } from '../lifecycle'
+import { RenderedContent, RenderedElement, RenderedPlaceholder } from '../template'
+import { ListImpl } from './list'
+import { DOMPlace, ParentNodePlace, ParentPlaceholderPlace, Place, PlaceholderNode, renderNode, takeNodes, unrenderNodes } from './place'
 
 export interface Placeholder {
-    setContent<T>(componentFunc: ComponentFactory<T> | null): void
+    setContent(content: RenderedContent): void
 }
 
-export class PlaceholderImpl extends Lifecycles {
+const renderElement = ({ tag, attrs, handlers, children }: RenderedElement, lifecycles: Lifecycle[]): Place => {
+    const element = dce(tag)
+
+    processRendered(new ParentNodePlace(element), lifecycles, children)
+
+    if (attrs) {
+        for (const [name, value] of Object.entries(attrs)) {
+            if (typeof value === 'function') {
+                const lifecycle = value(element, name)
+                if (lifecycle) {
+                    lifecycles.push(lifecycle)
+                }
+            } else {
+                setAttr(element, name, value)
+            }
+        }
+    }
+    for (const handler of handlers) {
+        const lifecycle = handler(element)
+        if (lifecycle) {
+            lifecycles.push(lifecycle)
+        }
+    }
+    return element
+}
+
+const processRendered = (place: Place, lifecycles: Lifecycle[], rendered: RenderedContent): Place => {
+    if (typeof rendered === 'boolean' || rendered === null || typeof rendered === 'undefined') {
+        return place
+    }
+    if (typeof rendered === 'string') {
+        place = renderNode(place, txt(rendered))
+    } else if (typeof rendered === 'number') {
+        place = renderNode(place, txt(rendered.toString()))
+    } else if (Array.isArray(rendered)) {
+        for (const r of rendered) {
+            place = processRendered(place, lifecycles, r)
+        }
+    } else if (rendered.type === 'element') {
+        place = renderElement(rendered, lifecycles)
+    } else if (rendered.type === 'text') {
+        place = renderNode(place, txt(rendered.data))
+    } else if (rendered.type === 'placeholder') {
+        const plh = new PlaceholderImpl(place, rendered.content)
+        rendered.handler?.(plh)
+        place = plh
+    } else if (rendered.type === 'list') {
+        const list = new ListImpl(place, rendered.contents)
+        rendered.handler?.(list)
+        place = list
+    } else if (rendered.type === 'component') {
+        place = processRendered(place, lifecycles, rendered.factory(...rendered.args))
+    } else if (rendered.type === 'lifecycle') {
+        lifecycles.push(rendered)
+    }
+    return place
+}
+
+export class PlaceholderImpl extends PlaceholderNode {
+    lifecycles: Lifecycle[]
     place: Place
     lastPlace: Place
-    constructor(place: Place) {
+    constructor(place: Place, content: RenderedContent | null) {
         super()
+        this.lifecycles = []
         this.place = place
         this.lastPlace = place
+        this.renderContent(content)
     }
 
-    renderContent<T>(componentFunc: ComponentFactory<T> | null = null) {
-        if (componentFunc) {
-            const renderer = new RendererImpl(
-                { type: PlaceType.ParentPlaceholder, parent: this },
-                this
-            )
-            componentFunc(renderer)
-            this.lastPlace = renderer.place
+    lastPlaceNode(): DOMPlace {
+        if (this.lastPlace instanceof PlaceholderNode) {
+            return this.lastPlace.lastPlaceNode()
+        }
+        return this.lastPlace
+    }
+
+    mount() {
+        for (const c of this.lifecycles) {
+            if (c.mount) {
+                c.mount()
+            }
         }
     }
 
-    setContent<T>(componentFunc: ComponentFactory<T> | null = null) {
+    unmount() {
+        for (const c of this.lifecycles) {
+            if (c.unmount) {
+                c.unmount()
+            }
+        }
+        this.lifecycles.length = 0
+    }
+
+    renderContent(content: RenderedContent | null = null) {
+        if (content) {
+            this.lastPlace = processRendered(new ParentPlaceholderPlace(this), this.lifecycles, content)
+        }
+    }
+
+    setContent(content: RenderedContent | null = null) {
         this.unmount()
         unrenderNodes(this.place, this.lastPlace)
         this.lastPlace = this.place
-        this.renderContent(componentFunc)
+        this.renderContent(content)
         this.mount()
     }
 
-    spawnBefore<T>(componentFunc: ComponentFactory<T> | null = null): Placeholder {
-        const spawned = new PlaceholderImpl(this.place)
-        spawned.renderContent(componentFunc)
-        this.place = { type: PlaceType.Placeholder, placeholder: spawned }
+    spawnBefore(content: RenderedContent | null = null): Placeholder {
+        const spawned = new PlaceholderImpl(this.place, content)
+        this.place = spawned
         return spawned
     }
 
-    spawnAfter<T>(componentFunc: ComponentFactory<T> | null = null): Placeholder {
-        const spawned = new PlaceholderImpl(this.place)
+    spawnAfter(content: RenderedContent | null = null): Placeholder {
+        const spawned = new PlaceholderImpl(this.place, null)
         spawned.lifecycles = this.lifecycles
         spawned.lastPlace = this.lastPlace
-        this.place = { type: PlaceType.Placeholder, placeholder: spawned }
+        this.place = spawned
         this.lastPlace = this.place
         this.lifecycles = []
-        this.renderContent(componentFunc)
+        this.renderContent(content)
         return spawned
     }
 
@@ -75,9 +156,12 @@ export class PlaceholderImpl extends Lifecycles {
     }
 }
 
-export const createRootPlaceholder = (element: Element): Placeholder =>
-    new PlaceholderImpl({ type: PlaceType.ParentNode, parent: element })
+export const plh = (content: RenderedContent, handler?: (placeholder: PlaceholderImpl) => void): RenderedPlaceholder => ({
+    type: 'placeholder',
+    content,
+    handler,
+})
 
-export const plh =
-    (componentFunc: ComponentFactory | null = null): ComponentFactory<Placeholder> =>
-    (renderer: Renderer) => renderer.renderPlaceholder(componentFunc)
+export const createRootPlaceholder = (element: Element): Placeholder =>
+    new PlaceholderImpl(new ParentNodePlace(element), null)
+

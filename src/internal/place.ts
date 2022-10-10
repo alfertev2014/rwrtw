@@ -1,38 +1,45 @@
 import { PlaceholderImpl } from './placeholder'
 
-export enum PlaceType {
-    Node,
-    ParentNode,
-    Placeholder,
-    ParentPlaceholder,
+export class ParentNodePlace {
+    parent: Node
+    constructor(parent: Node) {
+        this.parent = parent
+    }
 }
 
-export type DOMPlace =
-    | { type: PlaceType.Node; node: Node }
-    | { type: PlaceType.ParentNode; parent: Node }
+export type DOMPlace = Node | ParentNodePlace
 
-export type Place =
-    | DOMPlace
-    | { type: PlaceType.Placeholder; placeholder: PlaceholderImpl }
-    | { type: PlaceType.ParentPlaceholder; parent: PlaceholderImpl }
+export abstract class PlaceholderNode {
+    abstract lastPlaceNode(): DOMPlace;
+}
+
+export class ParentPlaceholderPlace extends PlaceholderNode {
+    parent: PlaceholderImpl
+    constructor(parent: PlaceholderImpl) {
+        super()
+        this.parent = parent
+    }
+
+    lastPlaceNode(): DOMPlace {
+        return this.parent.lastPlaceNode()
+    }
+}
+
+export type Place = DOMPlace | PlaceholderNode
 
 export const lastPlaceNode = (place: Place): DOMPlace => {
-    switch (place.type) {
-        case PlaceType.Placeholder:
-            return lastPlaceNode(place.placeholder.lastPlace)
-        case PlaceType.ParentPlaceholder:
-            return lastPlaceNode(place.parent.place)
-        default:
-            return place
+    if (place instanceof PlaceholderNode) {
+        return place.lastPlaceNode()
+    } else {
+        return place
     }
 }
 
 export const renderNode = <T extends Node>(place: Place, node: T): T => {
     const domPlace = lastPlaceNode(place)
-    if (domPlace.type === PlaceType.Node) {
-        const domNode = domPlace.node
-        if (domNode.parentNode) {
-            return domNode.parentNode.insertBefore(node, domNode.nextSibling)
+    if (domPlace instanceof Node) {
+        if (domPlace.parentNode) {
+            return domPlace.parentNode.insertBefore(node, domPlace.nextSibling)
         } else {
             return node
         }
@@ -43,10 +50,10 @@ export const renderNode = <T extends Node>(place: Place, node: T): T => {
 
 export const unrenderNodes = (place: Place, lastPlace: Place) => {
     const lastDomPlace: DOMPlace | null = lastPlaceNode(lastPlace)
-    if (lastDomPlace && lastDomPlace.type === PlaceType.Node) {
-        let lastDomNode: Node | null = lastDomPlace.node
+    if (lastDomPlace && lastDomPlace instanceof Node) {
+        let lastDomNode: Node | null = lastDomPlace
         const firstDomPlace = place ? lastPlaceNode(place) : null
-        const firstDomNode = firstDomPlace?.type === PlaceType.Node ? firstDomPlace.node : null
+        const firstDomNode = firstDomPlace instanceof Node ? firstDomPlace : null
         while (lastDomNode && lastDomNode !== firstDomNode) {
             const toRemove = lastDomNode
             lastDomNode = lastDomNode.previousSibling
@@ -58,10 +65,10 @@ export const unrenderNodes = (place: Place, lastPlace: Place) => {
 export const takeNodes = (place: Place, lastPlace: Place): DocumentFragment => {
     const lastDomPlace: DOMPlace | null = lastPlaceNode(lastPlace)
     const fragment = document.createDocumentFragment()
-    if (lastDomPlace && lastDomPlace.type === PlaceType.Node) {
-        let lastDomNode: Node | null = lastDomPlace.node
+    if (lastDomPlace && lastDomPlace instanceof Node) {
+        let lastDomNode: Node | null = lastDomPlace
         const firstDomPlace = place ? lastPlaceNode(place) : null
-        const firstDomNode = firstDomPlace?.type === PlaceType.Node ? firstDomPlace.node : null
+        const firstDomNode = firstDomPlace instanceof Node ? firstDomPlace : null
         while (lastDomNode && lastDomNode !== firstDomNode) {
             const toRemove = lastDomNode
             lastDomNode = lastDomNode.previousSibling
