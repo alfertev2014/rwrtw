@@ -3,12 +3,12 @@ import { RenderedContent, RenderedList } from '../template'
 import { DOMPlace, Place, PlaceholderNode } from './place'
 import { PlaceholderImpl } from './placeholder'
 
-export interface List extends Lifecycle {
+export interface List {
     insert(index: number, content: RenderedContent): void
     removeAt(index: number): void
 }
 
-export class ListImpl extends PlaceholderNode implements List {
+export class ListImpl extends PlaceholderNode implements List, Lifecycle {
     readonly place: Place
     readonly elements: PlaceholderImpl[]
     constructor(place: Place, contents: RenderedContent[]) {

@@ -52,10 +52,12 @@ const processRendered = (place: Place, lifecycles: Lifecycle[], rendered: Render
         place = renderNode(place, txt(rendered.data))
     } else if (rendered.type === 'placeholder') {
         const plh = new PlaceholderImpl(place, rendered.content)
+        lifecycles.push(plh)
         rendered.handler?.(plh)
         place = plh
     } else if (rendered.type === 'list') {
         const list = new ListImpl(place, rendered.contents)
+        lifecycles.push(list)
         rendered.handler?.(list)
         place = list
     } else if (rendered.type === 'component') {
@@ -66,7 +68,7 @@ const processRendered = (place: Place, lifecycles: Lifecycle[], rendered: Render
     return place
 }
 
-export class PlaceholderImpl extends PlaceholderNode {
+export class PlaceholderImpl extends PlaceholderNode implements Lifecycle {
     lifecycles: Lifecycle[]
     place: Place
     lastPlace: Place
