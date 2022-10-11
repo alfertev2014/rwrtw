@@ -17,7 +17,7 @@ export interface RenderedElement {
 export interface RenderedText {
     type: 'text'
     data: string
-    handler?: (node: Text) => Lifecycle | undefined
+    handler?: (node: Text) => Lifecycle | void
 }
 
 export interface RenderedPlaceholder {
@@ -57,8 +57,8 @@ export type Rendered =
 
 export type RenderedContent = Rendered | RenderedContent[]
 
-export type ElementHandler = (element: HTMLElement) => Lifecycle | undefined
-export type AttributeHandler = (element: HTMLElement, attr: string) => Lifecycle | undefined
+export type ElementHandler = (element: HTMLElement) => Lifecycle | void
+export type AttributeHandler = (element: HTMLElement, attr: string) => Lifecycle | void
 
 export interface TemplateElementAttrsMap {
     [key: string]: ElementAttrValue | AttributeHandler
@@ -81,7 +81,7 @@ export const el =
 
 export const text = (
     data: string,
-    handler?: (node: Text) => Lifecycle | undefined
+    handler?: (node: Text) => Lifecycle | void
 ): RenderedText => ({
     type: 'text',
     data,
