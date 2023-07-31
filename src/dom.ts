@@ -3,7 +3,7 @@ export type ElementAttrValue = number | string | boolean | null | undefined
 export const setAttr = (element: Element, name: string, value: ElementAttrValue) => {
     if (value) {
         element.setAttribute(name, value === true ? '' : value.toString())
-    } else if (value === null || value === false || typeof value === undefined) {
+    } else if (value === null || value === false || typeof value === "undefined") {
         element.removeAttribute(name)
     }
 }
