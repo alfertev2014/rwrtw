@@ -1,6 +1,6 @@
 {
   "name": "rwrtw",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "Tiny DOM helpers and building blocks for MVVM and UI components",
   "main": "lib/index.js",
   "module": "lib/index.js",
