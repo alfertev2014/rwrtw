@@ -1,8 +1,8 @@
 import { Lifecycle } from './lifecycle'
 import { ElementAttrValue } from './dom'
 import { EventHandlerController, EventHandlersMap } from './events'
-import { PlaceholderImpl } from './internal/placeholder'
-import { ListImpl } from './internal/list'
+import { Placeholder } from './internal/placeholder'
+import { List } from './internal/list'
 
 export type RenderedType = 'element' | 'text' | 'placeholder' | 'component' | 'lifecycle'
 
@@ -23,13 +23,13 @@ export interface RenderedText {
 export interface RenderedPlaceholder {
     type: 'placeholder'
     content: RenderedContent
-    handler?: (placeholder: PlaceholderImpl) => void
+    handler?: (placeholder: Placeholder) => void
 }
 
 export interface RenderedList {
     type: 'list'
     contents: RenderedContent[]
-    handler?: (list: ListImpl) => void
+    handler?: (list: List) => void
 }
 
 export interface RenderedComponent {

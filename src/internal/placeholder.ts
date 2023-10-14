@@ -158,7 +158,7 @@ export class PlaceholderImpl extends PlaceholderNode implements Lifecycle {
     }
 }
 
-export const plh = (content: RenderedContent, handler?: (placeholder: PlaceholderImpl) => void): RenderedPlaceholder => ({
+export const plh = (content: RenderedContent, handler?: (placeholder: Placeholder) => void): RenderedPlaceholder => ({
     type: 'placeholder',
     content,
     handler,

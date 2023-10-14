@@ -6,6 +6,7 @@ import { PlaceholderImpl } from './placeholder'
 export interface List {
     insert(index: number, content: RenderedContent): void
     removeAt(index: number): void
+    moveFromTo(fromIndex: number, toIndex: number): void
 }
 
 export class ListImpl extends PlaceholderNode implements List, Lifecycle {
@@ -106,5 +107,5 @@ export class ListImpl extends PlaceholderNode implements List, Lifecycle {
 
 export const list = (
     contents: RenderedContent[],
-    handler?: (list: ListImpl) => void
+    handler?: (list: List) => void
 ): RenderedList => ({ type: 'list', contents, handler })
