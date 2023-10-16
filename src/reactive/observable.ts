@@ -57,7 +57,9 @@ class Observable<T = unknown> {
         }
     }
 
-    _onDirty(): void { return undefined }
+    _onDirty(): void {
+        return undefined
+    }
 }
 
 class Computed<T = unknown> extends Observable<T> {

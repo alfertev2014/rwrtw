@@ -1,5 +1,5 @@
-import { Placeholder, plh } from '../internal/placeholder'
-import { cmpnt, RenderedContent } from '../template'
+import { Placeholder } from '../internal/placeholder'
+import { plh, cmpnt, RenderedContent } from '../template'
 
 export interface Switch<T> {
     value: T
@@ -17,7 +17,7 @@ class SwitchImpl<T> implements Switch<T> {
         placeholder: Placeholder,
         value: T,
         branches: CaseBranch<T>[],
-        defaultBranch: (() => RenderedContent) | null
+        defaultBranch: (() => RenderedContent) | null,
     ) {
         this.placeholder = placeholder
         this._value = value
@@ -41,26 +41,28 @@ class SwitchImpl<T> implements Switch<T> {
     }
 }
 
-const selectBranch = <T>(value: T,
+const selectBranch = <T>(
+    value: T,
     branches: CaseBranch<T>[],
-    defaultBranch: (() => RenderedContent) | null): RenderedContent => {
-        for (const branch of branches) {
-            if (value === branch[0]) {
-                return branch[1]?.()
-            }
+    defaultBranch: (() => RenderedContent) | null,
+): RenderedContent => {
+    for (const branch of branches) {
+        if (value === branch[0]) {
+            return branch[1]?.()
         }
-        return defaultBranch?.()
     }
+    return defaultBranch?.()
+}
 
 export const switchElse = cmpnt(
     <T>(
         value: T,
         branches: CaseBranch<T>[],
         defaultBranch: (() => RenderedContent) | null = null,
-        handler?: (sw: Switch<T>) => void
+        handler?: (sw: Switch<T>) => void,
     ): RenderedContent => {
         return plh(selectBranch(value, branches, defaultBranch), (placeholder: Placeholder) => {
             handler?.(new SwitchImpl<T>(placeholder, value, branches, defaultBranch))
         })
-    }
+    },
 )

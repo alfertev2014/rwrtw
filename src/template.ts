@@ -1,10 +1,10 @@
-import { Lifecycle } from './lifecycle'
-import { ElementAttrValue } from './dom'
-import { EventHandlerController, EventHandlersMap } from './events'
+import { Lifecycle } from './internal/lifecycle'
+import { ElementAttrValue } from './dom/helpers'
+import { EventHandlerController, EventHandlersMap } from './internal/events'
 import { Placeholder } from './internal/placeholder'
 import { List } from './internal/list'
 
-export type RenderedType = 'element' | 'text' | 'placeholder' | 'component' | 'lifecycle'
+export type RenderedType = 'element' | 'text' | 'placeholder' | 'list' | 'component' | 'lifecycle'
 
 export interface RenderedElement {
     type: 'element'
@@ -79,16 +79,28 @@ export const el =
         children,
     })
 
-export const text = (
-    data: string,
-    handler?: (node: Text) => Lifecycle | void
-): RenderedText => ({
+export const text = (data: string, handler?: (node: Text) => Lifecycle | void): RenderedText => ({
     type: 'text',
     data,
     handler,
 })
 
-export const cmpnt = <Func extends (...args: any[]) => RenderedContent>(factory: Func) =>
+export const plh = (
+    content: RenderedContent,
+    handler?: (placeholder: Placeholder) => void,
+): RenderedPlaceholder => ({
+    type: 'placeholder',
+    content,
+    handler,
+})
+
+export const list = (
+    contents: RenderedContent[],
+    handler?: (list: List) => void,
+): RenderedList => ({ type: 'list', contents, handler })
+
+export const cmpnt =
+    <Func extends (...args: any[]) => RenderedContent>(factory: Func) =>
     (...args: Parameters<Func>): RenderedComponent => ({
         type: 'component',
         factory,

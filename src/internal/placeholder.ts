@@ -1,71 +1,20 @@
-import { dce, setAttr, txt } from '../dom'
-import { Lifecycle } from '../lifecycle'
-import { RenderedContent, RenderedElement, RenderedPlaceholder } from '../template'
-import { ListImpl } from './list'
-import { DOMPlace, ParentNodePlace, ParentPlaceholderPlace, Place, PlaceholderNode, renderNode, takeNodes, unrenderNodes } from './place'
+import { Lifecycle } from './lifecycle'
+import { RenderedContent } from '../template'
+
+import {
+    DOMPlace,
+    ParentNodePlace,
+    ParentPlaceholderPlace,
+    Place,
+    PlaceholderNode,
+    renderNode,
+    takeNodes,
+    unrenderNodes,
+} from './place'
+import { processRendered } from './rendering'
 
 export interface Placeholder {
     setContent(content: RenderedContent): void
-}
-
-const renderElement = ({ tag, attrs, handlers, children }: RenderedElement, lifecycles: Lifecycle[]): Place => {
-    const element = dce(tag)
-
-    processRendered(new ParentNodePlace(element), lifecycles, children)
-
-    if (attrs) {
-        for (const [name, value] of Object.entries(attrs)) {
-            if (typeof value === 'function') {
-                const lifecycle = value(element, name)
-                if (lifecycle) {
-                    lifecycles.push(lifecycle)
-                }
-            } else {
-                setAttr(element, name, value)
-            }
-        }
-    }
-    for (const handler of handlers) {
-        const lifecycle = handler(element)
-        if (lifecycle) {
-            lifecycles.push(lifecycle)
-        }
-    }
-    return element
-}
-
-const processRendered = (place: Place, lifecycles: Lifecycle[], rendered: RenderedContent): Place => {
-    if (typeof rendered === 'boolean' || rendered === null || typeof rendered === 'undefined') {
-        return place
-    }
-    if (typeof rendered === 'string') {
-        place = renderNode(place, txt(rendered))
-    } else if (typeof rendered === 'number') {
-        place = renderNode(place, txt(rendered.toString()))
-    } else if (Array.isArray(rendered)) {
-        for (const r of rendered) {
-            place = processRendered(place, lifecycles, r)
-        }
-    } else if (rendered.type === 'element') {
-        place = renderElement(rendered, lifecycles)
-    } else if (rendered.type === 'text') {
-        place = renderNode(place, txt(rendered.data))
-    } else if (rendered.type === 'placeholder') {
-        const plh = new PlaceholderImpl(place, rendered.content)
-        lifecycles.push(plh)
-        rendered.handler?.(plh)
-        place = plh
-    } else if (rendered.type === 'list') {
-        const list = new ListImpl(place, rendered.contents)
-        lifecycles.push(list)
-        rendered.handler?.(list)
-        place = list
-    } else if (rendered.type === 'component') {
-        place = processRendered(place, lifecycles, rendered.factory(...rendered.args))
-    } else if (rendered.type === 'lifecycle') {
-        lifecycles.push(rendered)
-    }
-    return place
 }
 
 export class PlaceholderImpl extends PlaceholderNode implements Lifecycle {
@@ -106,7 +55,11 @@ export class PlaceholderImpl extends PlaceholderNode implements Lifecycle {
 
     renderContent(content: RenderedContent | null = null) {
         if (content) {
-            this.lastPlace = processRendered(new ParentPlaceholderPlace(this), this.lifecycles, content)
+            this.lastPlace = processRendered(
+                new ParentPlaceholderPlace(this),
+                this.lifecycles,
+                content,
+            )
         }
     }
 
@@ -158,12 +111,5 @@ export class PlaceholderImpl extends PlaceholderNode implements Lifecycle {
     }
 }
 
-export const plh = (content: RenderedContent, handler?: (placeholder: Placeholder) => void): RenderedPlaceholder => ({
-    type: 'placeholder',
-    content,
-    handler,
-})
-
 export const createRootPlaceholder = (element: Element): Placeholder =>
     new PlaceholderImpl(new ParentNodePlace(element), null)
-

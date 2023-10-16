@@ -27,5 +27,5 @@ export const hidable = cmpnt(
                     this.visible = true
                 },
             })
-        })
+        }),
 )

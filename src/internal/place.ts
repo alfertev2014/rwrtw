@@ -10,7 +10,7 @@ export class ParentNodePlace {
 export type DOMPlace = Node | ParentNodePlace
 
 export abstract class PlaceholderNode {
-    abstract lastPlaceNode(): DOMPlace;
+    abstract lastPlaceNode(): DOMPlace
 }
 
 export class ParentPlaceholderPlace extends PlaceholderNode {

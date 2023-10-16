@@ -1,5 +1,4 @@
-import { plh } from '../internal/placeholder'
-import { cmpnt, RenderedContent } from '../template'
+import { plh, cmpnt, RenderedContent } from '../template'
 
 export interface IfElse {
     condition: boolean
@@ -10,7 +9,7 @@ export const ifElse = cmpnt(
         condition: boolean,
         trueBranch: (() => RenderedContent) | null,
         falseBranch: (() => RenderedContent) | null,
-        handler?: (ifElse: IfElse) => void
+        handler?: (ifElse: IfElse) => void,
     ): RenderedContent => {
         return plh(condition ? trueBranch?.() : falseBranch?.(), (placeholder) => {
             let _value = condition
@@ -26,5 +25,5 @@ export const ifElse = cmpnt(
                 },
             })
         })
-    }
+    },
 )

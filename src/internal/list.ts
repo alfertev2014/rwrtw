@@ -1,5 +1,5 @@
-import { Lifecycle } from '../lifecycle'
-import { RenderedContent, RenderedList } from '../template'
+import { Lifecycle } from './lifecycle'
+import { RenderedContent } from '../template'
 import { DOMPlace, Place, PlaceholderNode } from './place'
 import { PlaceholderImpl } from './placeholder'
 
@@ -20,7 +20,7 @@ export class ListImpl extends PlaceholderNode implements List, Lifecycle {
         for (const content of contents) {
             const placeholder = new PlaceholderImpl(
                 index > 0 ? this.elements[index - 1] : this.place,
-                content
+                content,
             )
             ++index
             this.elements.push(placeholder)
@@ -50,7 +50,7 @@ export class ListImpl extends PlaceholderNode implements List, Lifecycle {
         }
         const placeholder = new PlaceholderImpl(
             index > 0 ? this.elements[index - 1] : this.place,
-            content
+            content,
         )
         if (index < this.elements.length) {
             this.elements[index].place = placeholder
@@ -104,8 +104,3 @@ export class ListImpl extends PlaceholderNode implements List, Lifecycle {
         }
     }
 }
-
-export const list = (
-    contents: RenderedContent[],
-    handler?: (list: List) => void
-): RenderedList => ({ type: 'list', contents, handler })
