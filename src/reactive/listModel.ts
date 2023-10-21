@@ -6,9 +6,10 @@ export class ListModel<T> {
     readonly data: T[]
     readonly elementsEquality: (e1: T, e2: T) => boolean
 
-    onAdd?: (i: number, element: T) => void
-    onMove?: (from: number, to: number, element: T) => void
+    onInsert?: (i: number, element: T) => void
+    onMove?: (from: number, to: number) => void
     onRemove?: (i: number) => void
+    onChanged?: (i: number, element: T) => void
 
     constructor(data: T[], elementsEquality = defaultElementsEquality) {
         this.data = [...data]
@@ -21,6 +22,7 @@ export class ListModel<T> {
             if (data.findIndex((el) => this.elementsEquality(el, element)) < 0) {
                 this._removeElement(i)
             } else {
+                this.onChanged?.(i, element)
                 ++i
             }
         }
@@ -48,11 +50,11 @@ export class ListModel<T> {
     _moveElement(from: number, to: number, element: T) {
         this.data.splice(from, 1)
         this.data.splice(to, 0, element)
-        this.onMove?.(from, to, element)
+        this.onMove?.(from, to)
     }
 
     _insertElement(i: number, element: T) {
         this.data.splice(i, 0, element)
-        this.onAdd?.(i, element)
+        this.onInsert?.(i, element)
     }
 }
