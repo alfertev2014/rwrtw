@@ -23,19 +23,21 @@ export class PlaceholderImpl extends PlaceholderNode implements Placeholder {
 
   mount() {
       for (const c of this.lifecycles) {
-          if (c.mount) {
-              c.mount()
-          }
+              c.mount?.()
       }
   }
 
   unmount() {
       for (const c of this.lifecycles) {
-          if (c.unmount) {
-              c.unmount()
-          }
+              c.unmount?.()
       }
-      this.lifecycles.length = 0
+  }
+
+  dispose() {
+    for (const c of this.lifecycles) {
+        c.dispose?.()
+    }
+    this.lifecycles.length = 0
   }
 
   _lifecyclesReg(): RegLifecycleHandler {
@@ -55,6 +57,7 @@ export class PlaceholderImpl extends PlaceholderNode implements Placeholder {
 
   setContent(content: PlaceholderContent | null) {
       this.unmount()
+      this.dispose()
       unrenderNodes(this.place, this.lastPlace)
       this.lastPlace = this.place
       this.renderContent(content)

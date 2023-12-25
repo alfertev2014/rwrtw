@@ -17,5 +17,5 @@ export type RegLifecycleHandler = (lifecycle: Lifecycle) => void
 
 export type PlaceholderContent = (place: Place, regLifecycle: RegLifecycleHandler) => Place
 
-export const createPlaceholder = (place: Place, content: PlaceholderContent | null) =>
+export const createPlaceholder = (place: Place, content: PlaceholderContent | null): Placeholder =>
     new PlaceholderImpl(place, content)

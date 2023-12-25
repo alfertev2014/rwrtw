@@ -1,6 +1,6 @@
 import { ElementAttrValue } from "../dom/helpers"
 import { EventHandlerController, EventHandlersMap } from "../internal/events"
-import { List } from "../internal/list"
+import { List } from "../list"
 import { Placeholder } from "../placeholder"
 import { Lifecycle } from "../placeholder/lifecycle"
 

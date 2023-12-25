@@ -1,8 +1,8 @@
 import { dce, setAttr, txt } from '../dom/helpers'
-import { ListImpl } from '../internal/list'
 import { PlaceholderContent, RegLifecycleHandler, createPlaceholder } from '../placeholder'
 import { ParentNodePlace, Place, renderNode } from '../placeholder/place'
 import { RenderedContent, RenderedElement } from '.'
+import { createList } from '../list'
 
 const renderElement = (
     { tag, attrs, handlers, children }: RenderedElement,
@@ -59,7 +59,7 @@ export const processRendered = (
         rendered.handler?.(plh)
         place = plh
     } else if (rendered.type === 'list') {
-        const list = new ListImpl(place, rendered.contents.map(content => templateContent(content)))
+        const list = createList(place, rendered.contents.map(content => templateContent(content)))
         regLifecycle(list)
         rendered.handler?.(list)
         place = list
