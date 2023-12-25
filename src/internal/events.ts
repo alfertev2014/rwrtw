@@ -1,26 +1,26 @@
-import { Lifecycle } from '../placeholder/lifecycle'
+import { Lifecycle } from "../placeholder/lifecycle"
 
 export interface EventHandlersMap {
-    [key: string]: EventListenerOrEventListenerObject
+  [key: string]: EventListenerOrEventListenerObject
 }
 
 export class EventHandlerController<E extends Element = Element> implements Lifecycle {
-    readonly element: E
-    readonly eventsMap: EventHandlersMap
-    constructor(element: E, eventsMap: EventHandlersMap) {
-        this.element = element
-        this.eventsMap = eventsMap
-    }
+  readonly element: E
+  readonly eventsMap: EventHandlersMap
+  constructor(element: E, eventsMap: EventHandlersMap) {
+    this.element = element
+    this.eventsMap = eventsMap
+  }
 
-    mount() {
-        for (const [eventName, handler] of Object.entries(this.eventsMap)) {
-            this.element.addEventListener(eventName, handler)
-        }
+  mount() {
+    for (const [eventName, handler] of Object.entries(this.eventsMap)) {
+      this.element.addEventListener(eventName, handler)
     }
+  }
 
-    unmount() {
-        for (const [eventName, handler] of Object.entries(this.eventsMap)) {
-            this.element.removeEventListener(eventName, handler)
-        }
+  unmount() {
+    for (const [eventName, handler] of Object.entries(this.eventsMap)) {
+      this.element.removeEventListener(eventName, handler)
     }
+  }
 }

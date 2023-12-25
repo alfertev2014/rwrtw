@@ -1,4 +1,3 @@
-
 /**
  * Value type for elements' attributes.
  */
@@ -12,11 +11,11 @@ export type ElementAttrValue = number | string | boolean | null | undefined
  * @param value New value of the attribute. If it is falsy value, the attribute will be removed.
  */
 export const setAttr = (element: Element, name: string, value: ElementAttrValue) => {
-    if (value) {
-        element.setAttribute(name, value === true ? '' : value.toString())
-    } else if (value === null || value === false || typeof value === 'undefined') {
-        element.removeAttribute(name)
-    }
+  if (value) {
+    element.setAttribute(name, value === true ? "" : value.toString())
+  } else if (value === null || value === false || typeof value === "undefined") {
+    element.removeAttribute(name)
+  }
 }
 
 /**

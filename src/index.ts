@@ -1,5 +1,5 @@
-export * from './internal/events'
-export { List } from './list'
-export { createPlaceholder, Placeholder } from './placeholder'
-export * from './mvvm'
-export * from './template'
+export * from "./internal/events"
+export { List } from "./list"
+export { createPlaceholder, Placeholder } from "./placeholder"
+export * from "./mvvm"
+export * from "./template"
