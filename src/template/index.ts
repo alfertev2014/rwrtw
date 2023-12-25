@@ -1,8 +1,8 @@
-import { Lifecycle } from './internal/lifecycle'
-import { ElementAttrValue } from './dom/helpers'
-import { EventHandlerController, EventHandlersMap } from './internal/events'
-import { Placeholder } from './internal/placeholder'
-import { List } from './internal/list'
+import { ElementAttrValue } from "../dom/helpers"
+import { EventHandlerController, EventHandlersMap } from "../internal/events"
+import { List } from "../internal/list"
+import { Placeholder } from "../placeholder"
+import { Lifecycle } from "../placeholder/lifecycle"
 
 export type RenderedType = 'element' | 'text' | 'placeholder' | 'list' | 'component' | 'lifecycle'
 

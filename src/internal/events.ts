@@ -1,4 +1,4 @@
-import { Lifecycle } from './lifecycle'
+import { Lifecycle } from '../placeholder/lifecycle'
 
 export interface EventHandlersMap {
     [key: string]: EventListenerOrEventListenerObject

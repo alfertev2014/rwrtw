@@ -1,4 +1,4 @@
-import { PlaceholderImpl } from './placeholder'
+import { Placeholder } from '.'
 
 export class ParentNodePlace {
     parent: Node
@@ -14,14 +14,14 @@ export abstract class PlaceholderNode {
 }
 
 export class ParentPlaceholderPlace extends PlaceholderNode {
-    parent: PlaceholderImpl
-    constructor(parent: PlaceholderImpl) {
+    parent: Placeholder
+    constructor(parent: Placeholder) {
         super()
         this.parent = parent
     }
 
     lastPlaceNode(): DOMPlace {
-        return this.parent.lastPlaceNode()
+        return lastPlaceNode(this.parent.place)
     }
 }
 

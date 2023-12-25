@@ -1,5 +1,6 @@
-import { Placeholder } from '../internal/placeholder'
+import { Placeholder } from '../placeholder'
 import { plh, cmpnt, RenderedContent } from '../template'
+import { templateContent } from '../template/rendering'
 
 export interface Switch<T> {
     value: T
@@ -31,7 +32,7 @@ class SwitchImpl<T> implements Switch<T> {
 
     set value(value: T) {
         if (this._value !== value) {
-            this.placeholder.setContent(this._selectBranch())
+            this.placeholder.setContent(templateContent(this._selectBranch()))
             this._value = value
         }
     }

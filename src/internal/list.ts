@@ -1,24 +1,23 @@
-import { Lifecycle } from './lifecycle'
-import { RenderedContent } from '../template'
-import { DOMPlace, Place, PlaceholderNode } from './place'
-import { PlaceholderImpl } from './placeholder'
+import { Placeholder, PlaceholderContent, createPlaceholder } from '../placeholder'
+import { Lifecycle } from '../placeholder/lifecycle'
+import { DOMPlace, Place, PlaceholderNode, lastPlaceNode } from '../placeholder/place'
 
 export interface List {
-    insert(index: number, content: RenderedContent): void
+    insert(index: number, content: PlaceholderContent): void
     removeAt(index: number): void
     moveFromTo(fromIndex: number, toIndex: number): void
 }
 
 export class ListImpl extends PlaceholderNode implements List, Lifecycle {
     readonly place: Place
-    readonly elements: PlaceholderImpl[]
-    constructor(place: Place, contents: RenderedContent[]) {
+    readonly elements: Placeholder[]
+    constructor(place: Place, contents: (PlaceholderContent | null)[]) {
         super()
         this.place = place
         this.elements = []
         let index = 0
         for (const content of contents) {
-            const placeholder = new PlaceholderImpl(
+            const placeholder = createPlaceholder(
                 index > 0 ? this.elements[index - 1] : this.place,
                 content,
             )
@@ -29,11 +28,7 @@ export class ListImpl extends PlaceholderNode implements List, Lifecycle {
 
     lastPlaceNode(): DOMPlace {
         const place = this.lastPlace
-        if (place instanceof PlaceholderNode) {
-            return place.lastPlaceNode()
-        } else {
-            return place
-        }
+        return lastPlaceNode(place)
     }
 
     get lastPlace(): Place {
@@ -44,11 +39,11 @@ export class ListImpl extends PlaceholderNode implements List, Lifecycle {
         }
     }
 
-    insert(index: number, content: RenderedContent) {
+    insert(index: number, content: PlaceholderContent | null) {
         if (index > this.elements.length) {
             index = this.elements.length
         }
-        const placeholder = new PlaceholderImpl(
+        const placeholder = createPlaceholder(
             index > 0 ? this.elements[index - 1] : this.place,
             content,
         )
@@ -94,13 +89,13 @@ export class ListImpl extends PlaceholderNode implements List, Lifecycle {
 
     mount() {
         for (const element of this.elements) {
-            element.mount()
+            element.mount?.()
         }
     }
 
     unmount() {
         for (const element of this.elements) {
-            element.unmount()
+            element.unmount?.()
         }
     }
 }

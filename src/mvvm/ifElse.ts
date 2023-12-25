@@ -1,4 +1,5 @@
 import { plh, cmpnt, RenderedContent } from '../template'
+import { templateContent } from '../template/rendering'
 
 export interface IfElse {
     condition: boolean
@@ -19,7 +20,7 @@ export const ifElse = cmpnt(
                 },
                 set condition(value: boolean) {
                     if (_value !== value) {
-                        placeholder.setContent(value ? trueBranch?.() : falseBranch?.())
+                        placeholder.setContent(templateContent(value ? trueBranch?.() : falseBranch?.()))
                         _value = value
                     }
                 },
