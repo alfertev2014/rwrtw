@@ -68,11 +68,11 @@ export class PlaceholderImpl extends PlaceholderNode implements Placeholder {
     this.unmount()
     this.dispose()
     unrenderNodes(this._place, this._lastPlace)
+    this._lastPlace = this._place
   }
 
   setContent(content: PlaceholderContent): void {
     this.erase()
-    this._lastPlace = this._place
     this._renderContent(content)
     this.mount()
   }
