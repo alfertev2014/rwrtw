@@ -1,19 +1,20 @@
-import { Placeholder, PlaceholderContent, createPlaceholder } from "../placeholder"
-import { DOMPlace, Place, PlaceholderNode, lastPlaceNode } from "../placeholder/place"
-import { List } from "."
+import { type PlaceholderContent } from "../placeholder"
+import { type DOMPlace, type Place, PlaceholderNode, lastPlaceNode } from "../placeholder/place"
+import { type List } from "."
+import { PlaceholderImpl } from "../placeholder/impl"
 
 export class ListImpl extends PlaceholderNode implements List {
   readonly place: Place
-  readonly elements: Placeholder[]
-  constructor(place: Place, contents: (PlaceholderContent | null)[]) {
+  readonly elements: PlaceholderImpl[]
+  constructor(place: Place, contents: PlaceholderContent[]) {
     super()
     this.place = place
     this.elements = []
-    let index = 0
+    let currentPlace = place
     for (const content of contents) {
-      const placeholder = createPlaceholder(index > 0 ? this.elements[index - 1] : this.place, content)
-      ++index
+      const placeholder = new PlaceholderImpl(currentPlace, content)
       this.elements.push(placeholder)
+      currentPlace = placeholder
     }
   }
 
@@ -29,29 +30,34 @@ export class ListImpl extends PlaceholderNode implements List {
     }
   }
 
-  insert(index: number, content: PlaceholderContent | null) {
+  _placeAtIndex(index: number): Place {
+    return index > 0 ? this.elements[index - 1] : this.place
+  }
+
+  insert(index: number, content: PlaceholderContent): void {
     if (index > this.elements.length) {
       index = this.elements.length
     }
-    const placeholder = createPlaceholder(index > 0 ? this.elements[index - 1] : this.place, content)
-    if (index < this.elements.length) {
-      this.elements[index].place = placeholder
-    }
+    const placeholder =
+      index < this.elements.length
+        ? this.elements[index].spawnBefore(content)
+        : new PlaceholderImpl(this.lastPlace, content)
     this.elements.splice(index, 0, placeholder)
   }
 
-  removeAt(index: number) {
+  removeAt(index: number): void {
     if (index >= this.elements.length) {
       return
     }
-    if (index > 0 && index < this.elements.length - 1) {
-      this.elements[index + 1].place = this.elements[index - 1]
+    if (index >= 0 && index < this.elements.length - 1) {
+      this.elements[index + 1].removeBefore()
+    } else {
+      this.elements[index].erase()
     }
-    this.elements[index].setContent(null)
     this.elements.splice(index, 1)
   }
 
-  moveFromTo(fromIndex: number, toIndex: number) {
+  moveFromTo(fromIndex: number, toIndex: number): void {
     if (fromIndex === toIndex) {
       return
     }
@@ -70,23 +76,23 @@ export class ListImpl extends PlaceholderNode implements List {
 
     placeholder.moveToPlace(toIndex === 0 ? this.place : this.elements[toIndex - 1])
     if (toIndex < this.elements.length - 1) {
-      this.elements[toIndex + 1].place = placeholder
+      this.elements[toIndex + 1]._place = placeholder
     }
   }
 
-  mount() {
+  mount(): void {
     for (const element of this.elements) {
       element.mount?.()
     }
   }
 
-  unmount() {
+  unmount(): void {
     for (const element of this.elements) {
       element.unmount?.()
     }
   }
 
-  dispose() {
+  dispose(): void {
     for (const element of this.elements) {
       element.dispose?.()
     }

@@ -1,9 +1,9 @@
-import { cmpnt, RenderedComponent, RenderedContent } from "../template"
+import { cmpnt, type RenderedComponent, type RenderedContent } from "../template"
 import { ifElse } from "./ifElse"
 
 export interface Hidable {
-  hide(): void
-  show(): void
+  hide: () => void
+  show: () => void
   visible: boolean
 }
 

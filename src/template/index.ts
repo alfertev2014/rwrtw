@@ -1,8 +1,8 @@
-import { ElementAttrValue } from "../dom/helpers"
-import { EventHandlerController, EventHandlersMap } from "../internal/events"
-import { List } from "../list"
-import { Placeholder } from "../placeholder"
-import { Lifecycle } from "../placeholder/lifecycle"
+import { type ElementAttrValue } from "../dom/helpers"
+import { EventHandlerController, type EventHandlersMap } from "../internal/events"
+import { type List } from "../list"
+import { type Placeholder } from "../placeholder"
+import { type Lifecycle } from "../placeholder/lifecycle"
 
 export type RenderedType = "element" | "text" | "placeholder" | "list" | "component" | "lifecycle"
 
@@ -17,7 +17,7 @@ export interface RenderedElement {
 export interface RenderedText {
   type: "text"
   data: string
-  handler?: (node: Text) => Lifecycle | void
+  handler?: (node: Text) => Lifecycle | undefined
 }
 
 export interface RenderedPlaceholder {
@@ -57,12 +57,10 @@ export type Rendered =
 
 export type RenderedContent = Rendered | RenderedContent[]
 
-export type ElementHandler = (element: HTMLElement) => Lifecycle | void
-export type AttributeHandler = (element: HTMLElement, attr: string) => Lifecycle | void
+export type ElementHandler = (element: HTMLElement) => Lifecycle | undefined
+export type AttributeHandler = (element: HTMLElement, attr: string) => Lifecycle | undefined
 
-export interface TemplateElementAttrsMap {
-  [key: string]: ElementAttrValue | AttributeHandler
-}
+export type TemplateElementAttrsMap = Record<string, ElementAttrValue | AttributeHandler>
 
 export const on =
   (handlers: EventHandlersMap): ElementHandler =>
@@ -79,7 +77,7 @@ export const el =
     children,
   })
 
-export const text = (data: string, handler?: (node: Text) => Lifecycle | void): RenderedText => ({
+export const text = (data: string, handler?: (node: Text) => Lifecycle | undefined): RenderedText => ({
   type: "text",
   data,
   handler,

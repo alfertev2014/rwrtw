@@ -1,4 +1,4 @@
-export const defaultElementsEquality = <T>(e1: T, e2: T) => {
+export const defaultElementsEquality = <T>(e1: T, e2: T): boolean => {
   return e1 === e2
 }
 
@@ -16,7 +16,7 @@ export class ListModel<T> {
     this.elementsEquality = elementsEquality
   }
 
-  applyNewData(data: T[]) {
+  applyNewData(data: T[]): void {
     for (let i = 0; i < this.data.length; ) {
       const element = this.data[i]
       if (data.findIndex((el) => this.elementsEquality(el, element)) < 0) {
@@ -38,22 +38,22 @@ export class ListModel<T> {
     }
   }
 
-  _findElement(element: T) {
+  _findElement(element: T): number {
     return this.data.findIndex((el) => this.elementsEquality(el, element))
   }
 
-  _removeElement(i: number) {
+  _removeElement(i: number): void {
     this.data.splice(i, 1)
     this.onRemove?.(i)
   }
 
-  _moveElement(from: number, to: number, element: T) {
+  _moveElement(from: number, to: number, element: T): void {
     this.data.splice(from, 1)
     this.data.splice(to, 0, element)
     this.onMove?.(from, to)
   }
 
-  _insertElement(i: number, element: T) {
+  _insertElement(i: number, element: T): void {
     this.data.splice(i, 0, element)
     this.onInsert?.(i, element)
   }

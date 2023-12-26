@@ -1,5 +1,5 @@
-import { Placeholder } from "../placeholder"
-import { plh, cmpnt, RenderedContent } from "../template"
+import { type Placeholder } from "../placeholder"
+import { plh, cmpnt, type RenderedContent } from "../template"
 import { templateContent } from "../template/rendering"
 
 export interface Switch<T> {
@@ -10,14 +10,14 @@ export type CaseBranch<T> = [T, (() => RenderedContent) | null]
 
 class SwitchImpl<T> implements Switch<T> {
   _value: T
-  branches: CaseBranch<T>[]
+  branches: Array<CaseBranch<T>>
   defaultBranch: (() => RenderedContent) | null
   readonly placeholder: Placeholder
 
   constructor(
     placeholder: Placeholder,
     value: T,
-    branches: CaseBranch<T>[],
+    branches: Array<CaseBranch<T>>,
     defaultBranch: (() => RenderedContent) | null,
   ) {
     this.placeholder = placeholder
@@ -26,7 +26,7 @@ class SwitchImpl<T> implements Switch<T> {
     this.defaultBranch = defaultBranch
   }
 
-  get value() {
+  get value(): T {
     return this._value
   }
 
@@ -37,14 +37,14 @@ class SwitchImpl<T> implements Switch<T> {
     }
   }
 
-  _selectBranch() {
+  _selectBranch(): RenderedContent {
     return selectBranch(this.value, this.branches, this.defaultBranch)
   }
 }
 
 const selectBranch = <T>(
   value: T,
-  branches: CaseBranch<T>[],
+  branches: Array<CaseBranch<T>>,
   defaultBranch: (() => RenderedContent) | null,
 ): RenderedContent => {
   for (const branch of branches) {
@@ -58,7 +58,7 @@ const selectBranch = <T>(
 export const switchElse = cmpnt(
   <T>(
     value: T,
-    branches: CaseBranch<T>[],
+    branches: Array<CaseBranch<T>>,
     defaultBranch: (() => RenderedContent) | null = null,
     handler?: (sw: Switch<T>) => void,
   ): RenderedContent => {

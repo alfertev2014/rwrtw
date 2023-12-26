@@ -1,5 +1,5 @@
 export * from "./internal/events"
-export { List } from "./list"
-export { createPlaceholder, Placeholder } from "./placeholder"
+export type { List } from "./list"
+export { createPlaceholder, type Placeholder } from "./placeholder"
 export * from "./mvvm"
 export * from "./template"

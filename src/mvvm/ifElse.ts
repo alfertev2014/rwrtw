@@ -1,4 +1,4 @@
-import { plh, cmpnt, RenderedContent } from "../template"
+import { plh, cmpnt, type RenderedContent } from "../template"
 import { templateContent } from "../template/rendering"
 
 export interface IfElse {

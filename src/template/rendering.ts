@@ -1,7 +1,7 @@
 import { dce, setAttr, txt } from "../dom/helpers"
-import { PlaceholderContent, RegLifecycleHandler, createPlaceholder } from "../placeholder"
-import { ParentNodePlace, Place, renderNode } from "../placeholder/place"
-import { RenderedContent, RenderedElement } from "."
+import { type PlaceholderContent, type RegLifecycleHandler, createPlaceholder } from "../placeholder"
+import { type Place, placeInParentNode, renderNode } from "../placeholder/place"
+import { type RenderedContent, type RenderedElement } from "."
 import { createList } from "../list"
 
 const renderElement = (
@@ -10,13 +10,13 @@ const renderElement = (
 ): Place => {
   const element = dce(tag)
 
-  processRendered(new ParentNodePlace(element), regLifecycle, children)
+  processRendered(placeInParentNode(element), regLifecycle, children)
 
-  if (attrs) {
+  if (attrs != null) {
     for (const [name, value] of Object.entries(attrs)) {
       if (typeof value === "function") {
         const lifecycle = value(element, name)
-        if (lifecycle) {
+        if (lifecycle != null) {
           regLifecycle(lifecycle)
         }
       } else {
@@ -26,7 +26,7 @@ const renderElement = (
   }
   for (const handler of handlers) {
     const lifecycle = handler(element)
-    if (lifecycle) {
+    if (lifecycle != null) {
       regLifecycle(lifecycle)
     }
   }

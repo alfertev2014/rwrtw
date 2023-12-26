@@ -9,7 +9,7 @@ class Observable<T = unknown> {
     this._deriveds = []
   }
 
-  current() {
+  current(): T | undefined {
     if (trakingStack.length > 0) {
       trakingStack[trakingStack.length - 1]._subscribe(this)
     }
@@ -17,7 +17,7 @@ class Observable<T = unknown> {
     return this._current
   }
 
-  change(value: T) {
+  change(value: T): void {
     if (value !== this._current) {
       this._makeDirty()
     }
@@ -33,21 +33,21 @@ class Observable<T = unknown> {
     return res
   }
 
-  _connect(derived: Computed) {
+  _connect(derived: Computed): void {
     const index = this._deriveds.indexOf(derived)
     if (index < 0) {
       this._deriveds.push(derived)
     }
   }
 
-  _disconnect(derived: Observable) {
+  _disconnect(derived: Observable): void {
     const index = this._deriveds.indexOf(derived)
     if (index >= 0) {
       this._deriveds.splice(index, 1)
     }
   }
 
-  _makeDirty() {
+  _makeDirty(): void {
     if (!this._dirty) {
       this._dirty = true
       this._onDirty()
@@ -74,7 +74,7 @@ class Computed<T = unknown> extends Observable<T> {
     this._dependenciesCount = 0
   }
 
-  _subscribe(dependency: Observable) {
+  _subscribe(dependency: Observable): void {
     const count = this._dependenciesCount
     const index = this._dependencies.indexOf(dependency)
     if (index < 0) {
@@ -122,9 +122,6 @@ class Computed<T = unknown> extends Observable<T> {
 }
 
 class Effect extends Computed<undefined> {
-  constructor(computeFunc: () => undefined) {
-    super(computeFunc)
-  }
   _onDirty(): void {
     effectsQueue.push(this)
   }
@@ -135,7 +132,7 @@ const trakingStack: Computed[] = []
 let effectsQueue: Effect[] = []
 let runningEffects: Effect[] = []
 
-const runEffects = () => {
+const runEffects = (): void => {
   while (effectsQueue.length > 0) {
     const tmp = runningEffects
     runningEffects = effectsQueue
@@ -163,7 +160,7 @@ export const effect = (func: () => undefined): Effect => {
   return new Effect(func)
 }
 
-export const transaction = (func: () => void) => {
+export const transaction = (func: () => void): void => {
   transactionDepth++
   func()
   transactionDepth--

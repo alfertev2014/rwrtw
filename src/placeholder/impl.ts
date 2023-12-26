@@ -1,102 +1,114 @@
-import { Placeholder, PlaceholderContent, RegLifecycleHandler } from "."
-import { Lifecycle } from "./lifecycle"
-import { DOMPlace, ParentPlaceholderPlace, Place, PlaceholderNode, renderNode, takeNodes, unrenderNodes } from "./place"
+import { type Placeholder, type PlaceholderContent, type RegLifecycleHandler } from "."
+import { type Lifecycle } from "./lifecycle"
+import {
+  type DOMPlace,
+  type Place,
+  PlaceholderNode,
+  placeInParentPlaceholder,
+  renderNode,
+  takeNodes,
+  unrenderNodes,
+} from "./place"
 
 export class PlaceholderImpl extends PlaceholderNode implements Placeholder {
-  lifecycles: Lifecycle[]
-  place: Place
-  lastPlace: Place
-  constructor(place: Place, content: PlaceholderContent | null) {
+  _lifecycles: Lifecycle[]
+  _place: Place
+  _lastPlace: Place
+  constructor(place: Place, content: PlaceholderContent) {
     super()
-    this.lifecycles = []
-    this.place = place
-    this.lastPlace = place
-    this.renderContent(content)
+    this._lifecycles = []
+    this._place = place
+    this._lastPlace = place
+    this._renderContent(content)
+  }
+
+  get place(): Place {
+    return this._place
   }
 
   lastPlaceNode(): DOMPlace {
-    if (this.lastPlace instanceof PlaceholderNode) {
-      return this.lastPlace.lastPlaceNode()
+    if (this._lastPlace instanceof PlaceholderNode) {
+      return this._lastPlace.lastPlaceNode()
     }
-    return this.lastPlace
+    return this._lastPlace
   }
 
-  mount() {
-    for (const c of this.lifecycles) {
+  mount(): void {
+    for (const c of this._lifecycles) {
       c.mount?.()
     }
   }
 
-  unmount() {
-    for (const c of this.lifecycles) {
+  unmount(): void {
+    for (const c of this._lifecycles) {
       c.unmount?.()
     }
   }
 
-  dispose() {
-    for (const c of this.lifecycles) {
+  dispose(): void {
+    for (const c of this._lifecycles) {
       c.dispose?.()
     }
-    this.lifecycles.length = 0
+    this._lifecycles.length = 0
   }
 
   _lifecyclesReg(): RegLifecycleHandler {
     return (lifecycle) => {
-      this.lifecycles.push(lifecycle)
+      this._lifecycles.push(lifecycle)
     }
   }
 
-  renderContent(content: PlaceholderContent | null) {
-    if (content) {
-      this.lastPlace = content(new ParentPlaceholderPlace(this), this._lifecyclesReg())
+  _renderContent(content: PlaceholderContent): void {
+    if (content != null) {
+      this._lastPlace = content(placeInParentPlaceholder(this), this._lifecyclesReg())
     }
   }
 
-  setContent(content: PlaceholderContent | null) {
+  erase(): void {
     this.unmount()
     this.dispose()
-    unrenderNodes(this.place, this.lastPlace)
-    this.lastPlace = this.place
-    this.renderContent(content)
+    unrenderNodes(this._place, this._lastPlace)
+  }
+
+  setContent(content: PlaceholderContent): void {
+    this.erase()
+    this._lastPlace = this._place
+    this._renderContent(content)
     this.mount()
   }
 
-  spawnBefore(content: PlaceholderContent | null): Placeholder {
-    const spawned = new PlaceholderImpl(this.place, content)
-    this.place = spawned
+  spawnBefore(content: PlaceholderContent): PlaceholderImpl {
+    const spawned = new PlaceholderImpl(this._place, content)
+    this._place = spawned
     return spawned
   }
 
-  spawnAfter(content: PlaceholderContent | null): Placeholder {
-    const spawned = new PlaceholderImpl(this.place, null)
-    spawned.lifecycles = this.lifecycles
-    spawned.lastPlace = this.lastPlace
-    this.place = spawned
-    this.lastPlace = this.place
-    this.lifecycles = []
-    this.renderContent(content)
-    return spawned
+  removeBefore(): void {
+    if (this._place instanceof PlaceholderImpl) {
+      this._place.erase()
+      this._place = this._place._place
+    }
   }
 
-  swapWith(placeholder: PlaceholderImpl) {
-    const thisFragment = takeNodes(this.place, this.lastPlace)
-    const otherFragment = takeNodes(placeholder.place, placeholder.lastPlace)
-    const lifecycles = this.lifecycles
-    const place = this.place
-    const lastPlace = this.lastPlace
-    this.lifecycles = placeholder.lifecycles
-    this.place = placeholder.place
-    this.lastPlace = placeholder.lastPlace
-    placeholder.lifecycles = lifecycles
-    placeholder.place = place
-    placeholder.lastPlace = lastPlace
-    renderNode(this.place, thisFragment)
-    renderNode(placeholder.place, otherFragment)
+  swapWith(placeholder: PlaceholderImpl): void {
+    const thisFragment = takeNodes(this._place, this._lastPlace)
+    const otherFragment = takeNodes(placeholder._place, placeholder._lastPlace)
+    const lifecycles = this._lifecycles
+    const place = this._place
+    const lastPlace = this._lastPlace
+    this._lifecycles = placeholder._lifecycles
+    this._place = placeholder._place
+    this._lastPlace = placeholder._lastPlace
+    placeholder._lifecycles = lifecycles
+    placeholder._place = place
+    placeholder._lastPlace = lastPlace
+    renderNode(this._place, thisFragment)
+    renderNode(placeholder._place, otherFragment)
   }
 
-  moveToPlace(place: Place) {
-    const fragment = takeNodes(this.place, this.lastPlace)
-    this.place = place
-    renderNode(this.place, fragment)
+  moveToPlace(place: Place): void {
+    const fragment = takeNodes(this._place, this._lastPlace)
+    this._place = place
+    renderNode(this._place, fragment)
   }
 }
