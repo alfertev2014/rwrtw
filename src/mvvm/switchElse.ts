@@ -1,25 +1,18 @@
-import { type Placeholder } from "../placeholder"
-import { plh, cmpnt, type RenderedContent } from "../template"
-import { templateContent } from "../template/rendering"
+import { type PlaceholderContent, type Placeholder, createPlaceholder } from "../placeholder"
 
 export interface Switch<T> {
   value: T
 }
 
-export type CaseBranch<T> = [T, (() => RenderedContent) | null]
+export type CaseBranch<T> = [T, PlaceholderContent]
 
 class SwitchImpl<T> implements Switch<T> {
   _value: T
   branches: Array<CaseBranch<T>>
-  defaultBranch: (() => RenderedContent) | null
+  defaultBranch: PlaceholderContent
   readonly placeholder: Placeholder
 
-  constructor(
-    placeholder: Placeholder,
-    value: T,
-    branches: Array<CaseBranch<T>>,
-    defaultBranch: (() => RenderedContent) | null,
-  ) {
+  constructor(placeholder: Placeholder, value: T, branches: Array<CaseBranch<T>>, defaultBranch: PlaceholderContent) {
     this.placeholder = placeholder
     this._value = value
     this.branches = branches
@@ -32,12 +25,12 @@ class SwitchImpl<T> implements Switch<T> {
 
   set value(value: T) {
     if (this._value !== value) {
-      this.placeholder.setContent(templateContent(this._selectBranch()))
+      this.placeholder.setContent(this._selectBranch())
       this._value = value
     }
   }
 
-  _selectBranch(): RenderedContent {
+  _selectBranch(): PlaceholderContent {
     return selectBranch(this.value, this.branches, this.defaultBranch)
   }
 }
@@ -45,25 +38,26 @@ class SwitchImpl<T> implements Switch<T> {
 const selectBranch = <T>(
   value: T,
   branches: Array<CaseBranch<T>>,
-  defaultBranch: (() => RenderedContent) | null,
-): RenderedContent => {
+  defaultBranch: PlaceholderContent,
+): PlaceholderContent => {
   for (const branch of branches) {
     if (value === branch[0]) {
-      return branch[1]?.()
+      return branch[1]
     }
   }
-  return defaultBranch?.()
+  return defaultBranch
 }
 
-export const switchElse = cmpnt(
+export const switchElse =
   <T>(
     value: T,
     branches: Array<CaseBranch<T>>,
-    defaultBranch: (() => RenderedContent) | null = null,
+    defaultBranch: PlaceholderContent,
     handler?: (sw: Switch<T>) => void,
-  ): RenderedContent => {
-    return plh(selectBranch(value, branches, defaultBranch), (placeholder: Placeholder) => {
-      handler?.(new SwitchImpl<T>(placeholder, value, branches, defaultBranch))
-    })
-  },
-)
+  ): PlaceholderContent =>
+  (place, regLifecycle) => {
+    const placeholder = createPlaceholder(place, selectBranch(value, branches, defaultBranch))
+    regLifecycle(placeholder)
+    handler?.(new SwitchImpl<T>(placeholder, value, branches, defaultBranch))
+    return placeholder
+  }

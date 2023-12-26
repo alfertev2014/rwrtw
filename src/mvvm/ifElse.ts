@@ -1,30 +1,31 @@
-import { plh, cmpnt, type RenderedContent } from "../template"
-import { templateContent } from "../template/rendering"
+import { type PlaceholderContent, createPlaceholder } from "../placeholder"
 
 export interface IfElse {
   condition: boolean
 }
 
-export const ifElse = cmpnt(
+export const ifElse =
   (
     condition: boolean,
-    trueBranch: (() => RenderedContent) | null,
-    falseBranch: (() => RenderedContent) | null,
+    trueBranch: PlaceholderContent,
+    falseBranch: PlaceholderContent,
     handler?: (ifElse: IfElse) => void,
-  ): RenderedContent => {
-    return plh(condition ? trueBranch?.() : falseBranch?.(), (placeholder) => {
-      let _value = condition
-      handler?.({
-        get condition() {
-          return _value
-        },
-        set condition(value: boolean) {
-          if (_value !== value) {
-            placeholder.setContent(templateContent(value ? trueBranch?.() : falseBranch?.()))
-            _value = value
-          }
-        },
-      })
+  ): PlaceholderContent =>
+  (place, regLifecycle) => {
+    const placeholder = createPlaceholder(place, condition ? trueBranch : falseBranch)
+    regLifecycle(placeholder)
+
+    let _value = condition
+    handler?.({
+      get condition() {
+        return _value
+      },
+      set condition(value: boolean) {
+        if (_value !== value) {
+          placeholder.setContent(condition ? trueBranch : falseBranch)
+          _value = value
+        }
+      },
     })
-  },
-)
+    return placeholder
+  }

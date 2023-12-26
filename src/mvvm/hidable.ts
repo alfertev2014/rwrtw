@@ -1,4 +1,4 @@
-import { cmpnt, type RenderedComponent, type RenderedContent } from "../template"
+import { type PlaceholderContent } from "../placeholder"
 import { ifElse } from "./ifElse"
 
 export interface Hidable {
@@ -7,25 +7,23 @@ export interface Hidable {
   visible: boolean
 }
 
-export const hidable = cmpnt(
-  (content: () => RenderedContent, handler?: (ref: Hidable) => void): RenderedComponent =>
-    ifElse(true, content, null, (ref) => {
-      handler?.({
-        get visible() {
-          return ref.condition
-        },
+export const hidable = (content: PlaceholderContent, handler?: (ref: Hidable) => void): PlaceholderContent =>
+  ifElse(true, content, null, (ref) => {
+    handler?.({
+      get visible() {
+        return ref.condition
+      },
 
-        set visible(value: boolean) {
-          ref.condition = value
-        },
+      set visible(value: boolean) {
+        ref.condition = value
+      },
 
-        hide() {
-          this.visible = false
-        },
+      hide() {
+        this.visible = false
+      },
 
-        show() {
-          this.visible = true
-        },
-      })
-    }),
-)
+      show() {
+        this.visible = true
+      },
+    })
+  })
