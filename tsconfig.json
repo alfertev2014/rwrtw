@@ -2,12 +2,10 @@
   "compilerOptions": {
     "outDir": "./lib",
     "strict": true,
-    "module": "ES2020",
-    "moduleResolution": "node",
-    "removeComments": true,
+    "module": "Node16",
     "target": "ES2020",
     "declaration": true,
-    "declarationDir": "./lib"
+    "isolatedModules": true
   },
   "include": ["src"]
 }

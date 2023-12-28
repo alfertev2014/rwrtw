@@ -1,5 +1,5 @@
-import { type PlaceholderContent } from "../placeholder"
-import { ifElse } from "./ifElse"
+import { type PlaceholderContent } from "../core/index.js"
+import { ifElse } from "./ifElse.js"
 
 export interface Hidable {
   hide: () => void

@@ -1,8 +1,7 @@
-import { dce, setAttr, txt } from "../dom/helpers"
-import { type PlaceholderContent, type RegLifecycleHandler, createPlaceholder } from "../placeholder"
-import { type Place, placeInParentNode, renderNode } from "../placeholder/place"
-import { type RenderedContent, type RenderedElement } from "."
-import { createList } from "../list"
+import { dce, setAttr, txt } from "../dom/helpers.js"
+import { type PlaceholderContent, type RegLifecycleHandler, createPlaceholder, createList } from "../core/index.js"
+import { type Place, placeInParentNode, renderNode } from "../core/impl/place.js"
+import { type RenderedContent, type RenderedElement } from "./index.js"
 
 const renderElement = (
   { tag, attrs, handlers, children }: RenderedElement,

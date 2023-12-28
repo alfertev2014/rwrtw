@@ -1,5 +1,2 @@
-export * from "./internal/events"
-export type { List } from "./list"
-export { createPlaceholder, type Placeholder } from "./placeholder"
-export * from "./mvvm"
-export * from "./template"
+export * from "./core/index.js"
+export * from "./components/index.js"

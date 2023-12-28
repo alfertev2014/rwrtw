@@ -1,4 +1,4 @@
-import { type Lifecycle } from "../placeholder/lifecycle"
+import { type Lifecycle } from "./core/index.js"
 
 export type EventHandlersMap = Record<string, EventListenerOrEventListenerObject>
 

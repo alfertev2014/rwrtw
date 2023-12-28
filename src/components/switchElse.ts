@@ -1,4 +1,4 @@
-import { type PlaceholderContent, type Placeholder, createPlaceholder } from "../placeholder"
+import { type PlaceholderContent, type Placeholder, createPlaceholder } from "../core/index.js"
 
 export interface Switch<T> {
   value: T

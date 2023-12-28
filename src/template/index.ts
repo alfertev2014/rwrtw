@@ -1,8 +1,6 @@
-import { type ElementAttrValue } from "../dom/helpers"
-import { EventHandlerController, type EventHandlersMap } from "../internal/events"
-import { type List } from "../list"
-import { type Placeholder } from "../placeholder"
-import { type Lifecycle } from "../placeholder/lifecycle"
+import { type ElementAttrValue } from "../dom/helpers.js"
+import { EventHandlerController, type EventHandlersMap } from "../events.js"
+import { type List, type Lifecycle, type Placeholder } from "../core/index.js"
 
 export type RenderedType = "element" | "text" | "placeholder" | "list" | "component" | "lifecycle"
 

@@ -1,5 +1,4 @@
-import { type Placeholder, type PlaceholderContent, type RegLifecycleHandler } from "."
-import { type Lifecycle } from "./lifecycle"
+import { type Lifecycle, type Placeholder, type PlaceholderContent, type RegLifecycleHandler } from "../index.js"
 import {
   type DOMPlace,
   type Place,
@@ -8,7 +7,7 @@ import {
   renderNode,
   takeNodes,
   unrenderNodes,
-} from "./place"
+} from "./place.js"
 
 export class PlaceholderImpl extends PlaceholderNode implements Placeholder {
   _lifecycles: Lifecycle[]

@@ -2,15 +2,15 @@
   "name": "rwrtw",
   "version": "0.0.7",
   "description": "Tiny DOM helpers and building blocks for MVVM and UI components",
-  "main": "lib/index.js",
-  "module": "lib/index.js",
-  "types": "lib/index.d.ts",
+  "type": "module",
+  "main": "./lib/index.js",
+  "types": "./lib/index.d.ts",
   "files": [
     "lib"
   ],
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "lint": "eslint src",
+    "lint": "eslint",
     "prettier": "prettier --write src",
     "prepack": "npm run clean && npm run prettier && npm run lint && npm run build",
     "build": "tsc",

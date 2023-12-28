@@ -1,4 +1,4 @@
-import { type Placeholder } from "."
+import { type Placeholder } from "../index.js"
 
 class ParentNodePlace {
   parent: Node

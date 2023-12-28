@@ -1,4 +1,4 @@
-import { el, type ElementHandler, type TemplateElementAttrsMap } from "./template"
+import { el, type ElementHandler, type TemplateElementAttrsMap } from "./index.js"
 
 const abbrev =
   (tag: string) =>

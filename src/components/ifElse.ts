@@ -1,4 +1,4 @@
-import { type PlaceholderContent, createPlaceholder } from "../placeholder"
+import { type PlaceholderContent, createPlaceholder } from "../core/index.js"
 
 export interface IfElse {
   condition: boolean
