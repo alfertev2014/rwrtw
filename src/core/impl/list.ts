@@ -1,8 +1,8 @@
-import { type List, type PlaceholderContent } from "../index.js"
+import { type PlaceholderList, type PlaceholderContent } from "../index.js"
 import { type DOMPlace, type Place, PlaceholderNode, lastPlaceNode } from "./place.js"
 import { PlaceholderImpl } from "./placeholder.js"
 
-export class ListImpl extends PlaceholderNode implements List {
+export class ListImpl extends PlaceholderNode implements PlaceholderList {
   readonly place: Place
   readonly elements: PlaceholderImpl[]
   constructor(place: Place, contents: PlaceholderContent[]) {

@@ -1,6 +1,6 @@
 import { type ElementAttrValue } from "../dom/helpers.js"
 import { EventHandlerController, type EventHandlersMap } from "../events.js"
-import { type List, type Lifecycle, type Placeholder } from "../core/index.js"
+import { type PlaceholderList, type Lifecycle, type Placeholder } from "../core/index.js"
 
 export type RenderedType = "element" | "text" | "placeholder" | "list" | "component" | "lifecycle"
 
@@ -27,7 +27,7 @@ export interface RenderedPlaceholder {
 export interface RenderedList {
   type: "list"
   contents: RenderedContent[]
-  handler?: (list: List) => void
+  handler?: (list: PlaceholderList) => void
 }
 
 export interface RenderedComponent {
@@ -87,7 +87,7 @@ export const plh = (content: RenderedContent, handler?: (placeholder: Placeholde
   handler,
 })
 
-export const list = (contents: RenderedContent[], handler?: (list: List) => void): RenderedList => ({
+export const list = (contents: RenderedContent[], handler?: (list: PlaceholderList) => void): RenderedList => ({
   type: "list",
   contents,
   handler,

@@ -1,22 +1,18 @@
 import { dce, setAttr, txt } from "../dom/helpers.js"
-import { type PlaceholderContent, type RegLifecycleHandler, createPlaceholder, createList } from "../core/index.js"
-import { type Place, placeInParentNode, renderNode } from "../core/impl/place.js"
+import { type PlaceholderContent, type PlaceholderContext } from "../core/index.js"
 import { type RenderedContent, type RenderedElement } from "./index.js"
 
-const renderElement = (
-  { tag, attrs, handlers, children }: RenderedElement,
-  regLifecycle: RegLifecycleHandler,
-): Place => {
+const renderElement = ({ tag, attrs, handlers, children }: RenderedElement, context: PlaceholderContext): void => {
   const element = dce(tag)
 
-  processRendered(placeInParentNode(element), regLifecycle, children)
+  processRendered(context.createChildContextIn(element), children)
 
   if (attrs != null) {
     for (const [name, value] of Object.entries(attrs)) {
       if (typeof value === "function") {
         const lifecycle = value(element, name)
         if (lifecycle != null) {
-          regLifecycle(lifecycle)
+          context.regLifecycle(lifecycle)
         }
       } else {
         setAttr(element, name, value)
@@ -26,51 +22,42 @@ const renderElement = (
   for (const handler of handlers) {
     const lifecycle = handler(element)
     if (lifecycle != null) {
-      regLifecycle(lifecycle)
+      context.regLifecycle(lifecycle)
     }
   }
-  return element
 }
 
-export const processRendered = (place: Place, regLifecycle: RegLifecycleHandler, rendered: RenderedContent): Place => {
+export const processRendered = (context: PlaceholderContext, rendered: RenderedContent): void => {
   if (typeof rendered === "boolean" || rendered === null || typeof rendered === "undefined") {
-    return place
+    return
   }
   if (typeof rendered === "string") {
-    place = renderNode(place, txt(rendered))
+    context.renderNode(txt(rendered))
   } else if (typeof rendered === "number") {
-    place = renderNode(place, txt(rendered.toString()))
+    context.renderNode(txt(rendered.toString()))
   } else if (Array.isArray(rendered)) {
     for (const r of rendered) {
-      place = processRendered(place, regLifecycle, r)
+      processRendered(context, r)
     }
   } else if (rendered.type === "element") {
-    place = renderElement(rendered, regLifecycle)
+    renderElement(rendered, context)
   } else if (rendered.type === "text") {
-    place = renderNode(place, txt(rendered.data))
+    context.renderNode(txt(rendered.data))
   } else if (rendered.type === "placeholder") {
-    const plh = createPlaceholder(place, templateContent(rendered.content))
-    regLifecycle(plh)
+    const plh = context.renderPlaceholder(templateContent(rendered.content))
     rendered.handler?.(plh)
-    place = plh
   } else if (rendered.type === "list") {
-    const list = createList(
-      place,
-      rendered.contents.map((content) => templateContent(content)),
-    )
-    regLifecycle(list)
+    const list = context.renderList(rendered.contents.map((content) => templateContent(content)))
     rendered.handler?.(list)
-    place = list
   } else if (rendered.type === "component") {
-    place = processRendered(place, regLifecycle, rendered.factory(...rendered.args))
+    processRendered(context, rendered.factory(...rendered.args))
   } else if (rendered.type === "lifecycle") {
-    regLifecycle(rendered)
+    context.regLifecycle(rendered)
   }
-  return place
 }
 
 export const templateContent =
   (content: RenderedContent): PlaceholderContent =>
-  (place, regLifecycle) => {
-    return processRendered(place, regLifecycle, content)
+  (context) => {
+    processRendered(context, content)
   }

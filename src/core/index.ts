@@ -1,16 +1,6 @@
 import { PlaceholderImpl } from "./impl/placeholder.js"
 
-import { type DOMPlace, type Place } from "./impl/place.js"
-import { ListImpl } from "./impl/list.js"
-
-export {
-  type DOMPlace,
-  type Place,
-  placeAfterNode,
-  placeInParentNode,
-  placeAfterPlaceholder,
-  placeInParentPlaceholder,
-} from "./impl/place.js"
+import { ParentNodePlace } from "./impl/place.js"
 
 export interface Lifecycle {
   readonly mount?: () => void
@@ -18,24 +8,41 @@ export interface Lifecycle {
   readonly dispose?: () => void
 }
 
-export interface Placeholder extends Lifecycle {
-  readonly place: Place
-  setContent: (content: PlaceholderContent) => void
-  lastPlaceNode: () => DOMPlace
-}
-
 export type RegLifecycleHandler = (lifecycle: Lifecycle) => void
 
-export type PlaceholderContent = ((place: Place, regLifecycle: RegLifecycleHandler) => Place) | null
-
-export const createPlaceholder = (place: Place, content: PlaceholderContent): Placeholder =>
-  new PlaceholderImpl(place, content)
-
-export interface List extends Lifecycle {
-  insert: (index: number, content: PlaceholderContent) => void
-  removeAt: (index: number) => void
-  moveFromTo: (fromIndex: number, toIndex: number) => void
-  lastPlaceNode: () => DOMPlace
+export interface PlaceholderContext {
+  readonly regLifecycle: <L extends Lifecycle>(lifecycle: L) => L
+  readonly renderNode: <N extends Node>(node: N) => N
+  readonly renderPlaceholder: (content: PlaceholderContent) => Placeholder
+  readonly renderList: (contents: PlaceholderContent[]) => PlaceholderList
+  readonly renderComponent: (content: PlaceholderContent) => void
+  readonly createChildContextAfter: (node: Node) => PlaceholderContext
+  readonly createChildContextIn: (node: ParentNode) => PlaceholderContext
 }
 
-export const createList = (place: Place, contents: PlaceholderContent[]): List => new ListImpl(place, contents)
+export type PlaceholderContent = ((content: PlaceholderContext) => void) | null
+
+export interface Placeholder extends Lifecycle {
+  readonly setContent: (content: PlaceholderContent) => void
+}
+
+export interface PlaceholderList extends Lifecycle {
+  readonly insert: (index: number, content: PlaceholderContent) => void
+  readonly removeAt: (index: number) => void
+  readonly moveFromTo: (fromIndex: number, toIndex: number) => void
+}
+
+export const createPlaceholderIn = (node: ParentNode): Placeholder => {
+  const res = new PlaceholderImpl(new ParentNodePlace(node), null)
+  res.mount()
+  return res
+}
+
+export const createPlaceholderAfter = (node: Node): Placeholder => {
+  if (node.parentNode === null) {
+    throw new Error("Cannot create placeholder after dangling node without parent")
+  }
+  const res = new PlaceholderImpl(node, null)
+  res.mount()
+  return res
+}

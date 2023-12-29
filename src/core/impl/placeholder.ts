@@ -1,12 +1,19 @@
-import { type Lifecycle, type Placeholder, type PlaceholderContent, type RegLifecycleHandler } from "../index.js"
+import {
+  type PlaceholderContext,
+  type Lifecycle,
+  type Placeholder,
+  type PlaceholderContent,
+  type PlaceholderList,
+} from "../index.js"
+import { ListImpl } from "./list.js"
 import {
   type DOMPlace,
   type Place,
   PlaceholderNode,
-  placeInParentPlaceholder,
   renderNode,
   takeNodes,
   unrenderNodes,
+  ParentNodePlace,
 } from "./place.js"
 
 export class PlaceholderImpl extends PlaceholderNode implements Placeholder {
@@ -19,10 +26,6 @@ export class PlaceholderImpl extends PlaceholderNode implements Placeholder {
     this._place = place
     this._lastPlace = place
     this._renderContent(content)
-  }
-
-  get place(): Place {
-    return this._place
   }
 
   lastPlaceNode(): DOMPlace {
@@ -51,15 +54,12 @@ export class PlaceholderImpl extends PlaceholderNode implements Placeholder {
     this._lifecycles.length = 0
   }
 
-  _lifecyclesReg(): RegLifecycleHandler {
-    return (lifecycle) => {
-      this._lifecycles.push(lifecycle)
-    }
-  }
-
   _renderContent(content: PlaceholderContent): void {
     if (content != null) {
-      this._lastPlace = content(placeInParentPlaceholder(this), this._lifecyclesReg())
+      const context = new PlaceholderContextImpl(this)
+      // TODO: Handle exceptions
+      content(context)
+      this._lastPlace = context.place
     }
   }
 
@@ -72,6 +72,7 @@ export class PlaceholderImpl extends PlaceholderNode implements Placeholder {
 
   setContent(content: PlaceholderContent): void {
     this.erase()
+    // TODO: Use DocumentFragment
     this._renderContent(content)
     this.mount()
   }
@@ -109,5 +110,57 @@ export class PlaceholderImpl extends PlaceholderNode implements Placeholder {
     const fragment = takeNodes(this._place, this._lastPlace)
     this._place = place
     renderNode(this._place, fragment)
+  }
+}
+
+class PlaceholderContextImpl implements PlaceholderContext {
+  readonly placeholder: PlaceholderImpl
+  place: Place
+  constructor(placeholder: PlaceholderImpl) {
+    this.placeholder = placeholder
+    this.place = placeholder._lastPlace
+  }
+
+  regLifecycle<L extends Lifecycle>(lifecycle: L): L {
+    this.placeholder._lifecycles.push(lifecycle)
+    return lifecycle
+  }
+
+  renderNode<N extends Node>(node: N): N {
+    const res = renderNode(this.place, node)
+    this.place = res
+    return res
+  }
+
+  renderPlaceholder(content: PlaceholderContent): Placeholder {
+    const placeholder = new PlaceholderImpl(this.placeholder._lastPlace, content)
+    this.placeholder._lifecycles.push(placeholder)
+    this.place = placeholder
+    return placeholder
+  }
+
+  renderList(contents: PlaceholderContent[]): PlaceholderList {
+    const list = new ListImpl(this.placeholder._lastPlace, contents)
+    this.placeholder._lifecycles.push(list)
+    this.placeholder._lastPlace = list
+    return list
+  }
+
+  renderComponent(content: PlaceholderContent): void {
+    if (content != null) {
+      content(this)
+    }
+  }
+
+  createChildContextAfter(node: Node): PlaceholderContext {
+    const res = new PlaceholderContextImpl(this.placeholder)
+    res.place = node
+    return res
+  }
+
+  createChildContextIn(node: ParentNode): PlaceholderContext {
+    const res = new PlaceholderContextImpl(this.placeholder)
+    res.place = new ParentNodePlace(node)
+    return res
   }
 }

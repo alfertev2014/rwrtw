@@ -1,4 +1,4 @@
-import { type PlaceholderContent, createPlaceholder } from "../core/index.js"
+import { type PlaceholderContent } from "../core/index.js"
 
 export interface IfElse {
   condition: boolean
@@ -11,9 +11,8 @@ export const ifElse =
     falseBranch: PlaceholderContent,
     handler?: (ifElse: IfElse) => void,
   ): PlaceholderContent =>
-  (place, regLifecycle) => {
-    const placeholder = createPlaceholder(place, condition ? trueBranch : falseBranch)
-    regLifecycle(placeholder)
+  (context) => {
+    const placeholder = context.renderPlaceholder(condition ? trueBranch : falseBranch)
 
     let _value = condition
     handler?.({
@@ -27,5 +26,4 @@ export const ifElse =
         }
       },
     })
-    return placeholder
   }

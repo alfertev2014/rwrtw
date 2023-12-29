@@ -1,4 +1,4 @@
-import { type PlaceholderContent, type Placeholder, createPlaceholder } from "../core/index.js"
+import { type PlaceholderContent, type Placeholder } from "../core/index.js"
 
 export interface Switch<T> {
   value: T
@@ -55,9 +55,7 @@ export const switchElse =
     defaultBranch: PlaceholderContent,
     handler?: (sw: Switch<T>) => void,
   ): PlaceholderContent =>
-  (place, regLifecycle) => {
-    const placeholder = createPlaceholder(place, selectBranch(value, branches, defaultBranch))
-    regLifecycle(placeholder)
+  (context) => {
+    const placeholder = context.renderPlaceholder(selectBranch(value, branches, defaultBranch))
     handler?.(new SwitchImpl<T>(placeholder, value, branches, defaultBranch))
-    return placeholder
   }

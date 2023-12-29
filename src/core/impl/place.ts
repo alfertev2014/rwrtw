@@ -1,6 +1,6 @@
-import { type Placeholder } from "../index.js"
+import { type PlaceholderImpl } from "./placeholder.js"
 
-class ParentNodePlace {
+export class ParentNodePlace {
   parent: Node
   constructor(parent: Node) {
     this.parent = parent
@@ -13,24 +13,19 @@ export abstract class PlaceholderNode {
   abstract lastPlaceNode(): DOMPlace
 }
 
-class ParentPlaceholderPlace extends PlaceholderNode {
-  parent: Placeholder
-  constructor(parent: Placeholder) {
+export class ParentPlaceholderPlace extends PlaceholderNode {
+  parent: PlaceholderImpl
+  constructor(parent: PlaceholderImpl) {
     super()
     this.parent = parent
   }
 
   lastPlaceNode(): DOMPlace {
-    return lastPlaceNode(this.parent.place)
+    return lastPlaceNode(this.parent._place)
   }
 }
 
 export type Place = DOMPlace | PlaceholderNode
-
-export const placeAfterNode = (node: Node): Place => node
-export const placeInParentNode = (node: Node): Place => new ParentNodePlace(node)
-export const placeAfterPlaceholder = (placeholder: Placeholder): Place => placeholder
-export const placeInParentPlaceholder = (placeholder: Placeholder): Place => new ParentPlaceholderPlace(placeholder)
 
 export const lastPlaceNode = (place: Place): DOMPlace => {
   if (place instanceof PlaceholderNode) {
