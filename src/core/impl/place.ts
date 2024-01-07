@@ -1,8 +1,8 @@
 import { type PlaceholderImpl } from "./placeholder.js"
 
 export class ParentNodePlace {
-  parent: Node
-  constructor(parent: Node) {
+  parent: ParentNode
+  constructor(parent: ParentNode) {
     this.parent = parent
   }
 }
@@ -44,7 +44,7 @@ export const renderNode = <T extends Node>(place: Place, node: T): T => {
       throw new Error("Place DOM node has no parent")
     }
   } else {
-    return domPlace.parent.appendChild(node)
+    return domPlace.parent.insertBefore(node, domPlace.parent.firstChild)
   }
 }
 

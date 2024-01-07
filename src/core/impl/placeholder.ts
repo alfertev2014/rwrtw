@@ -16,8 +16,8 @@ import {
   ParentNodePlace,
 } from "./place.js"
 
-export class PlaceholderImpl extends PlaceholderNode implements Placeholder {
-  _lifecycles: Lifecycle[]
+export class PlaceholderImpl extends PlaceholderNode implements Placeholder, Lifecycle {
+  readonly _lifecycles: Lifecycle[]
   _place: Place
   _lastPlace: Place
   constructor(place: Place, content: PlaceholderContent) {
@@ -56,10 +56,10 @@ export class PlaceholderImpl extends PlaceholderNode implements Placeholder {
 
   _renderContent(content: PlaceholderContent): void {
     if (content != null) {
-      const context = new PlaceholderContextImpl(this)
       // TODO: Handle exceptions
+      const context = new PlaceholderContextImpl(this._lifecycles, this._lastPlace)
       content(context)
-      this._lastPlace = context.place
+      this._lastPlace = context._lastPlace
     }
   }
 
@@ -70,7 +70,7 @@ export class PlaceholderImpl extends PlaceholderNode implements Placeholder {
     this._lastPlace = this._place
   }
 
-  setContent(content: PlaceholderContent): void {
+  replaceContent(content: PlaceholderContent): void {
     this.erase()
     // TODO: Use DocumentFragment
     this._renderContent(content)
@@ -90,22 +90,6 @@ export class PlaceholderImpl extends PlaceholderNode implements Placeholder {
     }
   }
 
-  swapWith(placeholder: PlaceholderImpl): void {
-    const thisFragment = takeNodes(this._place, this._lastPlace)
-    const otherFragment = takeNodes(placeholder._place, placeholder._lastPlace)
-    const lifecycles = this._lifecycles
-    const place = this._place
-    const lastPlace = this._lastPlace
-    this._lifecycles = placeholder._lifecycles
-    this._place = placeholder._place
-    this._lastPlace = placeholder._lastPlace
-    placeholder._lifecycles = lifecycles
-    placeholder._place = place
-    placeholder._lastPlace = lastPlace
-    renderNode(this._place, thisFragment)
-    renderNode(placeholder._place, otherFragment)
-  }
-
   moveToPlace(place: Place): void {
     const fragment = takeNodes(this._place, this._lastPlace)
     this._place = place
@@ -113,54 +97,44 @@ export class PlaceholderImpl extends PlaceholderNode implements Placeholder {
   }
 }
 
-class PlaceholderContextImpl implements PlaceholderContext {
-  readonly placeholder: PlaceholderImpl
-  place: Place
-  constructor(placeholder: PlaceholderImpl) {
-    this.placeholder = placeholder
-    this.place = placeholder._lastPlace
+export class PlaceholderContextImpl implements PlaceholderContext {
+  _lifecycles: Lifecycle[]
+  _lastPlace: Place
+  constructor(lifecycles: Lifecycle[], lastPlace: Place) {
+    this._lifecycles = lifecycles
+    this._lastPlace = lastPlace
   }
 
-  regLifecycle<L extends Lifecycle>(lifecycle: L): L {
-    this.placeholder._lifecycles.push(lifecycle)
+  appendLifecycle<L extends Lifecycle>(lifecycle: L): L {
+    this._lifecycles.push(lifecycle)
     return lifecycle
   }
 
-  renderNode<N extends Node>(node: N): N {
-    const res = renderNode(this.place, node)
-    this.place = res
+  appendNode<N extends Node>(node: N): N {
+    const res = renderNode(this._lastPlace, node)
+    this._lastPlace = res
     return res
   }
 
-  renderPlaceholder(content: PlaceholderContent): Placeholder {
-    const placeholder = new PlaceholderImpl(this.placeholder._lastPlace, content)
-    this.placeholder._lifecycles.push(placeholder)
-    this.place = placeholder
+  appendPlaceholder(content: PlaceholderContent): Placeholder {
+    const placeholder = new PlaceholderImpl(this._lastPlace, content)
+    this._lifecycles.push(placeholder)
+    this._lastPlace = placeholder
     return placeholder
   }
 
-  renderList(contents: PlaceholderContent[]): PlaceholderList {
-    const list = new ListImpl(this.placeholder._lastPlace, contents)
-    this.placeholder._lifecycles.push(list)
-    this.placeholder._lastPlace = list
+  appendList(contents: PlaceholderContent[]): PlaceholderList {
+    const list = new ListImpl(this._lastPlace, contents)
+    this._lifecycles.push(list)
+    this._lastPlace = list
     return list
   }
 
-  renderComponent(content: PlaceholderContent): void {
-    if (content != null) {
-      content(this)
-    }
+  createContextAfter(node: Node): PlaceholderContext {
+    return new PlaceholderContextImpl(this._lifecycles, node)
   }
 
-  createChildContextAfter(node: Node): PlaceholderContext {
-    const res = new PlaceholderContextImpl(this.placeholder)
-    res.place = node
-    return res
-  }
-
-  createChildContextIn(node: ParentNode): PlaceholderContext {
-    const res = new PlaceholderContextImpl(this.placeholder)
-    res.place = new ParentNodePlace(node)
-    return res
+  createContextIn(node: ParentNode): PlaceholderContext {
+    return new PlaceholderContextImpl(this._lifecycles, new ParentNodePlace(node))
   }
 }

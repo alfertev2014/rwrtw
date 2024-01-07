@@ -25,7 +25,7 @@ class SwitchImpl<T> implements Switch<T> {
 
   set value(value: T) {
     if (this._value !== value) {
-      this.placeholder.setContent(this._selectBranch())
+      this.placeholder.replaceContent(this._selectBranch())
       this._value = value
     }
   }
@@ -56,6 +56,6 @@ export const switchElse =
     handler?: (sw: Switch<T>) => void,
   ): PlaceholderContent =>
   (context) => {
-    const placeholder = context.renderPlaceholder(selectBranch(value, branches, defaultBranch))
+    const placeholder = context.appendPlaceholder(selectBranch(value, branches, defaultBranch))
     handler?.(new SwitchImpl<T>(placeholder, value, branches, defaultBranch))
   }

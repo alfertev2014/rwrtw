@@ -12,7 +12,7 @@ export const ifElse =
     handler?: (ifElse: IfElse) => void,
   ): PlaceholderContent =>
   (context) => {
-    const placeholder = context.renderPlaceholder(condition ? trueBranch : falseBranch)
+    const placeholder = context.appendPlaceholder(condition ? trueBranch : falseBranch)
 
     let _value = condition
     handler?.({
@@ -21,7 +21,7 @@ export const ifElse =
       },
       set condition(value: boolean) {
         if (_value !== value) {
-          placeholder.setContent(condition ? trueBranch : falseBranch)
+          placeholder.replaceContent(condition ? trueBranch : falseBranch)
           _value = value
         }
       },
