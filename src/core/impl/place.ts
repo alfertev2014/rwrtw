@@ -9,14 +9,23 @@ export class ParentNodePlace {
 
 export type DOMPlace = Node | ParentNodePlace
 
-export abstract class PlaceholderNode {
-  abstract lastPlaceNode(): DOMPlace
+export interface PlaceholderNode {
+  lastPlaceNode: () => DOMPlace
 }
 
-export class ParentPlaceholderPlace extends PlaceholderNode {
+export type Place = DOMPlace | PlaceholderNode
+
+export const lastPlaceNode = (place: Place): DOMPlace => {
+  if (place instanceof Node || place instanceof ParentNodePlace) {
+    return place
+  } else {
+    return place.lastPlaceNode()
+  }
+}
+
+export class ParentPlaceholderPlace implements PlaceholderNode {
   parent: PlaceholderImpl
   constructor(parent: PlaceholderImpl) {
-    super()
     this.parent = parent
   }
 
@@ -25,17 +34,7 @@ export class ParentPlaceholderPlace extends PlaceholderNode {
   }
 }
 
-export type Place = DOMPlace | PlaceholderNode
-
-export const lastPlaceNode = (place: Place): DOMPlace => {
-  if (place instanceof PlaceholderNode) {
-    return place.lastPlaceNode()
-  } else {
-    return place
-  }
-}
-
-export const renderNode = <T extends Node>(place: Place, node: T): T => {
+export const appendNodeAt = <T extends Node>(place: Place, node: T): T => {
   const domPlace = lastPlaceNode(place)
   if (domPlace instanceof Node) {
     if (domPlace.parentNode != null) {

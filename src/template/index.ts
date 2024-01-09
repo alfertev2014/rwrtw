@@ -1,102 +1,133 @@
-import { type ElementAttrValue } from "../dom/helpers.js"
+import { dce, setAttr, type ElementAttrValue, txt } from "../dom/helpers.js"
 import { EventHandlerController, type EventHandlersMap } from "../events.js"
-import { type PlaceholderList, type Lifecycle, type Placeholder, type PlaceholderContent } from "../core/index.js"
+import { type PlaceholderList, type Placeholder, type PlaceholderContent, type PlaceholderContext, appendNodeAt, type Place, ParentNodePlace } from "../core/index.js"
 
-export type RenderedType = "element" | "text" | "placeholder" | "list" | "component" | "lifecycle"
-
-export interface RenderedElement {
-  type: "element"
-  tag: string
-  attrs: TemplateElementAttrsMap | null
-  handlers: ElementHandler[]
-  children: RenderedContent
-}
-
-export interface RenderedText {
-  type: "text"
-  data: string
-  handler?: (node: Text) => Lifecycle | undefined
-}
+export type RenderedType = "placeholder" | "list" | "component"
 
 export interface RenderedPlaceholder {
   type: "placeholder"
-  content: RenderedContent
+  content: PlaceholderContent
   handler?: (placeholder: Placeholder) => void
+  context: PlaceholderContext
 }
 
 export interface RenderedList {
   type: "list"
-  contents: RenderedContent[]
+  contents: PlaceholderContent[]
   handler?: (list: PlaceholderList) => void
+  context: PlaceholderContext
 }
 
 export interface RenderedComponent {
   type: "component"
   factory: (...args: unknown[]) => PlaceholderContent
   args: unknown[]
+  context: PlaceholderContext
 }
 
-export interface RenderedLifecycle extends Lifecycle {
-  type: "lifecycle"
-}
-
-export type Rendered =
-  | RenderedElement
-  | RenderedText
+export type TemplateItem =
   | RenderedPlaceholder
   | RenderedList
   | RenderedComponent
-  | RenderedLifecycle
   | string
   | number
   | boolean
   | null
   | undefined
+  | Node
 
-export type RenderedContent = Rendered | RenderedContent[]
-
-export type ElementHandler = (element: HTMLElement) => Lifecycle | undefined
-export type AttributeHandler = (element: HTMLElement, attr: string) => Lifecycle | undefined
+export type ElementHandler = (element: HTMLElement) => void
+export type AttributeHandler = (element: HTMLElement, attr: string) => void
 
 export type TemplateElementAttrsMap = Record<string, ElementAttrValue | AttributeHandler>
 
 export const on =
-  (handlers: EventHandlersMap): ElementHandler =>
-  (element) =>
-    new EventHandlerController(element, handlers)
+  (context: PlaceholderContext, handlers: EventHandlersMap): ElementHandler =>
+  (element) => {
+    const res = new EventHandlerController(element, handlers)
+    context.appendLifecycle(res)
+    return res
+  }
+
+const processRendered = (place: Place, content: TemplateItem[]): void => {
+  for (const rendered of content) {
+    if (typeof rendered === "boolean" || rendered == null) {
+      return
+    }
+    if (typeof rendered === "string") {
+      place = appendNodeAt(place, txt(rendered))
+    } else if (typeof rendered === "number") {
+      place = appendNodeAt(place, txt(rendered.toString()))
+    } else if (rendered instanceof Node) {
+      place = appendNodeAt(place, rendered)
+    } else if (rendered.type === "placeholder") {
+      const plh = rendered.context.appendPlaceholder(rendered.content)
+      rendered.handler?.(plh)
+    } else if (rendered.type === "list") {
+      const list = rendered.context.appendList(rendered.contents)
+      rendered.handler?.(list)
+    } else if (rendered.type === "component") {
+      rendered.factory(...rendered.args)?.(rendered.context)
+    }
+  }
+}
 
 export const el =
   (tag: string, attrs: TemplateElementAttrsMap | null = null, ...handlers: ElementHandler[]) =>
-  (...children: RenderedContent[]): RenderedElement => ({
-    type: "element",
-    tag,
-    attrs,
-    handlers,
-    children,
-  })
+  (...children: TemplateItem[]): HTMLElement => {
+    const element = dce(tag)
 
-export const text = (data: string, handler?: (node: Text) => Lifecycle | undefined): RenderedText => ({
-  type: "text",
-  data,
-  handler,
-})
+    processRendered(new ParentNodePlace(element), children)
 
-export const plh = (content: RenderedContent, handler?: (placeholder: Placeholder) => void): RenderedPlaceholder => ({
+    if (attrs != null) {
+      for (const [name, value] of Object.entries(attrs)) {
+        if (typeof value === "function") {
+          value(element, name)
+        } else {
+          setAttr(element, name, value)
+        }
+      }
+    }
+
+    for (const handler of handlers) {
+      handler(element)
+    }
+    return element
+  }
+
+export const plh = (context: PlaceholderContext, content: PlaceholderContent, handler?: (placeholder: Placeholder) => void): RenderedPlaceholder => ({
   type: "placeholder",
   content,
   handler,
+  context
 })
 
-export const list = (contents: RenderedContent[], handler?: (list: PlaceholderList) => void): RenderedList => ({
+export const list = (context: PlaceholderContext, contents: PlaceholderContent[], handler?: (list: PlaceholderList) => void): RenderedList => ({
   type: "list",
   contents,
   handler,
+  context
 })
 
 export const cmpnt =
-  <Func extends (...args: any[]) => PlaceholderContent>(factory: Func) =>
+  <Func extends (...args: any[]) => PlaceholderContent>(context: PlaceholderContext, factory: Func) =>
   (...args: Parameters<Func>): RenderedComponent => ({
     type: "component",
     factory,
     args,
+    context
   })
+
+export interface TemplateRef<T> {
+  current: T
+  bind: () => (value: T) => void
+}
+
+export const ref = <T>(initValue: T): TemplateRef<T> => ({
+  current: initValue,
+  bind() {
+    return (value: T) => {
+      this.current = value
+    }
+  }
+})

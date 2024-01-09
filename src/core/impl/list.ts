@@ -1,12 +1,11 @@
 import { type PlaceholderList, type PlaceholderContent, type Lifecycle } from "../index.js"
-import { type DOMPlace, type Place, PlaceholderNode, lastPlaceNode } from "./place.js"
+import { type DOMPlace, type Place, lastPlaceNode } from "./place.js"
 import { PlaceholderImpl } from "./placeholder.js"
 
-export class ListImpl extends PlaceholderNode implements PlaceholderList, Lifecycle {
+export class ListImpl implements PlaceholderList, Lifecycle {
   readonly place: Place
   readonly elements: PlaceholderImpl[]
   constructor(place: Place, contents: PlaceholderContent[]) {
-    super()
     this.place = place
     this.elements = []
     let currentPlace = place
