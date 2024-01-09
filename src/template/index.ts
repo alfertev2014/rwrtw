@@ -20,8 +20,7 @@ export interface RenderedList {
 
 export interface RenderedComponent {
   type: "component"
-  factory: (...args: unknown[]) => PlaceholderContent
-  args: unknown[]
+  content: PlaceholderContent
   context: PlaceholderContext
 }
 
@@ -67,7 +66,7 @@ const processRendered = (place: Place, content: TemplateItem[]): void => {
       const list = rendered.context.appendList(rendered.contents)
       rendered.handler?.(list)
     } else if (rendered.type === "component") {
-      rendered.factory(...rendered.args)?.(rendered.context)
+      rendered.content?.(rendered.context)
     }
   }
 }
@@ -110,13 +109,34 @@ export const list = (context: PlaceholderContext, contents: PlaceholderContent[]
 })
 
 export const cmpnt =
-  <Func extends (...args: any[]) => PlaceholderContent>(context: PlaceholderContext, factory: Func) =>
-  (...args: Parameters<Func>): RenderedComponent => ({
+  (context: PlaceholderContext, content: PlaceholderContent): RenderedComponent => ({
     type: "component",
-    factory,
-    args,
+    content,
     context
   })
+
+export const fr = (...content: TemplateItem[]): PlaceholderContent => (context) => {
+  for (const rendered of content) {
+    if (typeof rendered === "boolean" || rendered == null) {
+      return
+    }
+    if (typeof rendered === "string") {
+      context.appendNode(txt(rendered))
+    } else if (typeof rendered === "number") {
+      context.appendNode(txt(rendered.toString()))
+    } else if (rendered instanceof Node) {
+      context.appendNode(rendered)
+    } else if (rendered.type === "placeholder") {
+      const plh = rendered.context.appendPlaceholder(rendered.content)
+      rendered.handler?.(plh)
+    } else if (rendered.type === "list") {
+      const list = rendered.context.appendList(rendered.contents)
+      rendered.handler?.(list)
+    } else if (rendered.type === "component") {
+      rendered.content?.(rendered.context)
+    }
+  }
+}
 
 export interface TemplateRef<T> {
   current: T
