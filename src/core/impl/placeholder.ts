@@ -6,14 +6,7 @@ import {
   type PlaceholderList,
 } from "../index.js"
 import { ListImpl as PlaceholderListImpl } from "./list.js"
-import {
-  type DOMPlace,
-  type Place,
-  appendNodeAt,
-  takeNodes,
-  unrenderNodes,
-  lastPlaceNode,
-} from "./place.js"
+import { type DOMPlace, type Place, appendNodeAt, takeNodes, unrenderNodes, lastPlaceNode } from "./place.js"
 
 export class PlaceholderImpl implements Placeholder, Lifecycle {
   readonly _lifecycles: Lifecycle[]
@@ -99,7 +92,7 @@ export class PlaceholderContextImpl implements PlaceholderContext {
     this._lifecycles = lifecycles
     this._lastPlace = lastPlace
   }
-  
+
   appendLifecycle<L extends Lifecycle>(lifecycle: L): L {
     this._lifecycles.push(lifecycle)
     return lifecycle

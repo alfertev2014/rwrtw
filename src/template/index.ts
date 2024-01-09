@@ -1,6 +1,14 @@
-import { dce, setAttr, type ElementAttrValue, txt } from "../dom/helpers.js"
+import { dce, setAttr, type ScalarValue, txt } from "../dom/helpers.js"
 import { EventHandlerController, type EventHandlersMap } from "../events.js"
-import { type PlaceholderList, type Placeholder, type PlaceholderContent, type PlaceholderContext, appendNodeAt, type Place, ParentNodePlace } from "../core/index.js"
+import {
+  type PlaceholderList,
+  type Placeholder,
+  type PlaceholderContent,
+  type PlaceholderContext,
+  appendNodeAt,
+  type Place,
+  ParentNodePlace,
+} from "../core/index.js"
 
 export type RenderedType = "placeholder" | "list" | "component"
 
@@ -24,21 +32,12 @@ export interface RenderedComponent {
   context: PlaceholderContext
 }
 
-export type TemplateItem =
-  | RenderedPlaceholder
-  | RenderedList
-  | RenderedComponent
-  | string
-  | number
-  | boolean
-  | null
-  | undefined
-  | Node
+export type TemplateItem = ScalarValue | Node | RenderedPlaceholder | RenderedList | RenderedComponent
 
 export type ElementHandler = (element: HTMLElement) => void
 export type AttributeHandler = (element: HTMLElement, attr: string) => void
 
-export type TemplateElementAttrsMap = Record<string, ElementAttrValue | AttributeHandler>
+export type TemplateElementAttrsMap = Record<string, ScalarValue | AttributeHandler>
 
 export const on =
   (context: PlaceholderContext, handlers: EventHandlersMap): ElementHandler =>
@@ -94,49 +93,58 @@ export const el =
     return element
   }
 
-export const plh = (context: PlaceholderContext, content: PlaceholderContent, handler?: (placeholder: Placeholder) => void): RenderedPlaceholder => ({
+export const plh = (
+  context: PlaceholderContext,
+  content: PlaceholderContent,
+  handler?: (placeholder: Placeholder) => void,
+): RenderedPlaceholder => ({
   type: "placeholder",
   content,
   handler,
-  context
+  context,
 })
 
-export const list = (context: PlaceholderContext, contents: PlaceholderContent[], handler?: (list: PlaceholderList) => void): RenderedList => ({
+export const list = (
+  context: PlaceholderContext,
+  contents: PlaceholderContent[],
+  handler?: (list: PlaceholderList) => void,
+): RenderedList => ({
   type: "list",
   contents,
   handler,
-  context
+  context,
 })
 
-export const cmpnt =
-  (context: PlaceholderContext, content: PlaceholderContent): RenderedComponent => ({
-    type: "component",
-    content,
-    context
-  })
+export const cmpnt = (context: PlaceholderContext, content: PlaceholderContent): RenderedComponent => ({
+  type: "component",
+  content,
+  context,
+})
 
-export const fr = (...content: TemplateItem[]): PlaceholderContent => (context) => {
-  for (const rendered of content) {
-    if (typeof rendered === "boolean" || rendered == null) {
-      return
-    }
-    if (typeof rendered === "string") {
-      context.appendNode(txt(rendered))
-    } else if (typeof rendered === "number") {
-      context.appendNode(txt(rendered.toString()))
-    } else if (rendered instanceof Node) {
-      context.appendNode(rendered)
-    } else if (rendered.type === "placeholder") {
-      const plh = rendered.context.appendPlaceholder(rendered.content)
-      rendered.handler?.(plh)
-    } else if (rendered.type === "list") {
-      const list = rendered.context.appendList(rendered.contents)
-      rendered.handler?.(list)
-    } else if (rendered.type === "component") {
-      rendered.content?.(rendered.context)
+export const fr =
+  (...content: TemplateItem[]): PlaceholderContent =>
+  (context) => {
+    for (const rendered of content) {
+      if (typeof rendered === "boolean" || rendered == null) {
+        return
+      }
+      if (typeof rendered === "string") {
+        context.appendNode(txt(rendered))
+      } else if (typeof rendered === "number") {
+        context.appendNode(txt(rendered.toString()))
+      } else if (rendered instanceof Node) {
+        context.appendNode(rendered)
+      } else if (rendered.type === "placeholder") {
+        const plh = rendered.context.appendPlaceholder(rendered.content)
+        rendered.handler?.(plh)
+      } else if (rendered.type === "list") {
+        const list = rendered.context.appendList(rendered.contents)
+        rendered.handler?.(list)
+      } else if (rendered.type === "component") {
+        rendered.content?.(rendered.context)
+      }
     }
   }
-}
 
 export interface TemplateRef<T> {
   current: T
@@ -149,5 +157,5 @@ export const ref = <T>(initValue: T): TemplateRef<T> => ({
     return (value: T) => {
       this.current = value
     }
-  }
+  },
 })
