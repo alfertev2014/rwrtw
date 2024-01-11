@@ -125,9 +125,7 @@ export const cmpnt = (context: PlaceholderContext, content: PlaceholderContent):
 })
 
 export const fr =
-  (...content: TemplateItem[]): PlaceholderContent =>
-  (place, context) =>
-    processRendered(place, content)
+  (place: Place, ...content: TemplateItem[]): Place => processRendered(place, content)
 
 export interface TemplateRef<T> {
   current: T
