@@ -21,7 +21,7 @@ export const ifElse =
       },
       set condition(value: boolean) {
         if (_value !== value) {
-          placeholder.replaceContent(condition ? trueBranch : falseBranch)
+          placeholder.replaceContent(value ? trueBranch : falseBranch)
           _value = value
         }
       },
