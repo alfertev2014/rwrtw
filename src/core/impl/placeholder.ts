@@ -1,10 +1,4 @@
-import {
-  type PlaceholderContext,
-  type Lifecycle,
-  type Placeholder,
-  type PlaceholderContent,
-  type PlaceholderList,
-} from "../index.js"
+import { type Lifecycle, type Placeholder, type PlaceholderContent, type PlaceholderList } from "../index.js"
 import { ListImpl as PlaceholderListImpl } from "./list.js"
 import { type DOMPlace, type Place, appendNodeAt, takeNodesFrom, removeNodesAt, lastPlaceNode } from "./place.js"
 
