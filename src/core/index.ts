@@ -12,16 +12,11 @@ export interface Lifecycle {
 
 export interface PlaceholderContext {
   readonly appendLifecycle: <L extends Lifecycle>(lifecycle: L) => L
-  readonly appendNode: <N extends Node>(node: N) => N
-  readonly appendPlaceholder: (content: PlaceholderContent) => Placeholder
-  readonly appendList: (contents: PlaceholderContent[]) => PlaceholderList
-  readonly appendComponent: (content: PlaceholderContent) => void
   readonly createPlaceholderAt: (place: Place, content: PlaceholderContent) => Placeholder
   readonly createListAt: (place: Place, contents: PlaceholderContent[]) => PlaceholderList
-  readonly createComponentAt: (place: Place, content: PlaceholderContent) => Place
 }
 
-export type PlaceholderContent = ((content: PlaceholderContext) => void) | null
+export type PlaceholderContent = ((place: Place, context: PlaceholderContext) => Place) | null
 
 export interface Placeholder extends PlaceholderNode {
   readonly replaceContent: (content: PlaceholderContent) => void

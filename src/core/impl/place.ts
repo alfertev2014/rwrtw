@@ -47,7 +47,7 @@ export const appendNodeAt = <T extends Node>(place: Place, node: T): T => {
   }
 }
 
-export const unrenderNodes = (place: Place, lastPlace: Place): void => {
+export const removeNodesAt = (place: Place, lastPlace: Place): void => {
   const lastDomPlace: DOMPlace | null = lastPlaceNode(lastPlace)
   if (lastDomPlace != null && lastDomPlace instanceof Node) {
     let lastDomNode: Node | null = lastDomPlace
@@ -61,7 +61,7 @@ export const unrenderNodes = (place: Place, lastPlace: Place): void => {
   }
 }
 
-export const takeNodes = (place: Place, lastPlace: Place): DocumentFragment => {
+export const takeNodesFrom = (place: Place, lastPlace: Place): DocumentFragment => {
   const lastDomPlace: DOMPlace | null = lastPlaceNode(lastPlace)
   const fragment = document.createDocumentFragment()
   if (lastDomPlace != null && lastDomPlace instanceof Node) {

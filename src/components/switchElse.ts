@@ -55,7 +55,8 @@ export const switchElse =
     defaultBranch: PlaceholderContent,
     handler?: (sw: Switch<T>) => void,
   ): PlaceholderContent =>
-  (context) => {
-    const placeholder = context.appendPlaceholder(selectBranch(value, branches, defaultBranch))
+  (place, context) => {
+    const placeholder = context.createPlaceholderAt(place, selectBranch(value, branches, defaultBranch))
     handler?.(new SwitchImpl<T>(placeholder, value, branches, defaultBranch))
+    return placeholder
   }

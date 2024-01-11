@@ -47,10 +47,10 @@ export const on =
     return res
   }
 
-const processRendered = (place: Place, content: TemplateItem[]): void => {
+const processRendered = (place: Place, content: TemplateItem[]): Place => {
   for (const rendered of content) {
     if (typeof rendered === "boolean" || rendered == null) {
-      return
+      return place
     }
     if (typeof rendered === "string") {
       place = appendNodeAt(place, txt(rendered))
@@ -59,15 +59,18 @@ const processRendered = (place: Place, content: TemplateItem[]): void => {
     } else if (rendered instanceof Node) {
       place = appendNodeAt(place, rendered)
     } else if (rendered.type === "placeholder") {
-      const plh = rendered.context.appendPlaceholder(rendered.content)
+      const plh = rendered.context.createPlaceholderAt(place, rendered.content)
       rendered.handler?.(plh)
+      place = plh
     } else if (rendered.type === "list") {
-      const list = rendered.context.appendList(rendered.contents)
+      const list = rendered.context.createListAt(place, rendered.contents)
       rendered.handler?.(list)
-    } else if (rendered.type === "component") {
-      rendered.content?.(rendered.context)
+      place = list
+    } else if (rendered.type === "component" && rendered.content != null) {
+      place = rendered.content(place, rendered.context)
     }
   }
+  return place
 }
 
 export const el =
@@ -123,28 +126,7 @@ export const cmpnt = (context: PlaceholderContext, content: PlaceholderContent):
 
 export const fr =
   (...content: TemplateItem[]): PlaceholderContent =>
-  (context) => {
-    for (const rendered of content) {
-      if (typeof rendered === "boolean" || rendered == null) {
-        return
-      }
-      if (typeof rendered === "string") {
-        context.appendNode(txt(rendered))
-      } else if (typeof rendered === "number") {
-        context.appendNode(txt(rendered.toString()))
-      } else if (rendered instanceof Node) {
-        context.appendNode(rendered)
-      } else if (rendered.type === "placeholder") {
-        const plh = rendered.context.appendPlaceholder(rendered.content)
-        rendered.handler?.(plh)
-      } else if (rendered.type === "list") {
-        const list = rendered.context.appendList(rendered.contents)
-        rendered.handler?.(list)
-      } else if (rendered.type === "component") {
-        rendered.content?.(rendered.context)
-      }
-    }
-  }
+  (place, context) => processRendered(place, content)
 
 export interface TemplateRef<T> {
   current: T
