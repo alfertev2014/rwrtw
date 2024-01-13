@@ -86,7 +86,7 @@ export const on =
   (context: PlaceholderContext, handlers: EventHandlersMap): ElementHandler =>
   (element) => {
     const res = new EventHandlerController(element, handlers)
-    context.appendLifecycle(res)
+    context.registerLifecycle(res)
     return res
   }
 

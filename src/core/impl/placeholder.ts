@@ -1,5 +1,5 @@
 import { type PlaceholderContext, type Lifecycle, type Placeholder, type PlaceholderContent } from "../index.js"
-import { type DOMPlace, type Place, appendNodeAt, takeNodesFrom, removeNodesAt, lastPlaceNode } from "./place.js"
+import { type DOMPlace, type Place, insertNodeAt, takeNodesFrom, removeNodesAt, lastPlaceNode } from "./place.js"
 
 export class PlaceholderImpl implements Placeholder, Lifecycle {
   readonly _lifecycles: Lifecycle[]
@@ -72,10 +72,10 @@ export class PlaceholderImpl implements Placeholder, Lifecycle {
   moveToPlace(place: Place): void {
     const fragment = takeNodesFrom(this._place, this._lastPlace)
     this._place = place
-    appendNodeAt(this._place, fragment)
+    insertNodeAt(this._place, fragment)
   }
 
-  appendLifecycle<L extends Lifecycle>(lifecycle: L): L {
+  registerLifecycle<L extends Lifecycle>(lifecycle: L): L {
     this._lifecycles.push(lifecycle)
     return lifecycle
   }
@@ -86,7 +86,7 @@ export const createChildPlaceholderAt = (
   context: PlaceholderContext,
   content: PlaceholderContent,
 ): Placeholder => {
-  return context.appendLifecycle(new PlaceholderImpl(place, content))
+  return context.registerLifecycle(new PlaceholderImpl(place, content))
 }
 
 export const createRootPlaceholderAt = (place: Place, content: PlaceholderContent): Placeholder & Lifecycle => {

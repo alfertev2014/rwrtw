@@ -36,7 +36,7 @@ export class ParentPlaceholderPlace implements PlaceholderNode {
   }
 }
 
-export const appendNodeAt = <T extends Node>(place: Place, node: T): T => {
+export const insertNodeAt = <T extends Node>(place: Place, node: T): T => {
   const domPlace = lastPlaceNode(place)
   if (domPlace instanceof Node) {
     if (domPlace.parentNode != null) {

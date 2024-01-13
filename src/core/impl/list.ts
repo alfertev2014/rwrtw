@@ -80,19 +80,19 @@ export class PlaceholderListImpl implements PlaceholderList, Lifecycle {
 
   mount(): void {
     for (const element of this.elements) {
-      element.mount?.()
+      element.mount()
     }
   }
 
   unmount(): void {
     for (const element of this.elements) {
-      element.unmount?.()
+      element.unmount()
     }
   }
 
   dispose(): void {
     for (const element of this.elements) {
-      element.dispose?.()
+      element.dispose()
     }
     this.elements.length = 0
   }
@@ -103,5 +103,5 @@ export const createListAt = (
   context: PlaceholderContext,
   contents: PlaceholderContent[],
 ): PlaceholderList => {
-  return context.appendLifecycle(new PlaceholderListImpl(place, contents))
+  return context.registerLifecycle(new PlaceholderListImpl(place, contents))
 }

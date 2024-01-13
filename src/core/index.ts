@@ -1,6 +1,6 @@
 import { type PlaceholderNode, type Place } from "./impl/place.js"
 
-export { type DOMPlace, placeAtBeginingOf, type PlaceholderNode, type Place, appendNodeAt } from "./impl/place.js"
+export { type DOMPlace, placeAtBeginingOf, type PlaceholderNode, type Place, insertNodeAt as appendNodeAt } from "./impl/place.js"
 export { createRootPlaceholderAt, createChildPlaceholderAt } from "./impl/placeholder.js"
 export { createListAt } from "./impl/list.js"
 
@@ -11,7 +11,7 @@ export interface Lifecycle {
 }
 
 export interface PlaceholderContext {
-  readonly appendLifecycle: <L extends Lifecycle>(lifecycle: L) => L
+  readonly registerLifecycle: <L extends Lifecycle>(lifecycle: L) => L
 }
 
 export type PlaceholderComponent = (place: Place, context: PlaceholderContext) => Place
