@@ -56,25 +56,6 @@ export class PlaceholderImpl implements Placeholder, Lifecycle {
     this.mount()
   }
 
-  spawnBefore(content: PlaceholderContent): PlaceholderImpl {
-    const spawned = new PlaceholderImpl(this._place, content)
-    this._place = spawned
-    return spawned
-  }
-
-  removeBefore(): void {
-    if (this._place instanceof PlaceholderImpl) {
-      this._place.erase()
-      this._place = this._place._place
-    }
-  }
-
-  moveToPlace(place: Place): void {
-    const fragment = takeNodesFrom(this._place, this._lastPlace)
-    this._place = place
-    insertNodeAt(this._place, fragment)
-  }
-
   registerLifecycle<L extends Lifecycle>(lifecycle: L): L {
     this._lifecycles.push(lifecycle)
     return lifecycle
