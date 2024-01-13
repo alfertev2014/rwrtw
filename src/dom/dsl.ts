@@ -19,7 +19,7 @@ export const hel =
       if (typeof child === "boolean" || child == null) {
         continue
       }
-      element.append(typeof child === "number"? child.toString() : child)
+      element.append(typeof child === "number" ? child.toString() : child)
     }
     return element
   }

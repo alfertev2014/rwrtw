@@ -7,6 +7,8 @@ export class ParentNodePlace {
   }
 }
 
+export const placeAtBeginingOf = (node: ParentNode): Place => new ParentNodePlace(node)
+
 export type DOMPlace = Node | ParentNodePlace
 
 export interface PlaceholderNode {

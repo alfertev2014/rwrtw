@@ -7,7 +7,7 @@ import {
   type PlaceholderContext,
   appendNodeAt,
   type Place,
-  ParentNodePlace,
+  placeAtBeginingOf,
 } from "../core/index.js"
 
 export type RenderedType = "placeholder" | "list" | "component"
@@ -78,7 +78,7 @@ export const el =
   (...children: TemplateItem[]): HTMLElement => {
     const element = dce(tag)
 
-    processRendered(new ParentNodePlace(element), children)
+    processRendered(placeAtBeginingOf(element), children)
 
     if (attrs != null) {
       for (const [name, value] of Object.entries(attrs)) {
@@ -124,8 +124,7 @@ export const cmpnt = (context: PlaceholderContext, content: PlaceholderContent):
   context,
 })
 
-export const fr =
-  (place: Place, ...content: TemplateItem[]): Place => processRendered(place, content)
+export const fr = (place: Place, ...content: TemplateItem[]): Place => processRendered(place, content)
 
 export interface TemplateRef<T> {
   current: T
