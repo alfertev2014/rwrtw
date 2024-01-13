@@ -2,10 +2,10 @@ import { dce, setAttr, type ScalarValue } from "./helpers.js"
 
 export type ElementAttrsMap = Record<string, ScalarValue>
 
-export type ChildrenItem = HTMLElement | ScalarValue
+export type ChildrenItem = Node | ScalarValue
 
 export const hel =
-  (tag: string, attrs: ElementAttrsMap | null = null, ...handlers: Array<(e: HTMLElement) => void>) =>
+  (tag: string, attrs: ElementAttrsMap | null = null) =>
   (...children: ChildrenItem[]): HTMLElement => {
     const element = dce(tag)
 
@@ -19,15 +19,7 @@ export const hel =
       if (typeof child === "boolean" || child == null) {
         continue
       }
-      if (typeof child === "number") {
-        element.append(child.toString())
-      } else {
-        element.append(child)
-      }
-    }
-
-    for (const handler of handlers) {
-      handler(element)
+      element.append(typeof child === "number"? child.toString() : child)
     }
     return element
   }
