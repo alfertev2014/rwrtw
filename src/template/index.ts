@@ -9,6 +9,8 @@ import {
   type Place,
   placeAtBeginingOf,
   type PlaceholderComponent,
+  createChildPlaceholderAt,
+  createListAt,
 } from "../core/index.js"
 
 export type TemplateItemType = "element" | "placeholder" | "list" | "component"
@@ -22,7 +24,7 @@ export interface ElementTemplateItem {
 }
 
 export const el =
-  (tag: string, attrs: TemplateElementAttrsMap | null = null, handler: ElementHandler) =>
+  (tag: string, attrs: TemplateElementAttrsMap | null = null, handler?: ElementHandler) =>
   (...children: TemplateItem[]): ElementTemplateItem => ({
     type: "element",
     tag,
@@ -52,10 +54,7 @@ export interface ListTemplateItem {
   handler?: (list: PlaceholderList) => void
 }
 
-export const list = (
-  contents: PlaceholderContent[],
-  handler?: (list: PlaceholderList) => void,
-): ListTemplateItem => ({
+export const list = (contents: PlaceholderContent[], handler?: (list: PlaceholderList) => void): ListTemplateItem => ({
   type: "list",
   contents,
   handler,
@@ -71,7 +70,12 @@ export const cmpnt = (content: PlaceholderContent): ComponentTemplateItem => ({
   content,
 })
 
-export type TemplateItem = ScalarValue | PlaceholderTemplateItem | ListTemplateItem | ComponentTemplateItem | ElementTemplateItem
+export type TemplateItem =
+  | ScalarValue
+  | PlaceholderTemplateItem
+  | ListTemplateItem
+  | ComponentTemplateItem
+  | ElementTemplateItem
 
 export type ElementHandler = (element: HTMLElement) => void
 export type AttributeHandler = (attr: string, element: HTMLElement, context: PlaceholderContext) => void
@@ -98,11 +102,11 @@ const renderTemplateItems = (place: Place, context: PlaceholderContext, content:
     } else if (rendered.type === "element") {
       place = renderElementItem(rendered, place, context)
     } else if (rendered.type === "placeholder") {
-      const plh = context.createPlaceholderAt(place, rendered.content)
+      const plh = createChildPlaceholderAt(place, context, rendered.content)
       rendered.handler?.(plh)
       place = plh
     } else if (rendered.type === "list") {
-      const list = context.createListAt(place, rendered.contents)
+      const list = createListAt(place, context, rendered.contents)
       rendered.handler?.(list)
       place = list
     } else if (rendered.type === "component" && rendered.content != null) {
@@ -137,9 +141,11 @@ const renderElementItem = (
   return element
 }
 
-export const renderTemplate = (...content: TemplateItem[]): PlaceholderComponent => (place, context) => {
-  return renderTemplateItems(place, context, content)
-}
+export const renderTemplate =
+  (...content: TemplateItem[]): PlaceholderComponent =>
+  (place, context) => {
+    return renderTemplateItems(place, context, content)
+  }
 
 export interface TemplateRef<T> {
   current: T

@@ -1,8 +1,8 @@
-import { type PlaceholderList, type PlaceholderContent, type Lifecycle } from "../index.js"
+import { type PlaceholderList, type PlaceholderContent, type Lifecycle, type PlaceholderContext } from "../index.js"
 import { type DOMPlace, type Place, lastPlaceNode } from "./place.js"
 import { PlaceholderImpl } from "./placeholder.js"
 
-export class ListImpl implements PlaceholderList, Lifecycle {
+export class PlaceholderListImpl implements PlaceholderList, Lifecycle {
   readonly place: Place
   readonly elements: PlaceholderImpl[]
   constructor(place: Place, contents: PlaceholderContent[]) {
@@ -96,4 +96,12 @@ export class ListImpl implements PlaceholderList, Lifecycle {
     }
     this.elements.length = 0
   }
+}
+
+export const createListAt = (
+  place: Place,
+  context: PlaceholderContext,
+  contents: PlaceholderContent[],
+): PlaceholderList => {
+  return context.appendLifecycle(new PlaceholderListImpl(place, contents))
 }

@@ -1,3 +1,4 @@
+import { createChildPlaceholderAt } from "../core/impl/placeholder.js"
 import { type PlaceholderComponent, type PlaceholderContent } from "../core/index.js"
 
 export interface IfElse {
@@ -12,7 +13,7 @@ export const ifElse =
     handler?: (ifElse: IfElse) => void,
   ): PlaceholderComponent =>
   (place, context) => {
-    const placeholder = context.createPlaceholderAt(place, condition ? trueBranch : falseBranch)
+    const placeholder = createChildPlaceholderAt(place, context, condition ? trueBranch : falseBranch)
 
     let _value = condition
     handler?.({

@@ -1,5 +1,4 @@
-import { type Lifecycle, type Placeholder, type PlaceholderContent, type PlaceholderList } from "../index.js"
-import { ListImpl as PlaceholderListImpl } from "./list.js"
+import { type PlaceholderContext, type Lifecycle, type Placeholder, type PlaceholderContent } from "../index.js"
 import { type DOMPlace, type Place, appendNodeAt, takeNodesFrom, removeNodesAt, lastPlaceNode } from "./place.js"
 
 export class PlaceholderImpl implements Placeholder, Lifecycle {
@@ -80,16 +79,16 @@ export class PlaceholderImpl implements Placeholder, Lifecycle {
     this._lifecycles.push(lifecycle)
     return lifecycle
   }
+}
 
-  createPlaceholderAt(place: Place, content: PlaceholderContent): Placeholder {
-    const res = new PlaceholderImpl(place, content)
-    this._lifecycles.push(res)
-    return res
-  }
+export const createChildPlaceholderAt = (
+  place: Place,
+  context: PlaceholderContext,
+  content: PlaceholderContent,
+): Placeholder => {
+  return context.appendLifecycle(new PlaceholderImpl(place, content))
+}
 
-  createListAt(place: Place, contents: PlaceholderContent[]): PlaceholderList {
-    const res = new PlaceholderListImpl(place, contents)
-    this._lifecycles.push(res)
-    return res
-  }
+export const createRootPlaceholderAt = (place: Place, content: PlaceholderContent): Placeholder & Lifecycle => {
+  return new PlaceholderImpl(place, content)
 }

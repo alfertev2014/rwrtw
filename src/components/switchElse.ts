@@ -1,3 +1,4 @@
+import { createChildPlaceholderAt } from "../core/impl/placeholder.js"
 import { type PlaceholderContent, type Placeholder, type PlaceholderComponent } from "../core/index.js"
 
 export interface Switch<T> {
@@ -56,7 +57,7 @@ export const switchElse =
     handler?: (sw: Switch<T>) => void,
   ): PlaceholderComponent =>
   (place, context) => {
-    const placeholder = context.createPlaceholderAt(place, selectBranch(value, branches, defaultBranch))
+    const placeholder = createChildPlaceholderAt(place, context, selectBranch(value, branches, defaultBranch))
     handler?.(new SwitchImpl<T>(placeholder, value, branches, defaultBranch))
     return placeholder
   }

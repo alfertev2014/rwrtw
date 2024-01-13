@@ -2,8 +2,8 @@ import { el, type ElementHandler, type TemplateElementAttrsMap } from "./index.j
 
 const abbrev =
   (tag: string) =>
-  (attrs: TemplateElementAttrsMap | null = null, ...handlers: ElementHandler[]) =>
-    el(tag, attrs, ...handlers)
+  (attrs: TemplateElementAttrsMap | null = null, handler?: ElementHandler) =>
+    el(tag, attrs, handler)
 
 export const p = abbrev("p")
 export const a = abbrev("a")
