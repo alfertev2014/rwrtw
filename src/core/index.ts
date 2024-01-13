@@ -16,7 +16,9 @@ export interface PlaceholderContext {
   readonly createListAt: (place: Place, contents: PlaceholderContent[]) => PlaceholderList
 }
 
-export type PlaceholderContent = ((place: Place, context: PlaceholderContext) => Place) | null
+export type PlaceholderComponent = (place: Place, context: PlaceholderContext) => Place 
+
+export type PlaceholderContent = PlaceholderComponent | null
 
 export interface Placeholder extends PlaceholderNode {
   readonly replaceContent: (content: PlaceholderContent) => void

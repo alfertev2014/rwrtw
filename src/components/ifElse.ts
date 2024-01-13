@@ -1,4 +1,4 @@
-import { type PlaceholderContent } from "../core/index.js"
+import { type PlaceholderComponent, type PlaceholderContent } from "../core/index.js"
 
 export interface IfElse {
   condition: boolean
@@ -10,7 +10,7 @@ export const ifElse =
     trueBranch: PlaceholderContent,
     falseBranch: PlaceholderContent,
     handler?: (ifElse: IfElse) => void,
-  ): PlaceholderContent =>
+  ): PlaceholderComponent =>
   (place, context) => {
     const placeholder = context.createPlaceholderAt(place, condition ? trueBranch : falseBranch)
 

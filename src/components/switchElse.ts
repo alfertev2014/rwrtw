@@ -1,4 +1,4 @@
-import { type PlaceholderContent, type Placeholder } from "../core/index.js"
+import { type PlaceholderContent, type Placeholder, type PlaceholderComponent } from "../core/index.js"
 
 export interface Switch<T> {
   value: T
@@ -54,7 +54,7 @@ export const switchElse =
     branches: Array<CaseBranch<T>>,
     defaultBranch: PlaceholderContent,
     handler?: (sw: Switch<T>) => void,
-  ): PlaceholderContent =>
+  ): PlaceholderComponent =>
   (place, context) => {
     const placeholder = context.createPlaceholderAt(place, selectBranch(value, branches, defaultBranch))
     handler?.(new SwitchImpl<T>(placeholder, value, branches, defaultBranch))
