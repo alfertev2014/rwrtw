@@ -7,7 +7,7 @@ export class ParentNodePlace {
   }
 }
 
-export const placeAtBeginingOf = (node: ParentNode): Place => new ParentNodePlace(node)
+export const placeAtBeginningOf = (node: ParentNode): Place => new ParentNodePlace(node)
 
 export type DOMPlace = Node | ParentNodePlace
 

@@ -7,7 +7,7 @@ import {
   type PlaceholderContext,
   appendNodeAt,
   type Place,
-  placeAtBeginingOf,
+  placeAtBeginningOf,
   type PlaceholderComponent,
   createChildPlaceholderAt,
   createListAt,
@@ -123,7 +123,7 @@ const renderElementItem = (
 ): HTMLElement => {
   const element = dce(tag)
 
-  renderTemplateItems(placeAtBeginingOf(element), context, children)
+  renderTemplateItems(placeAtBeginningOf(element), context, children)
 
   if (attrs != null) {
     for (const [name, value] of Object.entries(attrs)) {

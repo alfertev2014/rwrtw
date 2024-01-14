@@ -2,7 +2,7 @@ import { type PlaceholderNode, type Place } from "./impl/place.js"
 
 export {
   type DOMPlace,
-  placeAtBeginingOf,
+  placeAtBeginningOf,
   type PlaceholderNode,
   type Place,
   insertNodeAt as appendNodeAt,
