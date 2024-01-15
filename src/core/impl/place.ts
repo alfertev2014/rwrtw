@@ -1,5 +1,3 @@
-import { type PlaceholderImpl } from "./placeholder.js"
-
 export class ParentNodePlace {
   parent: ParentNode
   constructor(parent: ParentNode) {
@@ -22,17 +20,6 @@ export const lastPlaceNode = (place: Place): DOMPlace => {
     return place
   } else {
     return place.lastPlaceNode()
-  }
-}
-
-export class ParentPlaceholderPlace implements PlaceholderNode {
-  parent: PlaceholderImpl
-  constructor(parent: PlaceholderImpl) {
-    this.parent = parent
-  }
-
-  lastPlaceNode(): DOMPlace {
-    return lastPlaceNode(this.parent._place)
   }
 }
 

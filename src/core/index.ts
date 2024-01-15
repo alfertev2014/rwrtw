@@ -1,12 +1,6 @@
 import { type PlaceholderNode, type Place } from "./impl/place.js"
 
-export {
-  type DOMPlace,
-  placeAtBeginningOf,
-  type PlaceholderNode,
-  type Place,
-  insertNodeAt as appendNodeAt,
-} from "./impl/place.js"
+export { type DOMPlace, placeAtBeginningOf, type PlaceholderNode, type Place, insertNodeAt } from "./impl/place.js"
 export { createRootPlaceholderAt, createChildPlaceholderAt } from "./impl/placeholder.js"
 export { createListAt } from "./impl/list.js"
 

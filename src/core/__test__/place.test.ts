@@ -1,6 +1,6 @@
 import { describe, expect, test } from "@jest/globals"
 import { lastPlaceNode, placeAtBeginningOf, type Place, insertNodeAt } from "../impl/place.js"
-import { PlaceholderImpl } from "../impl/placeholder.js"
+import { PlaceholderImpl, createRootPlaceholderAt } from "../impl/placeholder.js"
 
 describe("Place", () => {
   describe("lastPlaceNode", () => {
@@ -40,7 +40,7 @@ describe("Place", () => {
     })
   })
 
-  describe("insertNodeAt", () => {
+  describe("Inserting DOM Nodes into place", () => {
     test("should insert DOM Node after Node place", () => {
       const parentNode = document.createElement("div")
       const beforeNode = document.createElement("div")
@@ -87,6 +87,35 @@ describe("Place", () => {
       expect(node.previousSibling).toBeNull()
       expect(node.parentNode).toBe(parentNode)
       expect(insertedNode).toBe(node)
+    })
+  })
+
+  describe("Inserting nodes after placeholder", () => {
+    test("if placeholder is empty it should insert nodes at place of placeholder", () => {
+      const parentNode = document.createElement("div")
+      const beforeNode = parentNode.appendChild(document.createElement("div"))
+      const placeholder = createRootPlaceholderAt(beforeNode, null)
+      const node = document.createElement("div")
+
+      insertNodeAt(placeholder, node)
+
+      expect(node.previousSibling).toBe(beforeNode)
+      expect(placeholder.lastPlaceNode()).toBe(beforeNode)
+    })
+
+    test("if placeholder contains nodes it should insert nodes after content of placeholder", () => {
+      const parentNode = document.createElement("div")
+      const beforeNode = parentNode.appendChild(document.createElement("div"))
+      const innerNode = document.createElement("div")
+      const placeholder = createRootPlaceholderAt(beforeNode, (place) => {
+        return insertNodeAt(place, innerNode)
+      })
+      const node = document.createElement("div")
+
+      insertNodeAt(placeholder, node)
+
+      expect(node.previousSibling).toBe(innerNode)
+      expect(placeholder.lastPlaceNode()).toBe(innerNode)
     })
   })
 })
