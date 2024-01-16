@@ -5,7 +5,6 @@ import {
   createRootPlaceholderAt,
   placeAtBeginningOf,
   insertNodeAt,
-  type Place,
 } from ".."
 
 describe("Placeholder", () => {
@@ -252,6 +251,243 @@ describe("Placeholder", () => {
       expect(childPlaceholder2?.lastPlaceNode()).toBe(innerNode2)
 
       expect(parentPlaceholder.lastPlaceNode()).toBe(innerNode2)
+    })
+  })
+
+  describe("Lifecycles", () => {
+    describe("Registration of one lifecycle", () => {
+      test("should call handlers in order on placeholder's handler", () => {
+        const parent = document.createElement("div")
+        const place = placeAtBeginningOf(parent)
+        const lifecycle = {
+          mount: jest.fn(),
+          unmount: jest.fn(),
+          dispose: jest.fn()
+        }
+
+        const placeholder = createRootPlaceholderAt(place, (place, context) => {
+          context.registerLifecycle(lifecycle)
+          return place
+        })
+
+        expect(lifecycle.mount).toBeCalledTimes(0)
+        expect(lifecycle.unmount).toBeCalledTimes(0)
+        expect(lifecycle.dispose).toBeCalledTimes(0)
+        
+        placeholder.mount?.()
+        expect(lifecycle.mount).toBeCalledTimes(1)
+        expect(lifecycle.unmount).toBeCalledTimes(0)
+        expect(lifecycle.dispose).toBeCalledTimes(0)
+
+        placeholder.unmount?.()
+        expect(lifecycle.mount).toBeCalledTimes(1)
+        expect(lifecycle.unmount).toBeCalledTimes(1)
+        expect(lifecycle.dispose).toBeCalledTimes(0)
+
+        placeholder.dispose?.()
+        expect(lifecycle.mount).toBeCalledTimes(1)
+        expect(lifecycle.unmount).toBeCalledTimes(1)
+        expect(lifecycle.dispose).toBeCalledTimes(1)
+      })
+
+      test("double registration should call handlers twice in order on placeholder's handler", () => {
+        const parent = document.createElement("div")
+        const place = placeAtBeginningOf(parent)
+        const lifecycle = {
+          mount: jest.fn(),
+          unmount: jest.fn(),
+          dispose: jest.fn()
+        }
+
+        const placeholder = createRootPlaceholderAt(place, (place, context) => {
+          context.registerLifecycle(lifecycle)
+          context.registerLifecycle(lifecycle)
+          return place
+        })
+
+        expect(lifecycle.mount).toBeCalledTimes(0)
+        expect(lifecycle.unmount).toBeCalledTimes(0)
+        expect(lifecycle.dispose).toBeCalledTimes(0)
+        
+        placeholder.mount?.()
+        expect(lifecycle.mount).toBeCalledTimes(2)
+        expect(lifecycle.unmount).toBeCalledTimes(0)
+        expect(lifecycle.dispose).toBeCalledTimes(0)
+
+        placeholder.unmount?.()
+        expect(lifecycle.mount).toBeCalledTimes(2)
+        expect(lifecycle.unmount).toBeCalledTimes(2)
+        expect(lifecycle.dispose).toBeCalledTimes(0)
+
+        placeholder.dispose?.()
+        expect(lifecycle.mount).toBeCalledTimes(2)
+        expect(lifecycle.unmount).toBeCalledTimes(2)
+        expect(lifecycle.dispose).toBeCalledTimes(2)
+      })
+
+      test("should call handlers in order on parent placeholder's handlers", () => {
+        const parent = document.createElement("div")
+        const place = placeAtBeginningOf(parent)
+        const lifecycle = {
+          mount: jest.fn(),
+          unmount: jest.fn(),
+          dispose: jest.fn()
+        }
+
+        let childPlaceholder: Placeholder | undefined
+
+        const parentPlaceholder = createRootPlaceholderAt(place, (place, context) => {
+          childPlaceholder = createChildPlaceholderAt(place, context, (place, context) => {
+            context.registerLifecycle(lifecycle)
+            return place
+          })
+          return childPlaceholder
+        })
+        
+        expect(lifecycle.mount).toBeCalledTimes(0)
+        expect(lifecycle.unmount).toBeCalledTimes(0)
+        expect(lifecycle.dispose).toBeCalledTimes(0)
+
+        parentPlaceholder.mount?.()
+        expect(lifecycle.mount).toBeCalledTimes(1)
+        expect(lifecycle.unmount).toBeCalledTimes(0)
+        expect(lifecycle.dispose).toBeCalledTimes(0)
+
+        parentPlaceholder.unmount?.()
+        expect(lifecycle.mount).toBeCalledTimes(1)
+        expect(lifecycle.unmount).toBeCalledTimes(1)
+        expect(lifecycle.dispose).toBeCalledTimes(0)
+
+        parentPlaceholder.dispose?.()
+        expect(lifecycle.mount).toBeCalledTimes(1)
+        expect(lifecycle.unmount).toBeCalledTimes(1)
+        expect(lifecycle.dispose).toBeCalledTimes(1)
+      })
+    })
+
+    describe("Lifecycle on replacing content", () => {
+      test("should call unmmount and dispose for old content", () => {
+        const parent = document.createElement("div")
+        const place = placeAtBeginningOf(parent)
+        const lifecycle = {
+          mount: jest.fn(),
+          unmount: jest.fn(),
+          dispose: jest.fn()
+        }
+
+        const placeholder = createRootPlaceholderAt(place, (place, context) => {
+          context.registerLifecycle(lifecycle)
+          return place
+        })        
+        
+        placeholder.mount?.()
+        expect(lifecycle.mount).toBeCalledTimes(1)
+
+        placeholder.replaceContent(null)
+
+        expect(lifecycle.unmount).toBeCalledTimes(1)
+        expect(lifecycle.dispose).toBeCalledTimes(1)
+
+        expect(lifecycle.dispose.mock.invocationCallOrder[0]).toBeGreaterThan(lifecycle.unmount.mock.invocationCallOrder[0])
+      })
+
+      test("should call mount for new content", () => {
+        const parent = document.createElement("div")
+        const place = placeAtBeginningOf(parent)
+        const lifecycle = {
+          mount: jest.fn(),
+          unmount: jest.fn(),
+          dispose: jest.fn()
+        }
+
+        const placeholder = createRootPlaceholderAt(place, null)        
+        
+        placeholder.mount?.()
+
+        placeholder.replaceContent((place, context) => {
+          context.registerLifecycle(lifecycle)
+          return place
+        })
+
+        expect(lifecycle.mount).toBeCalledTimes(1)
+        expect(lifecycle.unmount).toBeCalledTimes(0)
+        expect(lifecycle.dispose).toBeCalledTimes(0)
+      })
+
+      test("should call unmount and dispose for old content and mount for new content", () => {
+        const parent = document.createElement("div")
+        const place = placeAtBeginningOf(parent)
+        const oldLifecycle = {
+          mount: jest.fn(),
+          unmount: jest.fn(),
+          dispose: jest.fn()
+        }
+        
+        const newLifecycle = {
+          mount: jest.fn(),
+          unmount: jest.fn(),
+          dispose: jest.fn()
+        }
+
+        const placeholder = createRootPlaceholderAt(place, (place, context) => {
+          context.registerLifecycle(oldLifecycle)
+          return place
+        })        
+        
+        placeholder.mount?.()
+
+        placeholder.replaceContent((place, context) => {
+          context.registerLifecycle(newLifecycle)
+          return place
+        })
+
+        expect(oldLifecycle.unmount).toBeCalledTimes(1)
+        expect(oldLifecycle.dispose).toBeCalledTimes(1)
+        
+        expect(newLifecycle.mount).toBeCalledTimes(1)
+
+        expect(newLifecycle.mount.mock.invocationCallOrder[0]).toBeGreaterThan(oldLifecycle.unmount.mock.invocationCallOrder[0])
+        expect(newLifecycle.mount.mock.invocationCallOrder[0]).toBeGreaterThan(oldLifecycle.dispose.mock.invocationCallOrder[0])
+      })
+
+      test("for child placeholder should call unmount and dispose for old content and mount for new content", () => {
+        const parent = document.createElement("div")
+        const place = placeAtBeginningOf(parent)
+        const oldLifecycle = {
+          mount: jest.fn(),
+          unmount: jest.fn(),
+          dispose: jest.fn()
+        }
+        
+        const newLifecycle = {
+          mount: jest.fn(),
+          unmount: jest.fn(),
+          dispose: jest.fn()
+        }
+
+        const placeholder = createRootPlaceholderAt(place, (place, context) => {
+          const placeholder = createChildPlaceholderAt(place, context, (place, context) => {
+            context.registerLifecycle(oldLifecycle)
+            return place
+          })
+          return placeholder
+        })        
+        
+        placeholder.mount?.()
+
+        placeholder.replaceContent((place, context) => {
+          context.registerLifecycle(newLifecycle)
+          return place
+        })
+
+        expect(oldLifecycle.unmount).toBeCalledTimes(1)
+        expect(oldLifecycle.dispose).toBeCalledTimes(1)
+        
+        expect(newLifecycle.mount).toBeCalledTimes(1)
+
+        expect(newLifecycle.mount.mock.invocationCallOrder[0]).toBeGreaterThan(oldLifecycle.unmount.mock.invocationCallOrder[0])
+        expect(newLifecycle.mount.mock.invocationCallOrder[0]).toBeGreaterThan(oldLifecycle.dispose.mock.invocationCallOrder[0])
+      })
     })
   })
 })

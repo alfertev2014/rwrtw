@@ -1,5 +1,5 @@
 import { type PlaceholderContext, type Lifecycle, type Placeholder, type PlaceholderContent } from "../index.js"
-import { type DOMPlace, type Place, removeNodesAt, lastPlaceNode, PlaceholderNode } from "./place.js"
+import { type DOMPlace, type Place, removeNodesAt, lastPlaceNode, type PlaceholderNode } from "./place.js"
 
 export class ParentPlaceholderPlace implements PlaceholderNode {
   parent: PlaceholderImpl
