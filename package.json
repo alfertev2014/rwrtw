@@ -1,12 +1,13 @@
 {
   "name": "rwrtw",
   "version": "0.0.7",
-  "description": "Tiny DOM helpers and building blocks for MVVM and UI components",
+  "description": "Tiny DOM helpers and building blocks for Web UI components",
   "type": "module",
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
   "files": [
-    "lib"
+    "lib",
+    "README.md"
   ],
   "scripts": {
     "test": "jest",
@@ -22,11 +23,11 @@
   },
   "keywords": [
     "tiny",
+    "small",
     "DOM",
     "helpers",
     "UI",
     "library",
-    "MVVM",
     "components",
     "typescript"
   ],
