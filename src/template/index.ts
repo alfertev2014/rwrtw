@@ -5,12 +5,12 @@ import {
   type Placeholder,
   type PlaceholderContent,
   type PlaceholderContext,
-  appendNodeAt,
   type Place,
   placeAtBeginningOf,
   type PlaceholderComponent,
   createChildPlaceholderAt,
   createListAt,
+  insertNodeAt,
 } from "../core/index.js"
 
 export type TemplateItemType = "element" | "placeholder" | "list" | "component"
@@ -96,9 +96,9 @@ const renderTemplateItems = (place: Place, context: PlaceholderContext, content:
       return place
     }
     if (typeof rendered === "string") {
-      place = appendNodeAt(place, txt(rendered))
+      place = insertNodeAt(place, txt(rendered))
     } else if (typeof rendered === "number") {
-      place = appendNodeAt(place, txt(rendered.toString()))
+      place = insertNodeAt(place, txt(rendered.toString()))
     } else if (rendered.type === "element") {
       place = renderElementItem(rendered, place, context)
     } else if (rendered.type === "placeholder") {
@@ -135,7 +135,7 @@ const renderElementItem = (
     }
   }
 
-  appendNodeAt(place, element)
+  insertNodeAt(place, element)
 
   handler?.(element)
   return element

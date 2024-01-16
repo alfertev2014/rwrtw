@@ -262,7 +262,7 @@ describe("Placeholder", () => {
         const lifecycle = {
           mount: jest.fn(),
           unmount: jest.fn(),
-          dispose: jest.fn()
+          dispose: jest.fn(),
         }
 
         const placeholder = createRootPlaceholderAt(place, (place, context) => {
@@ -273,7 +273,7 @@ describe("Placeholder", () => {
         expect(lifecycle.mount).toBeCalledTimes(0)
         expect(lifecycle.unmount).toBeCalledTimes(0)
         expect(lifecycle.dispose).toBeCalledTimes(0)
-        
+
         placeholder.mount?.()
         expect(lifecycle.mount).toBeCalledTimes(1)
         expect(lifecycle.unmount).toBeCalledTimes(0)
@@ -296,7 +296,7 @@ describe("Placeholder", () => {
         const lifecycle = {
           mount: jest.fn(),
           unmount: jest.fn(),
-          dispose: jest.fn()
+          dispose: jest.fn(),
         }
 
         const placeholder = createRootPlaceholderAt(place, (place, context) => {
@@ -308,7 +308,7 @@ describe("Placeholder", () => {
         expect(lifecycle.mount).toBeCalledTimes(0)
         expect(lifecycle.unmount).toBeCalledTimes(0)
         expect(lifecycle.dispose).toBeCalledTimes(0)
-        
+
         placeholder.mount?.()
         expect(lifecycle.mount).toBeCalledTimes(2)
         expect(lifecycle.unmount).toBeCalledTimes(0)
@@ -331,7 +331,7 @@ describe("Placeholder", () => {
         const lifecycle = {
           mount: jest.fn(),
           unmount: jest.fn(),
-          dispose: jest.fn()
+          dispose: jest.fn(),
         }
 
         let childPlaceholder: Placeholder | undefined
@@ -343,7 +343,7 @@ describe("Placeholder", () => {
           })
           return childPlaceholder
         })
-        
+
         expect(lifecycle.mount).toBeCalledTimes(0)
         expect(lifecycle.unmount).toBeCalledTimes(0)
         expect(lifecycle.dispose).toBeCalledTimes(0)
@@ -372,14 +372,14 @@ describe("Placeholder", () => {
         const lifecycle = {
           mount: jest.fn(),
           unmount: jest.fn(),
-          dispose: jest.fn()
+          dispose: jest.fn(),
         }
 
         const placeholder = createRootPlaceholderAt(place, (place, context) => {
           context.registerLifecycle(lifecycle)
           return place
-        })        
-        
+        })
+
         placeholder.mount?.()
         expect(lifecycle.mount).toBeCalledTimes(1)
 
@@ -388,7 +388,9 @@ describe("Placeholder", () => {
         expect(lifecycle.unmount).toBeCalledTimes(1)
         expect(lifecycle.dispose).toBeCalledTimes(1)
 
-        expect(lifecycle.dispose.mock.invocationCallOrder[0]).toBeGreaterThan(lifecycle.unmount.mock.invocationCallOrder[0])
+        expect(lifecycle.dispose.mock.invocationCallOrder[0]).toBeGreaterThan(
+          lifecycle.unmount.mock.invocationCallOrder[0],
+        )
       })
 
       test("should call mount for new content", () => {
@@ -397,11 +399,11 @@ describe("Placeholder", () => {
         const lifecycle = {
           mount: jest.fn(),
           unmount: jest.fn(),
-          dispose: jest.fn()
+          dispose: jest.fn(),
         }
 
-        const placeholder = createRootPlaceholderAt(place, null)        
-        
+        const placeholder = createRootPlaceholderAt(place, null)
+
         placeholder.mount?.()
 
         placeholder.replaceContent((place, context) => {
@@ -420,20 +422,20 @@ describe("Placeholder", () => {
         const oldLifecycle = {
           mount: jest.fn(),
           unmount: jest.fn(),
-          dispose: jest.fn()
+          dispose: jest.fn(),
         }
-        
+
         const newLifecycle = {
           mount: jest.fn(),
           unmount: jest.fn(),
-          dispose: jest.fn()
+          dispose: jest.fn(),
         }
 
         const placeholder = createRootPlaceholderAt(place, (place, context) => {
           context.registerLifecycle(oldLifecycle)
           return place
-        })        
-        
+        })
+
         placeholder.mount?.()
 
         placeholder.replaceContent((place, context) => {
@@ -443,11 +445,15 @@ describe("Placeholder", () => {
 
         expect(oldLifecycle.unmount).toBeCalledTimes(1)
         expect(oldLifecycle.dispose).toBeCalledTimes(1)
-        
+
         expect(newLifecycle.mount).toBeCalledTimes(1)
 
-        expect(newLifecycle.mount.mock.invocationCallOrder[0]).toBeGreaterThan(oldLifecycle.unmount.mock.invocationCallOrder[0])
-        expect(newLifecycle.mount.mock.invocationCallOrder[0]).toBeGreaterThan(oldLifecycle.dispose.mock.invocationCallOrder[0])
+        expect(newLifecycle.mount.mock.invocationCallOrder[0]).toBeGreaterThan(
+          oldLifecycle.unmount.mock.invocationCallOrder[0],
+        )
+        expect(newLifecycle.mount.mock.invocationCallOrder[0]).toBeGreaterThan(
+          oldLifecycle.dispose.mock.invocationCallOrder[0],
+        )
       })
 
       test("for child placeholder should call unmount and dispose for old content and mount for new content", () => {
@@ -456,13 +462,13 @@ describe("Placeholder", () => {
         const oldLifecycle = {
           mount: jest.fn(),
           unmount: jest.fn(),
-          dispose: jest.fn()
+          dispose: jest.fn(),
         }
-        
+
         const newLifecycle = {
           mount: jest.fn(),
           unmount: jest.fn(),
-          dispose: jest.fn()
+          dispose: jest.fn(),
         }
 
         const placeholder = createRootPlaceholderAt(place, (place, context) => {
@@ -471,8 +477,8 @@ describe("Placeholder", () => {
             return place
           })
           return placeholder
-        })        
-        
+        })
+
         placeholder.mount?.()
 
         placeholder.replaceContent((place, context) => {
@@ -482,11 +488,15 @@ describe("Placeholder", () => {
 
         expect(oldLifecycle.unmount).toBeCalledTimes(1)
         expect(oldLifecycle.dispose).toBeCalledTimes(1)
-        
+
         expect(newLifecycle.mount).toBeCalledTimes(1)
 
-        expect(newLifecycle.mount.mock.invocationCallOrder[0]).toBeGreaterThan(oldLifecycle.unmount.mock.invocationCallOrder[0])
-        expect(newLifecycle.mount.mock.invocationCallOrder[0]).toBeGreaterThan(oldLifecycle.dispose.mock.invocationCallOrder[0])
+        expect(newLifecycle.mount.mock.invocationCallOrder[0]).toBeGreaterThan(
+          oldLifecycle.unmount.mock.invocationCallOrder[0],
+        )
+        expect(newLifecycle.mount.mock.invocationCallOrder[0]).toBeGreaterThan(
+          oldLifecycle.dispose.mock.invocationCallOrder[0],
+        )
       })
     })
   })

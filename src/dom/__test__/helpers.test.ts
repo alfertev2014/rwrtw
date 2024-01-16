@@ -2,14 +2,14 @@ import { describe, expect, test } from "@jest/globals"
 import { dce, setAttr, txt } from "../helpers"
 
 describe("DOM helpers", () => {
-  test("dce shoud create HTMLElement instances", () => {
+  test("dce should create HTMLElement instances", () => {
     const div = dce("div")
 
     expect(div).toBeInstanceOf(HTMLElement)
     expect(div.tagName).toBe("DIV")
   })
 
-  test("txt shoud create Text instances", () => {
+  test("txt should create Text instances", () => {
     const text = txt("some text")
 
     expect(text).toBeInstanceOf(Text)
