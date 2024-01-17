@@ -1,19 +1,19 @@
-
 /**
  * Reactive source node for scalar value types
  */
-class Observable<T = unknown> { // TODO: T should be scalar value
-  
+class Observable<T = unknown> {
+  // TODO: T should be scalar value
+
   /**
    * Current stored value or last computed value.
-   * 
+   *
    * Not actual if this._changed === true.
    */
   _current: T | undefined
-  
+
   /**
    * Value has changed and not consumed by any other nodes yet.
-   * 
+   *
    * If true, this._current is not actual, recomputing needed.
    */
   _changed: boolean
@@ -27,10 +27,10 @@ class Observable<T = unknown> { // TODO: T should be scalar value
 
   /**
    * Accessor for current value.
-   * 
+   *
    * Actualize current value if needed and remove changed sign from node.
    * If called in tracking context, the dependent node that consume the value will subscribe on this node.
-   * 
+   *
    * @returns current value
    */
   current(): T | undefined {
@@ -43,11 +43,11 @@ class Observable<T = unknown> { // TODO: T should be scalar value
 
   /**
    * Modifier of the value.
-   * 
+   *
    * Checks if value changed.
    * Mark as changed and propagate changed sing to subscribers.
    * If called not in a transaction, run effects.
-   * 
+   *
    * @param value New value
    */
   change(value: T): void {
@@ -62,7 +62,7 @@ class Observable<T = unknown> { // TODO: T should be scalar value
 
   /**
    * Recompute current value and clear changed sign.
-   * 
+   *
    * @returns true if value was actually changed.
    */
   _recompute(): boolean {
@@ -73,7 +73,7 @@ class Observable<T = unknown> { // TODO: T should be scalar value
 
   /**
    * Add subscriber to this._subscribers set.
-   * 
+   *
    * @param subscriber Subscriber (effect or computed)
    */
   _subscribe(subscriber: Computed): void {
@@ -85,7 +85,7 @@ class Observable<T = unknown> { // TODO: T should be scalar value
 
   /**
    * Remove subscriber from this._subscribers set.
-   * 
+   *
    * @param subscriber Subscriber (effect or computed)
    */
   _unsubscribe(subscriber: Observable): void {
@@ -97,7 +97,7 @@ class Observable<T = unknown> { // TODO: T should be scalar value
 
   /**
    * Set changed sign and propagate it recursively to subscribers.
-   * 
+   *
    */
   _markChanged(): void {
     if (!this._changed) {
@@ -112,8 +112,7 @@ class Observable<T = unknown> { // TODO: T should be scalar value
   /**
    * Hook called when the node is marked as changed
    */
-  _onChanged(): void {
-  }
+  _onChanged(): void {}
 }
 
 class Computed<T = unknown> extends Observable<T> {
@@ -182,8 +181,8 @@ class Computed<T = unknown> extends Observable<T> {
   }
 }
 
-
-class Effect extends Computed<undefined> { // TODO: Effect is simply callback with side effect on observable
+class Effect extends Computed<undefined> {
+  // TODO: Effect is simply callback with side effect on observable
 
   // TODO: What if effect called inside effect?
 
