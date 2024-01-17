@@ -1,25 +1,58 @@
-class Observable<T = unknown> {
+
+/**
+ * Reactive source node for scalar value types
+ */
+class Observable<T = unknown> { // TODO: T should be scalar value
+  
+  /**
+   * Current stored value or last computed value.
+   * 
+   * Not actual if this._changed === true.
+   */
   _current: T | undefined
-  _dirty: boolean
-  readonly _deriveds: Observable[]
+  
+  /**
+   * Value has changed and not consumed by any other nodes yet.
+   * 
+   * If true, this._current is not actual, recomputing needed.
+   */
+  _changed: boolean
+  readonly _subscribers: Observable[] // List of nodes that depends on this node
 
   constructor() {
     this._current = undefined
-    this._dirty = true
-    this._deriveds = []
+    this._changed = true
+    this._subscribers = []
   }
 
+  /**
+   * Accessor for current value.
+   * 
+   * Actualize current value if needed and remove changed sign from node.
+   * If called in tracking context, the dependent node that consume the value will subscribe on this node.
+   * 
+   * @returns current value
+   */
   current(): T | undefined {
-    if (trakingStack.length > 0) {
-      trakingStack[trakingStack.length - 1]._subscribe(this)
+    if (trackingComputed !== null) {
+      trackingComputed._subscribe(this)
     }
     this._recompute()
     return this._current
   }
 
+  /**
+   * Modifier of the value.
+   * 
+   * Checks if value changed.
+   * Mark as changed and propagate changed sing to subscribers.
+   * If called not in a transaction, run effects.
+   * 
+   * @param value New value
+   */
   change(value: T): void {
     if (value !== this._current) {
-      this._makeDirty()
+      this._markChanged()
     }
     this._current = value
     if (transactionDepth === 0) {
@@ -27,38 +60,59 @@ class Observable<T = unknown> {
     }
   }
 
+  /**
+   * Recompute current value and clear changed sign.
+   * 
+   * @returns true if value was actually changed.
+   */
   _recompute(): boolean {
-    const res = this._dirty
-    this._dirty = false
+    const res = this._changed
+    this._changed = false
     return res
   }
 
-  _connect(derived: Computed): void {
-    const index = this._deriveds.indexOf(derived)
+  /**
+   * Add subscriber to this._subscribers set.
+   * 
+   * @param subscriber Subscriber (effect or computed)
+   */
+  _subscribe(subscriber: Computed): void {
+    const index = this._subscribers.indexOf(subscriber)
     if (index < 0) {
-      this._deriveds.push(derived)
+      this._subscribers.push(subscriber)
     }
   }
 
-  _disconnect(derived: Observable): void {
-    const index = this._deriveds.indexOf(derived)
+  /**
+   * Remove subscriber from this._subscribers set.
+   * 
+   * @param subscriber Subscriber (effect or computed)
+   */
+  _unsubscribe(subscriber: Observable): void {
+    const index = this._subscribers.indexOf(subscriber)
     if (index >= 0) {
-      this._deriveds.splice(index, 1)
+      this._subscribers.splice(index, 1)
     }
   }
 
-  _makeDirty(): void {
-    if (!this._dirty) {
-      this._dirty = true
-      this._onDirty()
-      for (const derived of this._deriveds) {
-        derived._makeDirty()
+  /**
+   * Set changed sign and propagate it recursively to subscribers.
+   * 
+   */
+  _markChanged(): void {
+    if (!this._changed) {
+      this._changed = true
+      this._onChanged()
+      for (const derived of this._subscribers) {
+        derived._markChanged()
       }
     }
   }
 
-  _onDirty(): void {
-    return undefined
+  /**
+   * Hook called when the node is marked as changed
+   */
+  _onChanged(): void {
   }
 }
 
@@ -74,12 +128,14 @@ class Computed<T = unknown> extends Observable<T> {
     this._dependenciesCount = 0
   }
 
-  _subscribe(dependency: Observable): void {
+  // TODO: method "change" should not be available here
+
+  override _subscribe(dependency: Observable): void {
     const count = this._dependenciesCount
     const index = this._dependencies.indexOf(dependency)
     if (index < 0) {
       this._dependencies.splice(count, 0, dependency)
-      dependency._connect(this)
+      dependency._subscribe(this)
       this._dependenciesCount++
     } else if (index >= count) {
       if (index > count) {
@@ -91,19 +147,24 @@ class Computed<T = unknown> extends Observable<T> {
     }
   }
 
-  _recompute(): boolean {
-    if (this._dirty) {
+  override _recompute(): boolean {
+    if (this._changed) {
       const current = this._current
       if (this._recomputeDependencies()) {
-        trakingStack.push(this)
-        this._current = this._computeFunc()
-        trakingStack.pop()
+        const prevTracking = trackingComputed
+        // eslint-disable-next-line @typescript-eslint/no-this-alias
+        trackingComputed = this
+        try {
+          this._current = this._computeFunc()
+        } finally {
+          trackingComputed = prevTracking
+        }
         for (let i = this._dependenciesCount; i < this._dependencies.length; ++i) {
-          this._dependencies[i]._disconnect(this)
+          this._dependencies[i]._unsubscribe(this)
         }
         this._dependencies.length = this._dependenciesCount
       }
-      this._dirty = false
+      this._changed = false
       return this._current !== current
     }
     return false
@@ -121,13 +182,17 @@ class Computed<T = unknown> extends Observable<T> {
   }
 }
 
-class Effect extends Computed<undefined> {
-  _onDirty(): void {
+
+class Effect extends Computed<undefined> { // TODO: Effect is simply callback with side effect on observable
+
+  // TODO: What if effect called inside effect?
+
+  override _onChanged(): void {
     effectsQueue.push(this)
   }
 }
 
-const trakingStack: Computed[] = []
+let trackingComputed: Computed | null = null
 
 let effectsQueue: Effect[] = []
 let runningEffects: Effect[] = []
@@ -152,7 +217,7 @@ export const source = <T>(initValue: T): Observable<T> => {
   return res
 }
 
-export const derived = <T>(func: () => T): Computed<T> => {
+export const computed = <T>(func: () => T): Computed<T> => {
   return new Computed(func)
 }
 
@@ -162,8 +227,11 @@ export const effect = (func: () => undefined): Effect => {
 
 export const transaction = (func: () => void): void => {
   transactionDepth++
-  func()
-  transactionDepth--
+  try {
+    func()
+  } finally {
+    transactionDepth--
+  }
   if (transactionDepth === 0) {
     runEffects()
   }
