@@ -3,7 +3,6 @@ import { EventHandlerController, type EventHandlersMap } from "../events.js"
 import {
   type PlaceholderList,
   type Placeholder,
-  type PlaceholderContent,
   type PlaceholderContext,
   type Place,
   placeAtBeginningOf,
@@ -19,7 +18,7 @@ export interface ElementTemplateItem {
   type: "element"
   tag: string
   attrs: TemplateElementAttrsMap | null
-  children: TemplateItem[]
+  children: TemplateContent
   handler?: (element: HTMLElement) => void
 }
 
@@ -35,12 +34,12 @@ export const el =
 
 export interface PlaceholderTemplateItem {
   type: "placeholder"
-  content: PlaceholderContent
+  content: TemplateContent
   handler?: (placeholder: Placeholder) => void
 }
 
 export const plh = (
-  content: PlaceholderContent,
+  content: TemplateContent,
   handler?: (placeholder: Placeholder) => void,
 ): PlaceholderTemplateItem => ({
   type: "placeholder",
@@ -50,32 +49,25 @@ export const plh = (
 
 export interface ListTemplateItem {
   type: "list"
-  contents: PlaceholderContent[]
+  contents: TemplateContent[]
   handler?: (list: PlaceholderList) => void
 }
 
-export const list = (contents: PlaceholderContent[], handler?: (list: PlaceholderList) => void): ListTemplateItem => ({
+export const list = (contents: TemplateContent[], handler?: (list: PlaceholderList) => void): ListTemplateItem => ({
   type: "list",
   contents,
   handler,
 })
 
-export interface ComponentTemplateItem {
-  type: "component"
-  content: PlaceholderContent
-}
-
-export const cmpnt = (content: PlaceholderContent): ComponentTemplateItem => ({
-  type: "component",
-  content,
-})
-
 export type TemplateItem =
+  | TemplateContent[]
   | ScalarValue
   | PlaceholderTemplateItem
   | ListTemplateItem
-  | ComponentTemplateItem
   | ElementTemplateItem
+  | PlaceholderComponent
+
+export type TemplateContent = TemplateItem[] | TemplateItem
 
 export type ElementHandler = (element: HTMLElement) => void
 export type AttributeHandler = (attr: string, element: HTMLElement, context: PlaceholderContext) => void
@@ -90,28 +82,34 @@ export const on =
     return res
   }
 
-const renderTemplateItems = (place: Place, context: PlaceholderContext, content: TemplateItem[]): Place => {
-  for (const rendered of content) {
-    if (typeof rendered === "boolean" || rendered == null) {
-      return place
+const renderTemplateItems = (place: Place, context: PlaceholderContext, rendered: TemplateContent): Place => {
+  if (typeof rendered === "boolean" || rendered == null) {
+    return place
+  }
+  if (typeof rendered === "string") {
+    place = insertNodeAt(place, txt(rendered))
+  } else if (typeof rendered === "number") {
+    place = insertNodeAt(place, txt(rendered.toString()))
+  } else if (typeof rendered === "function") {
+    place = rendered(place, context)
+  } else if (Array.isArray(rendered)) {
+    for (const item of rendered) {
+      place = renderTemplateItems(place, context, item)
     }
-    if (typeof rendered === "string") {
-      place = insertNodeAt(place, txt(rendered))
-    } else if (typeof rendered === "number") {
-      place = insertNodeAt(place, txt(rendered.toString()))
-    } else if (rendered.type === "element") {
-      place = renderElementItem(rendered, place, context)
-    } else if (rendered.type === "placeholder") {
-      const plh = createChildPlaceholderAt(place, context, rendered.content)
-      rendered.handler?.(plh)
-      place = plh
-    } else if (rendered.type === "list") {
-      const list = createListAt(place, context, rendered.contents)
-      rendered.handler?.(list)
-      place = list
-    } else if (rendered.type === "component" && rendered.content != null) {
-      place = rendered.content(place, context)
-    }
+  } else if (rendered.type === "element") {
+    place = renderElementItem(rendered, place, context)
+  } else if (rendered.type === "placeholder") {
+    const plh = createChildPlaceholderAt(place, context, renderTemplate(rendered.content))
+    rendered.handler?.(plh)
+    place = plh
+  } else if (rendered.type === "list") {
+    const list = createListAt(
+      place,
+      context,
+      rendered.contents.map((item) => renderTemplate(item)),
+    )
+    rendered.handler?.(list)
+    place = list
   }
   return place
 }
