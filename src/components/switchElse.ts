@@ -1,46 +1,13 @@
-import { createChildPlaceholderAt } from "../core/impl/placeholder.js"
-import { type PlaceholderContent, type Placeholder, type PlaceholderComponent } from "../core/index.js"
+import { type PlaceholderComponent } from "../core/index.js"
+import { fr, plh, type TemplateHandler, type TemplateContent } from "../template/index.js"
 
 export interface Switch<T> {
   value: T
 }
 
-export type CaseBranch<T> = [T, PlaceholderContent]
+export type CaseBranch<T> = [T, TemplateContent]
 
-class SwitchImpl<T> implements Switch<T> {
-  _value: T
-  branches: Array<CaseBranch<T>>
-  defaultBranch: PlaceholderContent
-  readonly placeholder: Placeholder
-
-  constructor(placeholder: Placeholder, value: T, branches: Array<CaseBranch<T>>, defaultBranch: PlaceholderContent) {
-    this.placeholder = placeholder
-    this._value = value
-    this.branches = branches
-    this.defaultBranch = defaultBranch
-  }
-
-  get value(): T {
-    return this._value
-  }
-
-  set value(value: T) {
-    if (this._value !== value) {
-      this.placeholder.replaceContent(this._selectBranch())
-      this._value = value
-    }
-  }
-
-  _selectBranch(): PlaceholderContent {
-    return selectBranch(this.value, this.branches, this.defaultBranch)
-  }
-}
-
-const selectBranch = <T>(
-  value: T,
-  branches: Array<CaseBranch<T>>,
-  defaultBranch: PlaceholderContent,
-): PlaceholderContent => {
+const selectBranch = <T>(value: T, branches: Array<CaseBranch<T>>, defaultBranch: TemplateContent): TemplateContent => {
   for (const branch of branches) {
     if (value === branch[0]) {
       return branch[1]
@@ -49,15 +16,27 @@ const selectBranch = <T>(
   return defaultBranch
 }
 
-export const switchElse =
-  <T>(
-    value: T,
-    branches: Array<CaseBranch<T>>,
-    defaultBranch: PlaceholderContent,
-    handler?: (sw: Switch<T>) => void,
-  ): PlaceholderComponent =>
-  (place, context) => {
-    const placeholder = createChildPlaceholderAt(place, context, selectBranch(value, branches, defaultBranch))
-    handler?.(new SwitchImpl<T>(placeholder, value, branches, defaultBranch))
+export const switchElse = <T>(
+  initValue: T,
+  branches: Array<CaseBranch<T>>,
+  defaultBranch: TemplateContent,
+  handler?: TemplateHandler<Switch<T>>,
+): PlaceholderComponent =>
+  plh(selectBranch(initValue, branches, defaultBranch), (placeholder, context) => {
+    let _value: T = initValue
+    handler?.(
+      {
+        get value(): T {
+          return _value
+        },
+        set value(value: T) {
+          if (_value !== value) {
+            placeholder.replaceContent(fr(selectBranch(value, branches, defaultBranch)))
+            _value = value
+          }
+        },
+      },
+      context,
+    )
     return placeholder
-  }
+  })

@@ -1,31 +1,30 @@
-import { createChildPlaceholderAt } from "../core/impl/placeholder.js"
-import { type PlaceholderComponent, type PlaceholderContent } from "../core/index.js"
+import { type PlaceholderComponent } from "../core/index.js"
+import { type TemplateContent, fr, type TemplateHandler, plh } from "../template/index.js"
 
 export interface IfElse {
   condition: boolean
 }
 
-export const ifElse =
-  (
-    condition: boolean,
-    trueBranch: PlaceholderContent,
-    falseBranch: PlaceholderContent,
-    handler?: (ifElse: IfElse) => void,
-  ): PlaceholderComponent =>
-  (place, context) => {
-    const placeholder = createChildPlaceholderAt(place, context, condition ? trueBranch : falseBranch)
-
-    let _value = condition
-    handler?.({
-      get condition() {
-        return _value
+export const ifElse = (
+  initCondition: boolean,
+  trueBranch: TemplateContent,
+  falseBranch: TemplateContent,
+  handler?: TemplateHandler<IfElse>,
+): PlaceholderComponent =>
+  plh(fr(initCondition ? trueBranch : falseBranch), (placeholder, context) => {
+    let _condition = initCondition
+    handler?.(
+      {
+        get condition() {
+          return _condition
+        },
+        set condition(value: boolean) {
+          if (_condition !== value) {
+            placeholder.replaceContent(fr(value ? trueBranch : falseBranch))
+            _condition = value
+          }
+        },
       },
-      set condition(value: boolean) {
-        if (_value !== value) {
-          placeholder.replaceContent(value ? trueBranch : falseBranch)
-          _value = value
-        }
-      },
-    })
-    return placeholder
-  }
+      context,
+    )
+  })

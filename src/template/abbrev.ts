@@ -1,8 +1,8 @@
-import { el, type ElementHandler, type TemplateElementAttrsMap } from "./index.js"
+import { el, type TemplateHandler, type TemplateElementAttrsMap } from "./index.js"
 
 const abbrev =
   (tag: string) =>
-  (attrs: TemplateElementAttrsMap | null = null, ...handlers: ElementHandler[]) =>
+  (attrs: TemplateElementAttrsMap | null = null, ...handlers: Array<TemplateHandler<HTMLElement>>) =>
     el(tag, attrs, ...handlers)
 
 export const p = abbrev("p")
