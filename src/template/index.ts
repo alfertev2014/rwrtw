@@ -1,5 +1,4 @@
 import { dce, setAttr, type ScalarValue, txt } from "../dom/helpers.js"
-import { EventHandlerController, type EventHandlersMap } from "../events.js"
 import {
   type PlaceholderList,
   type Placeholder,
@@ -18,7 +17,7 @@ export type AttributeHandler = (attr: string, element: HTMLElement, context: Pla
 export type TemplateElementAttrsMap = Record<string, ScalarValue | AttributeHandler>
 
 export const el =
-  (tag: string, attrs: TemplateElementAttrsMap | null = null, handler?: ElementHandler) =>
+  (tag: string, attrs: TemplateElementAttrsMap | null = null, ...handlers: ElementHandler[]) =>
   (...children: TemplateContent[]): PlaceholderComponent =>
   (place, context) => {
     const element = dce(tag)
@@ -37,14 +36,16 @@ export const el =
 
     insertNodeAt(place, element)
 
-    handler?.(element)
+    for (const handler of handlers) {
+      handler(element)
+    }
     return element
   }
 
 export const plh =
   (content: TemplateContent, handler?: (placeholder: Placeholder) => void): PlaceholderComponent =>
   (place, context) => {
-    const res = createChildPlaceholderAt(place, context, renderTemplate(content))
+    const res = createChildPlaceholderAt(place, context, fr(content))
     handler?.(res)
     return res
   }
@@ -52,7 +53,7 @@ export const plh =
 export const list =
   (contents: TemplateContent[], handler?: (list: PlaceholderList) => void): PlaceholderComponent =>
   (place, context) => {
-    const list = createListAt(place, context, contents.map(renderTemplate))
+    const list = createListAt(place, context, contents.map(fr))
     handler?.(list)
     return list
   }
@@ -79,18 +80,15 @@ const renderTemplateContent = (place: Place, context: PlaceholderContext, conten
   return place
 }
 
-export const renderTemplate =
+export const fr =
   (...content: TemplateContent[]): PlaceholderComponent =>
   (place, context) => {
     return renderTemplateContent(place, context, content)
   }
 
-export const on =
-  (context: PlaceholderContext, handlers: EventHandlersMap): ElementHandler =>
-  (element) => {
-    const res = new EventHandlerController(element, handlers)
-    context.registerLifecycle(res)
-    return res
+export const on: (...args: Parameters<HTMLElement["addEventListener"]>) => ElementHandler =
+  (event, listener, options) => (element) => {
+    element.addEventListener(event, listener, options)
   }
 
 export interface TemplateRef<T> {
