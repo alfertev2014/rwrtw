@@ -38,5 +38,4 @@ export const switchElse = <T>(
       },
       context,
     )
-    return placeholder
   })

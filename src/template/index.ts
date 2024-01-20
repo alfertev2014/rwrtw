@@ -13,34 +13,33 @@ import {
 } from "../core/index.js"
 
 export type TemplateHandler<T> = (element: T, context: PlaceholderContext) => void
-export type AttributeHandler = (attr: string, element: HTMLElement, context: PlaceholderContext) => void
+export type TemplateElementAttrHandler = (element: HTMLElement, context: PlaceholderContext, attrName: string) => void
 
-export type TemplateElementAttrsMap = Record<string, ScalarValue | AttributeHandler>
+export type TemplateElementAttrsMap = Record<string, ScalarValue | TemplateElementAttrHandler>
 
 export const el =
-  (tag: string, attrs: TemplateElementAttrsMap | null = null, ...handlers: Array<TemplateHandler<HTMLElement>>) =>
+  (tag: string, attrs?: TemplateElementAttrsMap | null, ...handlers: Array<TemplateHandler<HTMLElement>>) =>
   (...children: TemplateContent[]): PlaceholderComponent =>
   (place, context) => {
     const element = dce(tag)
 
-    renderTemplateContent(placeAtBeginningOf(element), context, children)
-
     if (attrs != null) {
       for (const [name, value] of Object.entries(attrs)) {
         if (typeof value === "function") {
-          value(name, element, context)
+          value(element, context, name)
         } else {
           setAttr(element, name, value)
         }
       }
     }
 
-    insertNodeAt(place, element)
-
     for (const handler of handlers) {
       handler(element, context)
     }
-    return element
+
+    renderTemplateContent(element.lastChild ?? placeAtBeginningOf(element), context, children)
+
+    return insertNodeAt(place, element)
   }
 
 export const plh =
@@ -99,26 +98,41 @@ export const on: (...args: Parameters<HTMLElement["addEventListener"]>) => Templ
     element.addEventListener(event, listener, options)
   }
 
-export interface TemplateRef<T> {
-  readonly current: T | undefined
-  readonly bind: () => (value: T, context: PlaceholderContext) => void
+export const ev = (listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions): TemplateElementAttrHandler =>
+  (element, context, eventName) => {
+    element.addEventListener(eventName, listener, options)
+  }
+
+export interface TemplateRefObject<T> {
+  current?: T | undefined
 }
 
-export const ref = <T>(initValue?: T): TemplateRef<T> => {
-  let _current = initValue
-  return {
-    get current() {
-      return _current
-    },
-    bind() {
-      return (value: T, context: PlaceholderContext) => {
-        _current = value
-        context.registerLifecycle({
-          dispose() {
-            _current = undefined
-          },
-        })
-      }
-    },
+export type TemplateRefCallback<T> = (value: T | undefined) => void
+
+export type TemplateRef<T> = TemplateRefObject<T> | TemplateRefCallback<T>
+
+export const createRef = <T>(initValue?: T): TemplateRefObject<T> => {
+  return { current: initValue }
+}
+
+export const ref = <T>(ref: TemplateRef<T>): TemplateHandler<T> => {
+  if (typeof ref === "function") {
+    return (value, context) => {
+      ref(value)
+      context.registerLifecycle({
+        dispose() {
+          ref(undefined)
+        }
+      })
+    }
+  } else {
+    return (value, context) => {
+      ref.current = value
+      context.registerLifecycle({
+        dispose() {
+          ref.current = undefined
+        }
+      })
+    }
   }
 }

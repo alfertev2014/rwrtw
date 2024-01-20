@@ -9,15 +9,15 @@ export interface Hidable {
 }
 
 export const hidable = (content: TemplateContent, handler?: TemplateHandler<Hidable>): PlaceholderComponent =>
-  ifElse(true, content, null, (ref, context) => {
+  ifElse(true, content, null, (ifElse, context) => {
     handler?.(
       {
         get visible() {
-          return ref.condition
+          return ifElse.condition
         },
 
         set visible(value: boolean) {
-          ref.condition = value
+          ifElse.condition = value
         },
 
         hide() {
