@@ -134,7 +134,40 @@ Controllers with dynamic content should implement replacement operation of dynam
 
 ## Placeholder
 
-To remove chain of nodes from DOM we need starting and ending places.
+To remove chain of nodes from DOM we need a place where it starts and place where it ends. After removing we need to remember the place where we can insert nodes again. This is the idea of *Placeholder* - special object type to handle manipulations with DOM node structure.
+
+*Content* of placeholder is zero or many DOM nodes and other placeholders. Placeholders inside content of a placeholder is *Child placeholders*. Child placeholders could be inside child Elements of content. *Placeholder tree* is a tree of placeholders bound to DOM tree.
+
+Placeholder is allowed to do only primitive DOM operations. Complex DOM transformations and restructuring are possible by composing many placeholders but every placeholder is restricted to do only this operations with its content as a whole:
+
+* Placeholder can *insert* some content in one step.
+* Placeholder can *remove* its content also in one step,
+* Placeholder can *replace* all its content with new content in one step.
+  
+There is no ability to edit content using the placeholder. We cannot append, insert or remove nodes inside the content with the placeholder. We could use DOM API directly for this but not placeholder.
+
+Placeholders could follow each others in chain. Every placeholder must remember its place where it was created. When placeholder created it cannot modify its place or move to other place. Exception is when placeholder is used as an item of dynamic list.
+
+So, we can now define Place more accurately. Place is a reference to DOM node or placeholder in combination with "after" or "inside" sign. There are four cases of place:
+
+* after DOM Node
+* inside HTMLElement before first child
+* after a Placeholder
+* inside a Placeholder at the beginning
+
+The first two are called DOM-places. The last two are called Placeholder-places.
+
+Place is implemented as simple reference to Node or Placeholder object or as a wrapper of Node or Placeholder object. Direct reference to Node or Placeholder means the place is after the object it points to. Wrapper object means sign than the place is inside a Node or a Placeholder at the beginning.
+
+To insert DOM nodes into DOM tree of document or fragment we need to calculate DOM-place of Placeholder-places. Every Placeholder-place can be calculated to corresponding DOM place with the algorithm:
+
+* If a place is a Placeholder:
+  * If the last node in content of the placeholder is a DOM Node - this node is the DOM-place after the placeholder
+  * If the last node in content of the placeholder is a child Placeholder - the DOM-place after the placeholder is the DOM-place after the child Placeholder (recursively).
+  * If the content of the Placeholder is empty - the DOM-place after the placeholder is the DOM-place of the place where this placeholder was created. It could be other Placeholder or parent Placeholder.
+* If a place is at the beginning of a parent Placeholder - the resulting DOM-place is the DOM-place of a place where the parent Placeholder was created (recursively).
+
+This algorithm targets to chain of placeholder with nested placeholders at start or end of parent placeholders. If a Placeholder is surrounded with regular DOM Nodes and contains "static" DOM Nodes the bounds of its content in DOM tree is clear.
 
 // TBD
 
