@@ -23,6 +23,7 @@ export interface Placeholder extends PlaceholderNode {
 }
 
 export interface PlaceholderList extends PlaceholderNode {
+  readonly length: number
   readonly insert: (index: number, content: PlaceholderContent) => void
   readonly removeAt: (index: number) => void
   readonly moveFromTo: (fromIndex: number, toIndex: number) => void

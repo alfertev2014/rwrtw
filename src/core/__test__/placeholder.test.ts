@@ -6,7 +6,6 @@ import {
   placeAtBeginningOf,
   insertNodeAt,
   type DOMPlace,
-  Lifecycle,
 } from ".."
 
 describe("Placeholder", () => {
@@ -243,11 +242,10 @@ describe("Placeholder", () => {
   })
 
   describe("Lifecycles", () => {
-
     let LIFECYCLE: {
-      mount: jest.Mock<any, any, any>;
-      unmount: jest.Mock<any, any, any>;
-      dispose: jest.Mock<any, any, any>;
+      mount: jest.Mock<any, any, any>
+      unmount: jest.Mock<any, any, any>
+      dispose: jest.Mock<any, any, any>
     }
 
     beforeEach(() => {

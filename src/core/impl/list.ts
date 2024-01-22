@@ -15,17 +15,21 @@ const moveToPlace = (placeholder: PlaceholderImpl, place: Place): void => {
 }
 
 export class PlaceholderListImpl implements PlaceholderList, Lifecycle {
-  readonly place: Place
-  readonly items: PlaceholderImpl[]
+  readonly _place: Place
+  readonly _items: PlaceholderImpl[]
   constructor(place: Place, contents: PlaceholderContent[]) {
-    this.place = place
-    this.items = []
+    this._place = place
+    this._items = []
     let currentPlace = place
     for (const content of contents) {
       const placeholder = new PlaceholderImpl(currentPlace, content)
-      this.items.push(placeholder)
+      this._items.push(placeholder)
       currentPlace = placeholder
     }
+  }
+
+  get length(): number {
+    return this._items.length
   }
 
   lastDOMPlace(): DOMPlace {
@@ -33,85 +37,87 @@ export class PlaceholderListImpl implements PlaceholderList, Lifecycle {
   }
 
   get lastPlace(): Place {
-    if (this.items.length > 0) {
-      return this.items[this.items.length - 1]
+    if (this._items.length > 0) {
+      return this._items[this._items.length - 1]
     } else {
-      return this.place
+      return this._place
     }
   }
 
   _placeAtIndex(index: number): Place {
-    return index > 0 ? this.items[index - 1] : this.place
+    return index > 0 ? this._items[index - 1] : this._place
   }
 
   insert(index: number, content: PlaceholderContent): void {
-    if (index > this.items.length) {
-      index = this.items.length
+    if (index > this._items.length) {
+      index = this._items.length
     }
     const placeholder =
-      index < this.items.length ? spawnBefore(this.items[index], content) : new PlaceholderImpl(this.lastPlace, content)
-    this.items.splice(index, 0, placeholder)
+      index < this._items.length
+        ? spawnBefore(this._items[index], content)
+        : new PlaceholderImpl(this.lastPlace, content)
+    this._items.splice(index, 0, placeholder)
   }
 
   removeAt(index: number): void {
-    if (index >= this.items.length) {
+    if (index >= this._items.length) {
       return
     }
-    if (index >= 0 && index < this.items.length - 1) {
-      const next = this.items[index + 1]
+    if (index >= 0 && index < this._items.length - 1) {
+      const next = this._items[index + 1]
       if (next._place instanceof PlaceholderImpl) {
         next._place.erase()
         next._place = next._place._place
       }
     } else {
-      this.items[index].erase()
+      this._items[index].erase()
     }
-    this.items.splice(index, 1)
+    this._items.splice(index, 1)
   }
 
   moveFromTo(fromIndex: number, toIndex: number): void {
     if (fromIndex === toIndex) {
       return
     }
-    const placeholder = this.items[fromIndex]
-    if (fromIndex < this.items.length - 1) {
-      this.items[fromIndex + 1]._place = placeholder._place
+    const placeholder = this._items[fromIndex]
+    if (fromIndex < this._items.length - 1) {
+      this._items[fromIndex + 1]._place = placeholder._place
     }
-    moveToPlace(placeholder, this.items[toIndex - 1])
+    moveToPlace(placeholder, this._items[toIndex - 1])
 
     if (fromIndex < toIndex) {
       for (let i = fromIndex; i < toIndex - 1; ++i) {
-        this.items[i] = this.items[i + 1]
+        this._items[i] = this._items[i + 1]
       }
     } else {
       for (let i = fromIndex; i > toIndex + 1; --i) {
-        this.items[i] = this.items[i - 1]
+        this._items[i] = this._items[i - 1]
       }
     }
-    this.items[toIndex] = placeholder
+    this._items[toIndex] = placeholder
 
-    if (toIndex < this.items.length - 1) {
-      this.items[toIndex + 1]._place = placeholder
+    if (toIndex < this._items.length - 1) {
+      this._items[toIndex + 1]._place = placeholder
     }
   }
 
   mount(): void {
-    for (const element of this.items) {
+    for (const element of this._items) {
       element.mount()
     }
   }
 
   unmount(): void {
-    for (const element of this.items) {
+    for (const element of this._items) {
       element.unmount()
     }
   }
 
   dispose(): void {
-    for (const element of this.items) {
+    for (const element of this._items) {
       element.dispose()
     }
-    this.items.length = 0
+    this._items.length = 0
   }
 }
 
