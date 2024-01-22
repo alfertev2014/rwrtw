@@ -98,7 +98,11 @@ export const on: (...args: Parameters<HTMLElement["addEventListener"]>) => Templ
     element.addEventListener(event, listener, options)
   }
 
-export const ev = (listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions): TemplateElementAttrHandler =>
+export const ev =
+  (
+    listener: EventListenerOrEventListenerObject,
+    options?: boolean | AddEventListenerOptions,
+  ): TemplateElementAttrHandler =>
   (element, context, eventName) => {
     element.addEventListener(eventName, listener, options)
   }
@@ -122,7 +126,7 @@ export const ref = <T>(ref: TemplateRef<T>): TemplateHandler<T> => {
       context.registerLifecycle({
         dispose() {
           ref(undefined)
-        }
+        },
       })
     }
   } else {
@@ -131,7 +135,7 @@ export const ref = <T>(ref: TemplateRef<T>): TemplateHandler<T> => {
       context.registerLifecycle({
         dispose() {
           ref.current = undefined
-        }
+        },
       })
     }
   }
