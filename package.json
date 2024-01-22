@@ -1,7 +1,7 @@
 {
   "name": "rwrtw",
   "version": "0.0.7",
-  "description": "Tiny DOM helpers and building blocks for Web UI components",
+  "description": "Tiny UI library for browser applications, thin DOM helpers and component building blocks with transparent and convenient DSL",
   "type": "module",
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
