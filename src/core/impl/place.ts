@@ -1,11 +1,11 @@
 export class ParentNodePlace {
-  parent: ParentNode
+  readonly parent: ParentNode
   constructor(parent: ParentNode) {
     this.parent = parent
   }
 }
 
-export const placeAtBeginningOf = (node: ParentNode): Place => new ParentNodePlace(node)
+export const placeAtBeginningOf = (node: ParentNode): DOMPlace => new ParentNodePlace(node)
 
 export type DOMPlace = Node | ParentNodePlace
 
