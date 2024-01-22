@@ -1,7 +1,7 @@
 import { describe, expect, test } from "@jest/globals"
 import { lastDOMPlaceOf, placeAtBeginningOf, type Place, insertNodeAt } from "../impl/place.js"
-import { PlaceholderImpl, createChildPlaceholderAt, createRootPlaceholderAt } from "../impl/placeholder.js"
-import { type Placeholder } from "../index.js"
+import { createChildPlaceholderAt, createRootPlaceholderAt } from "../impl/placeholder.js"
+import { createListAt, type PlaceholderList, type Placeholder, PlaceholderContent } from "../index.js"
 
 describe("Place", () => {
   let PARENT_NODE: HTMLElement
@@ -145,30 +145,88 @@ describe("Place", () => {
     })
 
     describe("of dynamic list", () => {
-      describe("when list is empty", () => {
-        test("when list after Node", () => {
-          fail("TBD")
+      let INNER_CHILD_NODE: HTMLElement
+
+      beforeEach(() => {
+        INNER_CHILD_NODE = document.createElement("div")
+      })
+
+      describe.each([
+        [[]],
+        [[null]],
+        [[null, null]]
+      ] as PlaceholderContent[][][])("when list is empty", (LIST_ITEMS) => {
+        test("when list after Node - should return that Node", () => {
+          let list: PlaceholderList | undefined
+
+          createRootPlaceholderAt(CHILD_NODE, (place, context) => {
+            place = insertNodeAt(place, INNER_CHILD_NODE)
+            list = createListAt(place, context, LIST_ITEMS)
+            return list
+          })
+
+          if (list != null) {
+            expect(lastDOMPlaceOf(list)).toBe(INNER_CHILD_NODE)
+          } else {
+            fail("list is not initialized")
+          }
         })
   
-        test("when list at the beginning of Node", () => {
-          fail("TBD")
+        test("when list at the beginning of Node - should return the beginning of than Node", () => {
+          let list: PlaceholderList | undefined
+          let listPlace: Place | undefined
+
+          createRootPlaceholderAt(CHILD_NODE, (place, context) => {
+            place = insertNodeAt(place, INNER_CHILD_NODE)
+            
+            listPlace = placeAtBeginningOf(INNER_CHILD_NODE)
+            list = createListAt(listPlace, context, LIST_ITEMS)
+            
+            return place
+          })
+
+          if (list != null && listPlace != null) {
+            expect(lastDOMPlaceOf(list)).toBe(listPlace)
+          } else {
+            fail("list or listPlace are not initialized")
+          }
         })
   
-        test("when list after Placeholder with Node inside", () => {
-          fail("TBD")
+        test("when list after Placeholder with Node inside - should return that Node", () => {
+          let list: PlaceholderList | undefined
+
+          createRootPlaceholderAt(CHILD_NODE, (place, context) => {
+            place = createChildPlaceholderAt(place, context, (place) => {
+              return insertNodeAt(place, INNER_CHILD_NODE)
+            })
+            list = createListAt(place, context, LIST_ITEMS)
+            return list
+          })
+
+          if (list != null) {
+            expect(lastDOMPlaceOf(list)).toBe(INNER_CHILD_NODE)
+          } else {
+            fail("list is not initialized")
+          }
         })
   
         test("when list at the beginning of Placeholder", () => {
-          fail("TBD")
+          let list: PlaceholderList | undefined
+
+          createRootPlaceholderAt(CHILD_NODE, (place, context) => {
+            place = createChildPlaceholderAt(place, context, (place) => {
+              return insertNodeAt(place, INNER_CHILD_NODE)
+            })
+            list = createListAt(place, context, LIST_ITEMS)
+            return list
+          })
+
+          if (list != null) {
+            expect(lastDOMPlaceOf(list)).toBe(INNER_CHILD_NODE)
+          } else {
+            fail("list is not initialized")
+          }
         })
-      })
-
-      describe("when list contains only empty items", () => {
-
-      })
-      
-      describe("when list contains only empty items", () => {
-
       })
     })
   })
