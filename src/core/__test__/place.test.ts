@@ -168,7 +168,7 @@ describe("Place", () => {
       })
       
       describe("when list contains only empty items", () => {
-        
+
       })
     })
   })
@@ -243,26 +243,27 @@ describe("Place", () => {
 
   describe("Inserting nodes at the beginning of placeholder", () => {
     test("if placeholder is empty it should insert nodes at lastDOMPlace of placeholder", () => {
-      const placeholder = createRootPlaceholderAt(CHILD_NODE, null)
       const node = document.createElement("div")
-
-      insertNodeAt(placeholder, node)
+      
+      const placeholder = createRootPlaceholderAt(CHILD_NODE, (place, context) => {
+        return insertNodeAt(place, node)
+      })
 
       expect(node.previousSibling).toBe(CHILD_NODE)
-      expect(placeholder.lastDOMPlace()).toBe(CHILD_NODE)
+      expect(placeholder.lastDOMPlace()).toBe(node)
     })
 
-    test("if placeholder contains nodes it should insert nodes after content of placeholder", () => {
+    test("if placeholder contains nodes it should insert nodes before content of placeholder", () => {
       const innerNode = document.createElement("div")
+      const innerAfterNode = document.createElement("div")
       const placeholder = createRootPlaceholderAt(CHILD_NODE, (place) => {
-        return insertNodeAt(place, innerNode)
+        place = insertNodeAt(place, innerNode)
+        return insertNodeAt(place, innerAfterNode)
       })
-      const node = document.createElement("div")
 
-      insertNodeAt(placeholder, node)
-
-      expect(node.previousSibling).toBe(innerNode)
-      expect(placeholder.lastDOMPlace()).toBe(innerNode)
+      expect(innerNode.previousSibling).toBe(CHILD_NODE)
+      expect(innerNode.nextSibling).toBe(innerAfterNode)
+      expect(placeholder.lastDOMPlace()).toBe(innerAfterNode)
     })
   })
 })
