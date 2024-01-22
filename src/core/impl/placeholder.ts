@@ -1,5 +1,5 @@
 import { type PlaceholderContext, type Lifecycle, type Placeholder, type PlaceholderContent } from "../index.js"
-import { type DOMPlace, type Place, removeNodesAt, lastPlaceNode, type PlaceholderNode } from "./place.js"
+import { type DOMPlace, type Place, removeNodesAt, lastDOMPlaceOf, type PlaceholderNode } from "./place.js"
 
 export class ParentPlaceholderPlace implements PlaceholderNode {
   parent: PlaceholderImpl
@@ -7,8 +7,8 @@ export class ParentPlaceholderPlace implements PlaceholderNode {
     this.parent = parent
   }
 
-  lastPlaceNode(): DOMPlace {
-    return lastPlaceNode(this.parent._place)
+  lastDOMPlace(): DOMPlace {
+    return lastDOMPlaceOf(this.parent._place)
   }
 }
 
@@ -23,8 +23,8 @@ export class PlaceholderImpl implements Placeholder, Lifecycle {
     this._renderContent(content)
   }
 
-  lastPlaceNode(): DOMPlace {
-    return lastPlaceNode(this._lastPlace)
+  lastDOMPlace(): DOMPlace {
+    return lastDOMPlaceOf(this._lastPlace)
   }
 
   mount(): void {

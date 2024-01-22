@@ -10,21 +10,21 @@ export const placeAtBeginningOf = (node: ParentNode): Place => new ParentNodePla
 export type DOMPlace = Node | ParentNodePlace
 
 export interface PlaceholderNode {
-  lastPlaceNode: () => DOMPlace
+  lastDOMPlace: () => DOMPlace
 }
 
 export type Place = DOMPlace | PlaceholderNode
 
-export const lastPlaceNode = (place: Place): DOMPlace => {
+export const lastDOMPlaceOf = (place: Place): DOMPlace => {
   if (place instanceof Node || place instanceof ParentNodePlace) {
     return place
   } else {
-    return place.lastPlaceNode()
+    return place.lastDOMPlace()
   }
 }
 
 export const insertNodeAt = <T extends Node>(place: Place, node: T): T => {
-  const domPlace = lastPlaceNode(place)
+  const domPlace = lastDOMPlaceOf(place)
   if (domPlace instanceof Node) {
     if (domPlace.parentNode != null) {
       return domPlace.parentNode.insertBefore(node, domPlace.nextSibling)
@@ -37,10 +37,10 @@ export const insertNodeAt = <T extends Node>(place: Place, node: T): T => {
 }
 
 export const removeNodesAt = (place: Place, lastPlace: Place): void => {
-  const lastDomPlace: DOMPlace | null = lastPlaceNode(lastPlace)
+  const lastDomPlace: DOMPlace | null = lastDOMPlaceOf(lastPlace)
   if (lastDomPlace != null && lastDomPlace instanceof Node) {
     let lastDomNode: Node | null = lastDomPlace
-    const firstDomPlace = place != null ? lastPlaceNode(place) : null
+    const firstDomPlace = place != null ? lastDOMPlaceOf(place) : null
     const firstDomNode = firstDomPlace instanceof Node ? firstDomPlace : null
     while (lastDomNode != null && lastDomNode !== firstDomNode) {
       const toRemove = lastDomNode
@@ -51,11 +51,11 @@ export const removeNodesAt = (place: Place, lastPlace: Place): void => {
 }
 
 export const takeNodesFrom = (place: Place, lastPlace: Place): DocumentFragment => {
-  const lastDomPlace: DOMPlace | null = lastPlaceNode(lastPlace)
+  const lastDomPlace: DOMPlace | null = lastDOMPlaceOf(lastPlace)
   const fragment = document.createDocumentFragment()
   if (lastDomPlace != null && lastDomPlace instanceof Node) {
     let lastDomNode: Node | null = lastDomPlace
-    const firstDomPlace = place != null ? lastPlaceNode(place) : null
+    const firstDomPlace = place != null ? lastDOMPlaceOf(place) : null
     const firstDomNode = firstDomPlace instanceof Node ? firstDomPlace : null
     while (lastDomNode != null && lastDomNode !== firstDomNode) {
       const toRemove = lastDomNode

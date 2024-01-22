@@ -15,7 +15,7 @@ describe("Placeholder", () => {
 
       const placeholder = createRootPlaceholderAt(place, null)
 
-      expect(placeholder.lastPlaceNode()).toBe(place)
+      expect(placeholder.lastDOMPlace()).toBe(place)
       expect(parent.childNodes.length).toBe(0)
     })
 
@@ -26,7 +26,7 @@ describe("Placeholder", () => {
 
       const placeholder = createRootPlaceholderAt(place, (place) => insertNodeAt(place, node))
 
-      expect(placeholder.lastPlaceNode()).toBe(node)
+      expect(placeholder.lastDOMPlace()).toBe(node)
       expect(node.parentNode).toBe(parent)
       expect(parent.firstChild).toBe(node)
     })
@@ -47,7 +47,7 @@ describe("Placeholder", () => {
         return node
       })
 
-      expect(placeholder.lastPlaceNode()).toBe(node)
+      expect(placeholder.lastDOMPlace()).toBe(node)
       expect(firstNode.parentNode).toBe(parent)
       expect(node.parentNode).toBe(parent)
       expect(parent.firstChild).toBe(firstNode)
@@ -66,7 +66,7 @@ describe("Placeholder", () => {
         return childPlaceholder
       })
 
-      expect(childPlaceholder?.lastPlaceNode()).toBe(place)
+      expect(childPlaceholder?.lastDOMPlace()).toBe(place)
       expect(parent.childNodes.length).toBe(0)
     })
 
@@ -84,8 +84,8 @@ describe("Placeholder", () => {
         return childPlaceholder
       })
 
-      expect(childPlaceholder?.lastPlaceNode()).toBe(innerNode)
-      expect(parentPlaceholder.lastPlaceNode()).toBe(innerNode)
+      expect(childPlaceholder?.lastDOMPlace()).toBe(innerNode)
+      expect(parentPlaceholder.lastDOMPlace()).toBe(innerNode)
       expect(parent.childNodes.length).toBe(1)
       expect(parent.firstChild).toBe(innerNode)
     })
@@ -113,10 +113,10 @@ describe("Placeholder", () => {
       expect(parent.childNodes.length).toBe(2)
       expect(parent.firstChild).toBe(innerNode1)
       expect(parent.lastChild).toBe(innerNode2)
-      expect(childPlaceholder1?.lastPlaceNode()).toBe(innerNode1)
-      expect(childPlaceholder2?.lastPlaceNode()).toBe(innerNode2)
+      expect(childPlaceholder1?.lastDOMPlace()).toBe(innerNode1)
+      expect(childPlaceholder2?.lastDOMPlace()).toBe(innerNode2)
 
-      expect(parentPlaceholder.lastPlaceNode()).toBe(innerNode2)
+      expect(parentPlaceholder.lastDOMPlace()).toBe(innerNode2)
     })
   })
 
@@ -140,8 +140,8 @@ describe("Placeholder", () => {
       expect(parent.childNodes.length).toBe(1)
       expect(parent.firstChild).toBe(innerNode)
 
-      expect(childPlaceholder?.lastPlaceNode()).toBe(innerNode)
-      expect(parentPlaceholder.lastPlaceNode()).toBe(innerNode)
+      expect(childPlaceholder?.lastDOMPlace()).toBe(innerNode)
+      expect(parentPlaceholder.lastDOMPlace()).toBe(innerNode)
     })
 
     test("instead of nodes should insert new content and correct dom place of parent placeholder", () => {
@@ -167,8 +167,8 @@ describe("Placeholder", () => {
       expect(parent.childNodes.length).toBe(1)
       expect(parent.firstChild).toBe(innerNode)
 
-      expect(childPlaceholder?.lastPlaceNode()).toBe(innerNode)
-      expect(parentPlaceholder.lastPlaceNode()).toBe(innerNode)
+      expect(childPlaceholder?.lastDOMPlace()).toBe(innerNode)
+      expect(parentPlaceholder.lastDOMPlace()).toBe(innerNode)
     })
 
     test("empty content instead of nodes should remove old content and correct dom place of parent placeholder", () => {
@@ -189,8 +189,8 @@ describe("Placeholder", () => {
 
       expect(parent.firstChild).toBeNull()
 
-      expect(childPlaceholder?.lastPlaceNode()).toBe(place)
-      expect(parentPlaceholder.lastPlaceNode()).toBe(place)
+      expect(childPlaceholder?.lastDOMPlace()).toBe(place)
+      expect(parentPlaceholder.lastDOMPlace()).toBe(place)
     })
 
     test("removing content of last child placeholder should correct parent last place node to first child placeholder", () => {
@@ -217,10 +217,10 @@ describe("Placeholder", () => {
 
       expect(parent.childNodes.length).toBe(1)
       expect(parent.firstChild).toBe(innerNode1)
-      expect(childPlaceholder1?.lastPlaceNode()).toBe(innerNode1)
-      expect(childPlaceholder2?.lastPlaceNode()).toBe(innerNode1)
+      expect(childPlaceholder1?.lastDOMPlace()).toBe(innerNode1)
+      expect(childPlaceholder2?.lastDOMPlace()).toBe(innerNode1)
 
-      expect(parentPlaceholder.lastPlaceNode()).toBe(innerNode1)
+      expect(parentPlaceholder.lastDOMPlace()).toBe(innerNode1)
     })
 
     test("removing content of first child placeholder should correct second's last place node to parent place", () => {
@@ -247,10 +247,10 @@ describe("Placeholder", () => {
 
       expect(parent.childNodes.length).toBe(1)
       expect(parent.firstChild).toBe(innerNode2)
-      expect(childPlaceholder1?.lastPlaceNode()).toBe(place)
-      expect(childPlaceholder2?.lastPlaceNode()).toBe(innerNode2)
+      expect(childPlaceholder1?.lastDOMPlace()).toBe(place)
+      expect(childPlaceholder2?.lastDOMPlace()).toBe(innerNode2)
 
-      expect(parentPlaceholder.lastPlaceNode()).toBe(innerNode2)
+      expect(parentPlaceholder.lastDOMPlace()).toBe(innerNode2)
     })
   })
 

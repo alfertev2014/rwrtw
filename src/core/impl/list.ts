@@ -1,5 +1,5 @@
 import { type PlaceholderList, type PlaceholderContent, type Lifecycle, type PlaceholderContext } from "../index.js"
-import { type DOMPlace, type Place, lastPlaceNode, takeNodesFrom, insertNodeAt } from "./place.js"
+import { type DOMPlace, type Place, lastDOMPlaceOf, takeNodesFrom, insertNodeAt } from "./place.js"
 import { PlaceholderImpl } from "./placeholder.js"
 
 const spawnBefore = (placeholder: PlaceholderImpl, content: PlaceholderContent): PlaceholderImpl => {
@@ -28,8 +28,8 @@ export class PlaceholderListImpl implements PlaceholderList, Lifecycle {
     }
   }
 
-  lastPlaceNode(): DOMPlace {
-    return lastPlaceNode(this.lastPlace)
+  lastDOMPlace(): DOMPlace {
+    return lastDOMPlaceOf(this.lastPlace)
   }
 
   get lastPlace(): Place {
