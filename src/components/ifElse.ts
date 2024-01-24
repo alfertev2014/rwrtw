@@ -11,7 +11,7 @@ export const ifElse = (
   falseBranch: TemplateContent,
   handler?: TemplateHandler<IfElse>,
 ): PlaceholderComponent =>
-  plh(fr(initCondition ? trueBranch : falseBranch), (placeholder, context) => {
+  plh(initCondition ? trueBranch : falseBranch, (placeholder, context) => {
     let _condition = initCondition
     handler?.(
       {
