@@ -1,7 +1,11 @@
+export interface Observable<T = unknown> {
+  current: () => T
+}
+
 /**
- * Reactive source node for scalar value types
+ * Reactive observable node to manage subscribers
  */
-class Observable<T = unknown> {
+class ObservableImpl<T = unknown> implements Observable<T> {
   // TODO: T should be scalar value
 
   /**
@@ -17,7 +21,7 @@ class Observable<T = unknown> {
    * If true, this._current is not actual, recomputing needed.
    */
   _changed: boolean
-  readonly _subscribers: Observable[] // List of nodes that depends on this node
+  readonly _subscribers: ObservableImpl[] // List of nodes that depends on this node
 
   constructor() {
     this._current = undefined
@@ -33,31 +37,12 @@ class Observable<T = unknown> {
    *
    * @returns current value
    */
-  current(): T | undefined {
+  current(): T {
     if (trackingComputed !== null) {
       trackingComputed._subscribe(this)
     }
     this._recompute()
-    return this._current
-  }
-
-  /**
-   * Modifier of the value.
-   *
-   * Checks if value changed.
-   * Mark as changed and propagate changed sing to subscribers.
-   * If called not in a transaction, run effects.
-   *
-   * @param value New value
-   */
-  change(value: T): void {
-    if (value !== this._current) {
-      this._markChanged()
-    }
-    this._current = value
-    if (transactionDepth === 0) {
-      runEffects()
-    }
+    return this._current as T
   }
 
   /**
@@ -76,7 +61,7 @@ class Observable<T = unknown> {
    *
    * @param subscriber Subscriber (effect or computed)
    */
-  _subscribe(subscriber: Computed): void {
+  _subscribe(subscriber: ComputedImpl): void {
     const index = this._subscribers.indexOf(subscriber)
     if (index < 0) {
       this._subscribers.push(subscriber)
@@ -88,7 +73,7 @@ class Observable<T = unknown> {
    *
    * @param subscriber Subscriber (effect or computed)
    */
-  _unsubscribe(subscriber: Observable): void {
+  _unsubscribe(subscriber: ObservableImpl): void {
     const index = this._subscribers.indexOf(subscriber)
     if (index >= 0) {
       this._subscribers.splice(index, 1)
@@ -115,9 +100,42 @@ class Observable<T = unknown> {
   _onChanged(): void {}
 }
 
-class Computed<T = unknown> extends Observable<T> {
+export interface Source<T = unknown> extends Observable<T> {
+  change: (value: T) => void
+}
+
+/**
+ * Reactive source node for scalar value types
+ */
+class SourceImpl<T = unknown> extends ObservableImpl<T> implements Source<T> {
+  constructor(initValue: T) {
+    super()
+    this._current = initValue
+  }
+
+  /**
+   * Modifier of the value.
+   *
+   * Checks if value changed.
+   * Mark as changed and propagate changed sing to subscribers.
+   * If called not in a transaction, run effects.
+   *
+   * @param value New value
+   */
+  change(value: T): void {
+    if (value !== this._current) {
+      this._markChanged()
+    }
+    this._current = value
+    if (transactionDepth === 0) {
+      runEffects()
+    }
+  }
+}
+
+class ComputedImpl<T = unknown> extends ObservableImpl<T> {
   readonly _computeFunc: () => T
-  readonly _dependencies: Observable[]
+  readonly _dependencies: ObservableImpl[]
   _dependenciesCount: number
 
   constructor(computeFunc: () => T) {
@@ -129,7 +147,7 @@ class Computed<T = unknown> extends Observable<T> {
 
   // TODO: method "change" should not be available here
 
-  override _subscribe(dependency: Observable): void {
+  override _subscribe(dependency: ObservableImpl): void {
     const count = this._dependenciesCount
     const index = this._dependencies.indexOf(dependency)
     if (index < 0) {
@@ -181,7 +199,7 @@ class Computed<T = unknown> extends Observable<T> {
   }
 }
 
-class Effect extends Computed<undefined> {
+class EffectImpl extends ComputedImpl<undefined> {
   // TODO: Effect is simply callback with side effect on observable
 
   // TODO: What if effect called inside effect?
@@ -191,10 +209,10 @@ class Effect extends Computed<undefined> {
   }
 }
 
-let trackingComputed: Computed | null = null
+let trackingComputed: ComputedImpl | null = null
 
-let effectsQueue: Effect[] = []
-let runningEffects: Effect[] = []
+let effectsQueue: EffectImpl[] = []
+let runningEffects: EffectImpl[] = []
 
 const runEffects = (): void => {
   while (effectsQueue.length > 0) {
@@ -210,18 +228,16 @@ const runEffects = (): void => {
 
 let transactionDepth = 0
 
-export const source = <T>(initValue: T): Observable<T> => {
-  const res = new Observable<T>()
-  res.change(initValue)
-  return res
+export const source = <T>(initValue: T): Source<T> => {
+  return new SourceImpl<T>(initValue)
 }
 
-export const computed = <T>(func: () => T): Computed<T> => {
-  return new Computed(func)
+export const computed = <T>(func: () => T): Observable<T> => {
+  return new ComputedImpl(func)
 }
 
-export const effect = (func: () => undefined): Effect => {
-  return new Effect(func)
+export const effect = (func: () => undefined): Observable<undefined> => {
+  return new EffectImpl(func)
 }
 
 export const transaction = (func: () => void): void => {
