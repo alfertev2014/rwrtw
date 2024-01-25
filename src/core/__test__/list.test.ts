@@ -1,6 +1,6 @@
 import { describe, expect, test } from "@jest/globals"
 import { type DOMPlace, placeAtBeginningOf, insertNodeAt } from "../impl/place"
-import { createListAt, createRootPlaceholderAt, type PlaceholderList } from ".."
+import { createListAt, createRootPlaceholderAt, type PlaceholderContent, type PlaceholderList } from ".."
 
 describe("Dynamic list", () => {
   let PARENT_NODE: HTMLElement
@@ -76,7 +76,7 @@ describe("Dynamic list", () => {
 
       let list: PlaceholderList | undefined
       const placeholder = createRootPlaceholderAt(PARENT_PLACE, (place, context) => {
-        const listContent = [
+        const listContent: PlaceholderContent[] = [
           (place) => {
             return insertNodeAt(place, node)
           },
