@@ -1,12 +1,16 @@
+export type SignalHandler<T> = (value: T) => void
+
+export type UnsubscribeCallback = () => void
+
 export interface SyncSignal<T> {
-  subscribe: (handler: (value: T) => void) => () => void
-  unsubscribe: (handler: (value: T) => void) => void
+  subscribe: (handler: SignalHandler<T>) => UnsubscribeCallback
+  unsubscribe: (handler: SignalHandler<T>) => void
   emit: (value: T) => void
 }
 
 export const createSyncSignal = <T>(): SyncSignal<T> => {
   const handlers: Array<(value: T) => void> = []
-  return ({
+  return {
     subscribe(handler) {
       handlers.push(handler)
       return () => {
@@ -22,6 +26,6 @@ export const createSyncSignal = <T>(): SyncSignal<T> => {
       for (const handler of handlers) {
         handler(value)
       }
-    }
-  })
+    },
+  }
 }
