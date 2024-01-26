@@ -344,7 +344,7 @@ describe("Observable", () => {
         const s = source("")
         const c1 = computed(() => (s.current() !== "" ? "c1-" + s.current() : ""))
         const c2 = computed(() => "c2-" + s.current())
-        const c3 = computed(() => `c3 ${c1.current() === "" ? c2.current() : "false"}`)
+        const c3 = computed(() => `c3 ${c1.current() !== "" ? c2.current() : "false"}`)
 
         expect(c1.current()).toBe("")
         expect(c2.current()).toBe("c2-")

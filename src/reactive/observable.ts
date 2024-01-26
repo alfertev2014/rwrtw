@@ -1,10 +1,37 @@
+/**
+ * Abstract observable node of reactive graph. Notifies its subscribers when stored value is changed.
+ */
 export interface Observable<T = unknown> {
+  /**
+   * Accessor for current value.
+   *
+   * Actualize current value if needed and remove changed sign from node.
+   * If called in compute function or as a dependency of effect, the dependent node will subscribe on this observable.
+   *
+   * @returns current value
+   */
   current: () => T
 }
 
+/**
+ * State of observable node in reactive graph. Use as flag in every node.
+ */
 enum ChangedState {
+  /**
+   * Current value is actual and needn't be recomputed
+   */
   NOT_CHANGED = 0,
+
+  /**
+   * Current value is possibly not actual.
+   * New value could differ from current value after recompute.
+   * But if dependencies are not changed recomputing is not needed.
+   */
   POSSIBLY_CHANGED = 1,
+
+  /**
+   * Current value is definitely not actual and need to be recomputed.
+   */
   CHANGED = 2,
 }
 
@@ -27,7 +54,11 @@ class ObservableImpl<T = unknown> implements Observable<T> {
    * If true, this._current is not actual, recomputing needed.
    */
   _changed: ChangedState
-  readonly _subscribers: ObservableImpl[] // List of nodes that depends on this node
+
+  /**
+   * List of nodes that depends on this node
+   */
+  readonly _subscribers: ObservableImpl[] // TODO: Use Set?
 
   constructor() {
     this._current = undefined
@@ -36,12 +67,7 @@ class ObservableImpl<T = unknown> implements Observable<T> {
   }
 
   /**
-   * Accessor for current value.
-   *
-   * Actualize current value if needed and remove changed sign from node.
-   * If called in tracking context, the dependent node that consume the value will subscribe on this node.
-   *
-   * @returns current value
+   * @see Observable.current
    */
   current(): T {
     if (trackingComputed !== null) {
@@ -53,8 +79,6 @@ class ObservableImpl<T = unknown> implements Observable<T> {
 
   /**
    * Recompute current value and clear changed sign.
-   *
-   * @returns true if value was actually changed.
    */
   _recompute(): void {
     this._changed = ChangedState.NOT_CHANGED
@@ -85,8 +109,7 @@ class ObservableImpl<T = unknown> implements Observable<T> {
   }
 
   /**
-   * Set changed sign and propagate it recursively to subscribers.
-   *
+   * Set CHANGED state and propagate POSSIBLY_CHANGED recursively to subscribers.
    */
   _markChanged(): void {
     if (this._changed !== ChangedState.CHANGED) {
@@ -101,8 +124,7 @@ class ObservableImpl<T = unknown> implements Observable<T> {
   }
 
   /**
-   * Set changed sign and propagate it recursively to subscribers.
-   *
+   * Set POSSIBLY_CHANGED state and propagate it recursively to subscribers.
    */
   _markPossiblyChanged(): void {
     if (this._changed === ChangedState.NOT_CHANGED) {
@@ -115,17 +137,30 @@ class ObservableImpl<T = unknown> implements Observable<T> {
   }
 
   /**
-   * Hook called when the node is marked as changed
+   * Hook called when the node become possibly not actual
    */
   _onChanged(): void {}
 }
 
+/**
+ * Reactive mutable source node for scalar value types
+ */
 export interface Source<T = unknown> extends Observable<T> {
+  /**
+   * Modifier of the value.
+   *
+   * Store new value into the source.
+   * Checks if value has changed.
+   * Mark as changed and propagate changed sign to subscribers.
+   * If called not in a transaction, run effects.
+   *
+   * @param value New value
+   */
   change: (value: T) => void
 }
 
 /**
- * Reactive source node for scalar value types
+ * @see Source
  */
 class SourceImpl<T = unknown> extends ObservableImpl<T> implements Source<T> {
   constructor(initValue: T) {
@@ -134,13 +169,7 @@ class SourceImpl<T = unknown> extends ObservableImpl<T> implements Source<T> {
   }
 
   /**
-   * Modifier of the value.
-   *
-   * Checks if value changed.
-   * Mark as changed and propagate changed sign to subscribers.
-   * If called not in a transaction, run effects.
-   *
-   * @param value New value
+   * @see Source.change
    */
   change(value: T): void {
     if (value !== this._current) {
@@ -156,8 +185,24 @@ class SourceImpl<T = unknown> extends ObservableImpl<T> implements Source<T> {
   }
 }
 
-class ComputedImpl<T = unknown> extends ObservableImpl<T> {
+/**
+ * Computed value node in reactive graph.
+ * Caches its current value if observable dependencies are not changed.
+ */
+export interface Computed<T = unknown> extends Observable<T> {}
+
+/**
+ * @see Computed
+ */
+class ComputedImpl<T = unknown> extends ObservableImpl<T> implements Computed<T> {
+  /**
+   * Compute function to recompute current value. Required to be pure!
+   */
   readonly _computeFunc: () => T
+
+  /**
+   * Observable dependencies needed to compute value ordered by usage in compute function
+   */
   readonly _dependencies: ObservableImpl[]
   _dependenciesCount: number
 
@@ -168,51 +213,71 @@ class ComputedImpl<T = unknown> extends ObservableImpl<T> {
     this._dependenciesCount = 0
   }
 
+  /**
+   * Add itself to set of subscribers of observable dependency.
+   * Add the observable to list of dependencies if it is not already there.
+   * Dependencies are collected to list in order of the method calls
+   * Dependencies are merged with old dependencies.
+   * Not actual old dependencies will bubble to tail of the list.
+   *
+   * @param dependency Observable dependency
+   */
   _subscribeTo(dependency: ObservableImpl): void {
     const count = this._dependenciesCount
     const index = this._dependencies.indexOf(dependency)
     if (index < 0) {
-      this._dependencies.splice(count, 0, dependency)
-      dependency._subscribe(this)
+      // if dependency is not present in list
+
+      if (count < this._dependencies.length) {
+        const d = this._dependencies[count]
+        this._dependencies[count] = dependency // place it at current tracking count index
+        this._dependencies.push(d) // move the old at the end without any array shifting
+      } else {
+        this._dependencies.push(dependency) // just push to the end
+      }
+
+      dependency._subscribe(this) // subscribe new dependency
       this._dependenciesCount++
     } else if (index >= count) {
+      // if dependency is present and is not tracked yet
+
       if (index > count) {
+        // if it is nod already in right place
+
         const d = this._dependencies[count]
-        this._dependencies[count] = dependency
+        this._dependencies[count] = dependency // place it at current tracking count index by swapping values
         this._dependencies[index] = d
       }
       this._dependenciesCount++
+      // we needn't call _subscribe for the dependency because it was already in list
     }
   }
 
+  /**
+   * If value is POSSIBLY_CHANGED try to recompute dependencies and check if they actually changed.
+   * If one of dependencies changed the computed value become CHANGED and need to call compute function
+   *
+   * @see Observable.recompute
+   */
   override _recompute(): void {
     if (this._changed !== ChangedState.NOT_CHANGED) {
       if (this._changed === ChangedState.POSSIBLY_CHANGED) {
         this._recomputeDependencies()
       }
+      // could become CHANGED here
       if (this._changed === ChangedState.CHANGED) {
-        const previousValue = this._current
-        const prevTracking = trackingComputed
-        trackingComputed = this
-        try {
-          this._current = this._computeFunc()
-        } finally {
-          trackingComputed = prevTracking
-          for (let i = this._dependenciesCount; i < this._dependencies.length; ++i) {
-            this._dependencies[i]._unsubscribe(this)
-          }
-          this._dependencies.length = this._dependenciesCount
-        }
-        if (this._current !== previousValue) {
-          for (const subscriber of this._subscribers) {
-            subscriber._markChanged()
-          }
-          this._changed = ChangedState.NOT_CHANGED
-        }
+        this._callComputeFunction()
       }
     }
   }
 
+  /**
+   * Recompute dependencies and check if they changed.
+   * If some dependency has signaled that its value was actually changed
+   *   the computed become CHANGED and need to call compute function
+   * If all the dependencies are not actually changed
+   *   the computed become NOT_CHANGED and no need to call compute function
+   */
   _recomputeDependencies(): void {
     for (let i = 0; i < this._dependenciesCount; ++i) {
       this._dependencies[i]._recompute()
@@ -222,6 +287,33 @@ class ComputedImpl<T = unknown> extends ObservableImpl<T> {
       }
     }
     this._changed = ChangedState.NOT_CHANGED
+  }
+
+  /**
+   * Call the compute function in tracking context
+   */
+  _callComputeFunction(): void {
+    const previousValue = this._current
+    const prevTracking = trackingComputed
+    trackingComputed = this // Establish new tracking context for this
+    try {
+      this._current = this._computeFunc()
+    } finally {
+      trackingComputed = prevTracking // restore previous tracking context
+
+      // Unsubscribe from not actual dependencies at tail of list
+      for (let i = this._dependenciesCount; i < this._dependencies.length; ++i) {
+        this._dependencies[i]._unsubscribe(this)
+      }
+      this._dependencies.length = this._dependenciesCount // Remove the old dependencies from list
+    }
+    if (this._current !== previousValue) {
+      // Signal for all subscribers that the value was really changed
+      for (const subscriber of this._subscribers) {
+        subscriber._markChanged()
+      }
+    }
+    this._changed = ChangedState.NOT_CHANGED // The value is now in actual state
   }
 }
 
