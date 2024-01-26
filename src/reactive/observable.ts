@@ -2,6 +2,12 @@ export interface Observable<T = unknown> {
   current: () => T
 }
 
+enum ChangedState {
+  NOT_CHANGED = 0,
+  POSSIBLY_CHANGED = 1,
+  CHANGED = 2,
+}
+
 /**
  * Reactive observable node to manage subscribers
  */
@@ -20,12 +26,12 @@ class ObservableImpl<T = unknown> implements Observable<T> {
    *
    * If true, this._current is not actual, recomputing needed.
    */
-  _changed: boolean
+  _changed: ChangedState
   readonly _subscribers: ObservableImpl[] // List of nodes that depends on this node
 
   constructor() {
     this._current = undefined
-    this._changed = true
+    this._changed = ChangedState.CHANGED
     this._subscribers = []
   }
 
@@ -39,7 +45,7 @@ class ObservableImpl<T = unknown> implements Observable<T> {
    */
   current(): T {
     if (trackingComputed !== null) {
-      trackingComputed._subscribe(this)
+      trackingComputed._subscribeTo(this)
     }
     this._recompute()
     return this._current as T
@@ -50,10 +56,8 @@ class ObservableImpl<T = unknown> implements Observable<T> {
    *
    * @returns true if value was actually changed.
    */
-  _recompute(): boolean {
-    const res = this._changed
-    this._changed = false
-    return res
+  _recompute(): void {
+    this._changed = ChangedState.NOT_CHANGED
   }
 
   /**
@@ -85,11 +89,27 @@ class ObservableImpl<T = unknown> implements Observable<T> {
    *
    */
   _markChanged(): void {
-    if (!this._changed) {
-      this._changed = true
+    if (this._changed !== ChangedState.CHANGED) {
+      if (this._changed !== ChangedState.POSSIBLY_CHANGED) {
+        for (const subscriber of this._subscribers) {
+          subscriber._markPossiblyChanged()
+        }
+      }
+      this._changed = ChangedState.CHANGED
       this._onChanged()
-      for (const derived of this._subscribers) {
-        derived._markChanged()
+    }
+  }
+
+  /**
+   * Set changed sign and propagate it recursively to subscribers.
+   *
+   */
+  _markPossiblyChanged(): void {
+    if (this._changed === ChangedState.NOT_CHANGED) {
+      this._changed = ChangedState.POSSIBLY_CHANGED
+      this._onChanged()
+      for (const subscriber of this._subscribers) {
+        subscriber._markPossiblyChanged()
       }
     }
   }
@@ -117,18 +137,21 @@ class SourceImpl<T = unknown> extends ObservableImpl<T> implements Source<T> {
    * Modifier of the value.
    *
    * Checks if value changed.
-   * Mark as changed and propagate changed sing to subscribers.
+   * Mark as changed and propagate changed sign to subscribers.
    * If called not in a transaction, run effects.
    *
    * @param value New value
    */
   change(value: T): void {
     if (value !== this._current) {
-      this._markChanged()
-    }
-    this._current = value
-    if (transactionDepth === 0) {
-      runEffects()
+      this._changed = ChangedState.CHANGED
+      for (const subscriber of this._subscribers) {
+        subscriber._markChanged()
+      }
+      this._current = value
+      if (transactionDepth === 0) {
+        runEffects()
+      }
     }
   }
 }
@@ -145,9 +168,7 @@ class ComputedImpl<T = unknown> extends ObservableImpl<T> {
     this._dependenciesCount = 0
   }
 
-  // TODO: method "change" should not be available here
-
-  override _subscribe(dependency: ObservableImpl): void {
+  _subscribeTo(dependency: ObservableImpl): void {
     const count = this._dependenciesCount
     const index = this._dependencies.indexOf(dependency)
     if (index < 0) {
@@ -164,38 +185,43 @@ class ComputedImpl<T = unknown> extends ObservableImpl<T> {
     }
   }
 
-  override _recompute(): boolean {
-    if (this._changed) {
-      const current = this._current
-      if (this._recomputeDependencies()) {
+  override _recompute(): void {
+    if (this._changed !== ChangedState.NOT_CHANGED) {
+      if (this._changed === ChangedState.POSSIBLY_CHANGED) {
+        this._recomputeDependencies()
+      }
+      if (this._changed === ChangedState.CHANGED) {
+        const previousValue = this._current
         const prevTracking = trackingComputed
-        // eslint-disable-next-line @typescript-eslint/no-this-alias
         trackingComputed = this
         try {
           this._current = this._computeFunc()
         } finally {
           trackingComputed = prevTracking
+          for (let i = this._dependenciesCount; i < this._dependencies.length; ++i) {
+            this._dependencies[i]._unsubscribe(this)
+          }
+          this._dependencies.length = this._dependenciesCount
         }
-        for (let i = this._dependenciesCount; i < this._dependencies.length; ++i) {
-          this._dependencies[i]._unsubscribe(this)
+        if (this._current !== previousValue) {
+          for (const subscriber of this._subscribers) {
+            subscriber._markChanged()
+          }
+          this._changed = ChangedState.NOT_CHANGED
         }
-        this._dependencies.length = this._dependenciesCount
       }
-      this._changed = false
-      return this._current !== current
     }
-    return false
   }
 
-  _recomputeDependencies(): boolean {
+  _recomputeDependencies(): void {
     for (let i = 0; i < this._dependenciesCount; ++i) {
-      const dependency = this._dependencies[i]
-      if (dependency._recompute()) {
+      this._dependencies[i]._recompute()
+      if (this._changed === ChangedState.CHANGED) {
         this._dependenciesCount = i
-        return true
+        return
       }
     }
-    return this._dependenciesCount === 0
+    this._changed = ChangedState.NOT_CHANGED
   }
 }
 
@@ -220,7 +246,11 @@ const runEffects = (): void => {
     runningEffects = effectsQueue
     effectsQueue = tmp
     for (const effect of runningEffects) {
-      effect.current()
+      try {
+        effect.current()
+      } catch (e) {
+        console.error(e)
+      }
     }
     runningEffects.length = 0
   }
@@ -241,13 +271,15 @@ export const effect = (func: () => undefined): Observable<undefined> => {
 }
 
 export const transaction = (func: () => void): void => {
+  // TODO: Prohibit calling transaction in computed functions
+
   transactionDepth++
   try {
     func()
   } finally {
     transactionDepth--
-  }
-  if (transactionDepth === 0) {
-    runEffects()
+    if (transactionDepth === 0) {
+      runEffects()
+    }
   }
 }
