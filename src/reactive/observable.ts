@@ -33,6 +33,16 @@ enum ChangedState {
    * Current value is definitely not actual and need to be recomputed.
    */
   CHANGED = 2,
+
+  /**
+   * Observable node is dangling and not connected to reactive graph.
+   */
+  DANGLING = -1,
+
+  /**
+   * Observable node is dangling and should not be connected to reactive graph
+   */
+  SUSPENDED = -2,
 }
 
 /**
@@ -44,16 +54,14 @@ class ObservableImpl<T = unknown> implements Observable<T> {
   /**
    * Current stored value or last computed value.
    *
-   * Not actual if this._changed === true.
+   * Not actual if this._changed !== NOT_CHANGED
    */
   _current: T | undefined
 
   /**
-   * Value has changed and not consumed by any other nodes yet.
-   *
-   * If true, this._current is not actual, recomputing needed.
+   * State of current value actuality
    */
-  _changed: ChangedState
+  _state: ChangedState
 
   /**
    * List of nodes that depends on this node
@@ -62,7 +70,7 @@ class ObservableImpl<T = unknown> implements Observable<T> {
 
   constructor() {
     this._current = undefined
-    this._changed = ChangedState.CHANGED
+    this._state = ChangedState.DANGLING
     this._subscribers = []
   }
 
@@ -70,8 +78,8 @@ class ObservableImpl<T = unknown> implements Observable<T> {
    * @see Observable.current
    */
   current(): T {
-    if (trackingComputed !== null) {
-      trackingComputed._subscribeTo(this)
+    if (trackingSubscriber !== null) {
+      trackingSubscriber._subscribeTo(this)
     }
     this._recompute()
     return this._current as T
@@ -81,7 +89,7 @@ class ObservableImpl<T = unknown> implements Observable<T> {
    * Recompute current value and clear changed sign.
    */
   _recompute(): void {
-    this._changed = ChangedState.NOT_CHANGED
+    this._state = ChangedState.NOT_CHANGED
   }
 
   /**
@@ -106,19 +114,27 @@ class ObservableImpl<T = unknown> implements Observable<T> {
     if (index >= 0) {
       this._subscribers.splice(index, 1)
     }
+    if (this._subscribers.length === 0) {
+      this._onDangling()
+    }
+  }
+
+  _onDangling(): void {
+
   }
 
   /**
    * Set CHANGED state and propagate POSSIBLY_CHANGED recursively to subscribers.
    */
   _markChanged(): void {
-    if (this._changed !== ChangedState.CHANGED) {
-      if (this._changed !== ChangedState.POSSIBLY_CHANGED) {
+    if (this._state !== ChangedState.CHANGED) {
+      if (this._state !== ChangedState.POSSIBLY_CHANGED) {
         for (const subscriber of this._subscribers) {
           subscriber._markPossiblyChanged()
         }
       }
-      this._changed = ChangedState.CHANGED
+      this._state = ChangedState.CHANGED
+      this._current = undefined
       this._onChanged()
     }
   }
@@ -127,8 +143,8 @@ class ObservableImpl<T = unknown> implements Observable<T> {
    * Set POSSIBLY_CHANGED state and propagate it recursively to subscribers.
    */
   _markPossiblyChanged(): void {
-    if (this._changed === ChangedState.NOT_CHANGED) {
-      this._changed = ChangedState.POSSIBLY_CHANGED
+    if (this._state === ChangedState.NOT_CHANGED) {
+      this._state = ChangedState.POSSIBLY_CHANGED
       this._onChanged()
       for (const subscriber of this._subscribers) {
         subscriber._markPossiblyChanged()
@@ -172,14 +188,16 @@ class SourceImpl<T = unknown> extends ObservableImpl<T> implements Source<T> {
    * @see Source.change
    */
   change(value: T): void {
+    // TODO: Prohibit calling in computed functions
+
     if (value !== this._current) {
-      this._changed = ChangedState.CHANGED
+      this._state = ChangedState.CHANGED
       for (const subscriber of this._subscribers) {
         subscriber._markChanged()
       }
       this._current = value
       if (transactionDepth === 0) {
-        runEffects()
+        runTasks()
       }
     }
   }
@@ -211,6 +229,22 @@ class ComputedImpl<T = unknown> extends ObservableImpl<T> implements Computed<T>
     this._computeFunc = computeFunc
     this._dependencies = []
     this._dependenciesCount = 0
+  }
+
+  override _onDangling(): void {
+    scheduleTask(() => {
+      if (this._subscribers.length === 0) {
+        this._clearDependencies()
+        this._state = ChangedState.DANGLING
+      }
+    })
+  }
+
+  _clearDependencies(): void {
+    for (const dependency of this._dependencies) {
+      dependency._unsubscribe(this)
+    }
+    this._dependencies.length = 0
   }
 
   /**
@@ -260,14 +294,15 @@ class ComputedImpl<T = unknown> extends ObservableImpl<T> implements Computed<T>
    * @see Observable.recompute
    */
   override _recompute(): void {
-    if (this._changed !== ChangedState.NOT_CHANGED) {
-      if (this._changed === ChangedState.POSSIBLY_CHANGED) {
+    if (this._state !== ChangedState.NOT_CHANGED) {
+      if (this._state === ChangedState.POSSIBLY_CHANGED) {
         this._recomputeDependencies()
       }
       // could become CHANGED here
-      if (this._changed === ChangedState.CHANGED) {
+      if (this._state === ChangedState.CHANGED || this._state === ChangedState.DANGLING) {
         this._callComputeFunction()
       }
+      // Do nothing if SUSPENDED
     }
   }
 
@@ -281,12 +316,12 @@ class ComputedImpl<T = unknown> extends ObservableImpl<T> implements Computed<T>
   _recomputeDependencies(): void {
     for (let i = 0; i < this._dependenciesCount; ++i) {
       this._dependencies[i]._recompute()
-      if (this._changed === ChangedState.CHANGED) {
+      if (this._state === ChangedState.CHANGED) {
         this._dependenciesCount = i
         return
       }
     }
-    this._changed = ChangedState.NOT_CHANGED
+    this._state = ChangedState.NOT_CHANGED
   }
 
   /**
@@ -294,12 +329,12 @@ class ComputedImpl<T = unknown> extends ObservableImpl<T> implements Computed<T>
    */
   _callComputeFunction(): void {
     const previousValue = this._current
-    const prevTracking = trackingComputed
-    trackingComputed = this // Establish new tracking context for this
+    const prevTracking = trackingSubscriber
+    trackingSubscriber = this // Establish new tracking context for this
     try {
       this._current = this._computeFunc()
     } finally {
-      trackingComputed = prevTracking // restore previous tracking context
+      trackingSubscriber = prevTracking // restore previous tracking context
 
       // Unsubscribe from not actual dependencies at tail of list
       for (let i = this._dependenciesCount; i < this._dependencies.length; ++i) {
@@ -313,38 +348,72 @@ class ComputedImpl<T = unknown> extends ObservableImpl<T> implements Computed<T>
         subscriber._markChanged()
       }
     }
-    this._changed = ChangedState.NOT_CHANGED // The value is now in actual state
+    this._state = ChangedState.NOT_CHANGED // The value is now in actual state
   }
 }
 
-class EffectImpl extends ComputedImpl<undefined> {
+export interface Effect {
+  unsubscribe: () => void
+  suspend: () => void
+  resume: () => void
+}
+
+class EffectImpl extends ComputedImpl<undefined> implements Effect {
   // TODO: Effect is simply callback with side effect on observable
 
   // TODO: What if effect called inside effect?
 
+  constructor(func: () => undefined) {
+    super(func)
+    this._onChanged()
+    if (transactionDepth === 0) {
+      runTasks()
+    }
+  }
+
+  suspend(): void {
+    this._state = ChangedState.SUSPENDED
+  }
+
+  resume(): void {
+    this._state = ChangedState.DANGLING
+    scheduleTask(this._recompute.bind(this))
+  }
+
   override _onChanged(): void {
-    effectsQueue.push(this)
+    if (this._state !== ChangedState.SUSPENDED) {
+      scheduleTask(this._recompute.bind(this))
+    }
+  }
+
+  unsubscribe(): void {
+    this._clearDependencies()
+    this._state = ChangedState.SUSPENDED
   }
 }
 
-let trackingComputed: ComputedImpl | null = null
+let trackingSubscriber: ComputedImpl | null = null
 
-let effectsQueue: EffectImpl[] = []
-let runningEffects: EffectImpl[] = []
+let taskQueue: Array<() => void> = []
+let runningTasks: Array<() => void> = []
 
-const runEffects = (): void => {
-  while (effectsQueue.length > 0) {
-    const tmp = runningEffects
-    runningEffects = effectsQueue
-    effectsQueue = tmp
-    for (const effect of runningEffects) {
+const scheduleTask = (task: () => void): void => {
+  taskQueue.push(task)
+}
+
+const runTasks = (): void => {
+  while (taskQueue.length > 0) {
+    const tmp = runningTasks
+    runningTasks = taskQueue
+    taskQueue = tmp
+    for (const task of runningTasks) {
       try {
-        effect.current()
+        task()
       } catch (e) {
         console.error(e)
       }
     }
-    runningEffects.length = 0
+    runningTasks.length = 0
   }
 }
 
@@ -358,7 +427,7 @@ export const computed = <T>(func: () => T): Observable<T> => {
   return new ComputedImpl(func)
 }
 
-export const effect = (func: () => undefined): Observable<undefined> => {
+export const effect = (func: () => undefined): Effect => {
   return new EffectImpl(func)
 }
 
@@ -369,9 +438,9 @@ export const transaction = (func: () => void): void => {
   try {
     func()
   } finally {
-    transactionDepth--
-    if (transactionDepth === 0) {
-      runEffects()
+    if (transactionDepth === 1) {
+      runTasks()
     }
+    transactionDepth--
   }
 }
