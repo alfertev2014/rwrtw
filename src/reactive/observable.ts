@@ -1,7 +1,7 @@
 /**
  * Abstract observable node of reactive graph. Notifies its subscribers when stored value is changed.
  */
-export interface Observable<T = unknown> {
+export interface Observable<out T = unknown> {
   /**
    * Accessor for current value.
    *
@@ -48,8 +48,7 @@ enum ChangedState {
 /**
  * Reactive observable node to manage subscribers
  */
-class ObservableImpl<T = unknown> implements Observable<T> {
-  // TODO: T should be scalar value
+class ObservableImpl<out T = unknown> implements Observable<T> {
 
   /**
    * Current stored value or last computed value.
@@ -59,18 +58,12 @@ class ObservableImpl<T = unknown> implements Observable<T> {
   _current: T | undefined
 
   /**
-   * State of current value actuality
-   */
-  _state: ChangedState
-
-  /**
    * List of nodes that depends on this node
    */
-  readonly _subscribers: ObservableImpl[] // TODO: Use Set?
+  readonly _subscribers: Observer[] // TODO: Use Set?
 
   constructor() {
     this._current = undefined
-    this._state = ChangedState.DANGLING
     this._subscribers = []
   }
 
@@ -89,7 +82,6 @@ class ObservableImpl<T = unknown> implements Observable<T> {
    * Recompute current value and clear changed sign.
    */
   _recompute(): void {
-    this._state = ChangedState.NOT_CHANGED
   }
 
   /**
@@ -97,7 +89,7 @@ class ObservableImpl<T = unknown> implements Observable<T> {
    *
    * @param subscriber Subscriber (effect or computed)
    */
-  _subscribe(subscriber: ComputedImpl): void {
+  _subscribe(subscriber: Observer): void {
     const index = this._subscribers.indexOf(subscriber)
     if (index < 0) {
       this._subscribers.push(subscriber)
@@ -109,7 +101,7 @@ class ObservableImpl<T = unknown> implements Observable<T> {
    *
    * @param subscriber Subscriber (effect or computed)
    */
-  _unsubscribe(subscriber: ObservableImpl): void {
+  _unsubscribe(subscriber: Observer): void {
     const index = this._subscribers.indexOf(subscriber)
     if (index >= 0) {
       this._subscribers.splice(index, 1)
@@ -120,42 +112,19 @@ class ObservableImpl<T = unknown> implements Observable<T> {
   }
 
   _onDangling(): void {
-
+    
   }
 
-  /**
-   * Set CHANGED state and propagate POSSIBLY_CHANGED recursively to subscribers.
-   */
-  _markChanged(): void {
-    if (this._state !== ChangedState.CHANGED) {
-      if (this._state !== ChangedState.POSSIBLY_CHANGED) {
-        for (const subscriber of this._subscribers) {
-          subscriber._markPossiblyChanged()
-        }
-      }
-      this._state = ChangedState.CHANGED
-      this._current = undefined
-      this._onChanged()
+  _propagateChanged(): void {
+    for (const subscriber of this._subscribers) {
+      subscriber._markChanged()
     }
   }
+}
 
-  /**
-   * Set POSSIBLY_CHANGED state and propagate it recursively to subscribers.
-   */
-  _markPossiblyChanged(): void {
-    if (this._state === ChangedState.NOT_CHANGED) {
-      this._state = ChangedState.POSSIBLY_CHANGED
-      this._onChanged()
-      for (const subscriber of this._subscribers) {
-        subscriber._markPossiblyChanged()
-      }
-    }
-  }
-
-  /**
-   * Hook called when the node become possibly not actual
-   */
-  _onChanged(): void {}
+interface Observer {
+  readonly _markChanged: () => void
+  readonly _markPossiblyChanged: () => void
 }
 
 /**
@@ -179,6 +148,7 @@ export interface Source<T = unknown> extends Observable<T> {
  * @see Source
  */
 class SourceImpl<T = unknown> extends ObservableImpl<T> implements Source<T> {
+
   constructor(initValue: T) {
     super()
     this._current = initValue
@@ -188,13 +158,12 @@ class SourceImpl<T = unknown> extends ObservableImpl<T> implements Source<T> {
    * @see Source.change
    */
   change(value: T): void {
-    // TODO: Prohibit calling in computed functions
+    if (trackingSubscriber !== null) {
+      throw new Error("Changing source value in compute function")
+    }
 
     if (value !== this._current) {
-      this._state = ChangedState.CHANGED
-      for (const subscriber of this._subscribers) {
-        subscriber._markChanged()
-      }
+      this._propagateChanged()
       this._current = value
       if (transactionDepth === 0) {
         runTasks()
@@ -207,12 +176,17 @@ class SourceImpl<T = unknown> extends ObservableImpl<T> implements Source<T> {
  * Computed value node in reactive graph.
  * Caches its current value if observable dependencies are not changed.
  */
-export interface Computed<T = unknown> extends Observable<T> {}
+export interface Computed<out T = unknown> extends Observable<T> {}
 
 /**
  * @see Computed
  */
-class ComputedImpl<T = unknown> extends ObservableImpl<T> implements Computed<T> {
+class ComputedImpl<out T = unknown> extends ObservableImpl<T> implements Computed<T>, Observer {
+  /**
+   * State of current value actuality
+   */
+  _state: ChangedState
+
   /**
    * Compute function to recompute current value. Required to be pure!
    */
@@ -226,25 +200,37 @@ class ComputedImpl<T = unknown> extends ObservableImpl<T> implements Computed<T>
 
   constructor(computeFunc: () => T) {
     super()
+    this._state = ChangedState.DANGLING
     this._computeFunc = computeFunc
     this._dependencies = []
     this._dependenciesCount = 0
   }
 
-  override _onDangling(): void {
-    scheduleTask(() => {
-      if (this._subscribers.length === 0) {
-        this._clearDependencies()
-        this._state = ChangedState.DANGLING
+  /**
+   * Set CHANGED state and propagate POSSIBLY_CHANGED recursively to subscribers.
+   */
+  _markChanged(): void {
+    if (this._state !== ChangedState.CHANGED) {
+      if (this._state !== ChangedState.POSSIBLY_CHANGED) {
+        for (const subscriber of this._subscribers) {
+          subscriber._markPossiblyChanged()
+        }
       }
-    })
+      this._state = ChangedState.CHANGED
+      this._current = undefined
+    }
   }
 
-  _clearDependencies(): void {
-    for (const dependency of this._dependencies) {
-      dependency._unsubscribe(this)
+  /**
+   * Set POSSIBLY_CHANGED state and propagate it recursively to subscribers.
+   */
+  _markPossiblyChanged(): void {
+    if (this._state === ChangedState.NOT_CHANGED) {
+      this._state = ChangedState.POSSIBLY_CHANGED
+      for (const subscriber of this._subscribers) {
+        subscriber._markPossiblyChanged()
+      }
     }
-    this._dependencies.length = 0
   }
 
   /**
@@ -302,7 +288,6 @@ class ComputedImpl<T = unknown> extends ObservableImpl<T> implements Computed<T>
       if (this._state === ChangedState.CHANGED || this._state === ChangedState.DANGLING) {
         this._callComputeFunction()
       }
-      // Do nothing if SUSPENDED
     }
   }
 
@@ -350,6 +335,22 @@ class ComputedImpl<T = unknown> extends ObservableImpl<T> implements Computed<T>
     }
     this._state = ChangedState.NOT_CHANGED // The value is now in actual state
   }
+
+  _clearDependencies(): void {
+    for (const dependency of this._dependencies) {
+      dependency._unsubscribe(this)
+    }
+    this._dependencies.length = 0
+  }
+
+  override _onDangling(): void {
+    scheduleTask(() => {
+      if (this._subscribers.length === 0) {
+        this._clearDependencies()
+        this._state = ChangedState.DANGLING
+      }
+    })
+  }
 }
 
 export interface Effect {
@@ -358,17 +359,47 @@ export interface Effect {
   resume: () => void
 }
 
-class EffectImpl extends ComputedImpl<undefined> implements Effect {
-  // TODO: Effect is simply callback with side effect on observable
+class EffectImpl<T> implements Observer, Effect {
 
-  // TODO: What if effect called inside effect?
+  _state: ChangedState
+  readonly _trigger: ObservableImpl<T>
+  readonly _sideEffectFunc: (value: T) => void
+  constructor(trigger: ObservableImpl<T>, sideEffectFunc: (value: T) => void) {
+    this._state = ChangedState.DANGLING
+    this._trigger = trigger
+    this._trigger._subscribe(this)
+    this._sideEffectFunc = sideEffectFunc
+    this._schedule()
+  }
 
-  constructor(func: () => undefined) {
-    super(func)
-    this._onChanged()
-    if (transactionDepth === 0) {
-      runTasks()
+  _markChanged(): void {
+    if (this._state !== ChangedState.SUSPENDED) {
+      if (this._state !== ChangedState.CHANGED && this._state !== ChangedState.POSSIBLY_CHANGED) {
+        this._schedule()
+      }
+      this._state = ChangedState.CHANGED
     }
+  }
+
+  _markPossiblyChanged(): void {
+    if (this._state !== ChangedState.SUSPENDED) {
+      if (this._state !== ChangedState.CHANGED && this._state !== ChangedState.POSSIBLY_CHANGED) {
+        this._schedule()
+        this._state = ChangedState.POSSIBLY_CHANGED
+      }
+    }
+  }
+
+  _schedule(): void {
+    scheduleTask(() => {
+      if (this._state !== ChangedState.SUSPENDED) {
+        const current = this._trigger.current()
+        if (this._state === ChangedState.CHANGED) {
+          this._sideEffectFunc(current)
+        }
+        this._state = ChangedState.NOT_CHANGED
+      }
+    })
   }
 
   suspend(): void {
@@ -376,18 +407,14 @@ class EffectImpl extends ComputedImpl<undefined> implements Effect {
   }
 
   resume(): void {
-    this._state = ChangedState.DANGLING
-    scheduleTask(this._recompute.bind(this))
-  }
-
-  override _onChanged(): void {
-    if (this._state !== ChangedState.SUSPENDED) {
-      scheduleTask(this._recompute.bind(this))
+    if (this._state === ChangedState.SUSPENDED) {
+      this._schedule()
+      this._state = ChangedState.POSSIBLY_CHANGED
     }
   }
 
   unsubscribe(): void {
-    this._clearDependencies()
+    this._trigger._unsubscribe(this)
     this._state = ChangedState.SUSPENDED
   }
 }
@@ -402,6 +429,7 @@ const scheduleTask = (task: () => void): void => {
 }
 
 const runTasks = (): void => {
+  transactionDepth++
   while (taskQueue.length > 0) {
     const tmp = runningTasks
     runningTasks = taskQueue
@@ -415,32 +443,64 @@ const runTasks = (): void => {
     }
     runningTasks.length = 0
   }
+  transactionDepth--
 }
 
 let transactionDepth = 0
 
 export const source = <T>(initValue: T): Source<T> => {
+  if (trackingSubscriber !== null) {
+    throw new Error("Creating source  in tracking context")
+  }
   return new SourceImpl<T>(initValue)
 }
 
 export const computed = <T>(func: () => T): Observable<T> => {
+  if (trackingSubscriber !== null) {
+    throw new Error("Creating computed in tracking context")
+  }
   return new ComputedImpl(func)
 }
 
-export const effect = (func: () => undefined): Effect => {
-  return new EffectImpl(func)
+export const effect = <T>(trigger: Observable<T>, sideEffectFunc: (value: T) => void): Effect => {
+  if (!(trigger instanceof ObservableImpl)) {
+    throw new Error("Trigger of effect is not observable")
+  }
+  if (trackingSubscriber !== null) {
+    throw new Error("Creating effect in tracking context")
+  }
+  const res = new EffectImpl<T>(trigger as ObservableImpl<T>, sideEffectFunc)
+  if (transactionDepth === 0) {
+    runTasks()
+  }
+  return res
+}
+
+export const untrack = <T>(func: () => T): T => {
+  if (trackingSubscriber === null) {
+    return func()
+  }
+  const prevTracking = trackingSubscriber
+  trackingSubscriber = null
+  try {
+    return func()
+  } finally {
+    trackingSubscriber = prevTracking
+  }
 }
 
 export const transaction = (func: () => void): void => {
-  // TODO: Prohibit calling transaction in computed functions
+  if (trackingSubscriber !== null) {
+    throw new Error("Running transaction in tracking context")
+  }
 
   transactionDepth++
   try {
     func()
   } finally {
-    if (transactionDepth === 1) {
+    transactionDepth--
+    if (transactionDepth === 0) {
       runTasks()
     }
-    transactionDepth--
   }
 }
