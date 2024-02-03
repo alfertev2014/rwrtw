@@ -1,6 +1,6 @@
 {
   "name": "rwrtw",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "description": "Tiny UI library for browser applications, thin DOM helpers and component building blocks with transparent and convenient DSL",
   "type": "module",
   "main": "./lib/index.js",
