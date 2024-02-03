@@ -49,7 +49,6 @@ enum ChangedState {
  * Reactive observable node to manage subscribers
  */
 class ObservableImpl<out T = unknown> implements Observable<T> {
-
   /**
    * Current stored value or last computed value.
    *
@@ -81,8 +80,7 @@ class ObservableImpl<out T = unknown> implements Observable<T> {
   /**
    * Recompute current value and clear changed sign.
    */
-  _recompute(): void {
-  }
+  _recompute(): void {}
 
   /**
    * Add subscriber to this._subscribers set.
@@ -111,9 +109,7 @@ class ObservableImpl<out T = unknown> implements Observable<T> {
     }
   }
 
-  _onDangling(): void {
-    
-  }
+  _onDangling(): void {}
 
   _propagateChanged(): void {
     for (const subscriber of this._subscribers) {
@@ -148,7 +144,6 @@ export interface Source<T = unknown> extends Observable<T> {
  * @see Source
  */
 class SourceImpl<T = unknown> extends ObservableImpl<T> implements Source<T> {
-
   constructor(initValue: T) {
     super()
     this._current = initValue
@@ -360,7 +355,6 @@ export interface Effect {
 }
 
 class EffectImpl<T> implements Observer, Effect {
-
   _state: ChangedState
   readonly _trigger: ObservableImpl<T>
   readonly _sideEffectFunc: (value: T) => void

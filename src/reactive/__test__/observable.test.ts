@@ -511,7 +511,7 @@ describe("Observable", () => {
       test.each([[1], [2], [10]])("Effect function should be called once after transaction end", (callCount) => {
         const s = source("s")
         const effectFunc = jest.fn()
-        
+
         transaction(() => {
           const e = effect(s, effectFunc)
           for (let i = 0; i < callCount; ++i) {
@@ -556,7 +556,7 @@ describe("Observable", () => {
         const s = source("s")
         const c = computed(() => s.current())
         const effectFunc = jest.fn()
-        
+
         transaction(() => {
           const e = effect(c, effectFunc)
           for (let i = 0; i < callCount; ++i) {
@@ -591,7 +591,10 @@ describe("Observable", () => {
         const c1 = computed(() => s.current())
         const c2 = computed(() => s.current())
         const effectFunc = jest.fn()
-        const e = effect(computed(() => [c1.current(), c2.current()]), effectFunc)
+        const e = effect(
+          computed(() => [c1.current(), c2.current()]),
+          effectFunc,
+        )
 
         for (let i = 0; i < callCount; ++i) {
           s.change("sChanged" + i)
@@ -605,9 +608,12 @@ describe("Observable", () => {
         const c1 = computed(() => s.current())
         const c2 = computed(() => s.current())
         const effectFunc = jest.fn()
-        
+
         transaction(() => {
-          const e = effect(computed(() => [c1.current(), c2.current()]), effectFunc)
+          const e = effect(
+            computed(() => [c1.current(), c2.current()]),
+            effectFunc,
+          )
           for (let i = 0; i < callCount; ++i) {
             s.change("sChanged" + i)
           }
@@ -621,7 +627,10 @@ describe("Observable", () => {
         const c1 = computed(() => s.current())
         const c2 = computed(() => s.current())
         const effectFunc = jest.fn()
-        const e = effect(computed(() => [c1.current(), c2.current()]), effectFunc)
+        const e = effect(
+          computed(() => [c1.current(), c2.current()]),
+          effectFunc,
+        )
         e.unsubscribe()
 
         for (let i = 0; i < callCount; ++i) {
