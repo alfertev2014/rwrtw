@@ -66,19 +66,19 @@ Controllers with dynamic content should implement replacement operation of dynam
 
 ## Placeholder
 
-To remove chain of nodes from DOM we need a place where it starts and place where it ends. After removing we need to remember the place where we can insert nodes again. This is the idea of *Placeholder* - special object type to handle manipulations with DOM node structure.
+To remove chain of nodes from DOM we need the place where it starts and the place where it ends. After removing we need to remember the place where we can insert nodes again. This is the idea of *Placeholder* - special object to handle manipulations with DOM node structure at one point in DOM.
 
 *Content* of placeholder is zero or many DOM nodes and other placeholders. Placeholders inside content of a placeholder is *Child placeholders*. Child placeholders could be inside child Elements of content. *Placeholder tree* is a tree of placeholders bound to DOM tree.
 
-Placeholder is allowed to do only primitive DOM operations. Complex DOM transformations and restructuring are possible by composing many placeholders but every placeholder is restricted to do only this operations with its content as a whole:
+Placeholder is allowed to do only primitive DOM operations at one place. Complex DOM transformations and restructuring are possible by composing many placeholders. But every placeholder is restricted to do only these operations with its content as a whole:
 
-* Placeholder can *insert* some content in one step.
-* Placeholder can *remove* its content also in one step,
-* Placeholder can *replace* all its content with new content in one step.
+* Placeholder can **insert** some content in one step,
+* Placeholder can **remove** its content in one step,
+* Placeholder can **replace** all its content with new content in one step.
   
-There is no ability to edit content using the placeholder. We cannot append, insert or remove nodes inside the content with the placeholder. We could use DOM API directly for this but not placeholder.
+There is no ability to edit content nodes using the placeholder. We cannot append, insert or remove nodes inside the content with the placeholder. We can use DOM API directly for this but not a placeholder.
 
-Placeholders could follow each others in chain. Every placeholder must remember its place where it was created. When placeholder created it cannot modify its place or move to other place. Exception is when placeholder is used as an item of dynamic list.
+Placeholders could follow each others in chain. Every placeholder must remember its place where it was created. When placeholder created it cannot modify its place or move to other place. Exception is when placeholder is used as an item of a dynamic list.
 
 So, we can now define Place more accurately. Place is a reference to DOM node or placeholder in combination with "after" or "inside" sign. There are four cases of place:
 
@@ -87,16 +87,33 @@ So, we can now define Place more accurately. Place is a reference to DOM node or
 * after a Placeholder
 * inside a Placeholder at the beginning
 
-The first two are called DOM-places. The last two are called Placeholder-places.
+The first two are called *DOM-places*. The last two are called *Placeholder-places*.
 
-Place is implemented as simple reference to Node or Placeholder object or as a wrapper of Node or Placeholder object. Direct reference to Node or Placeholder means the place is after the object it points to. Wrapper object means sign than the place is inside a Node or a Placeholder at the beginning.
+Place is implemented as simple reference to Node or Placeholder object or as a wrapper of parent Node or parent Placeholder object. Direct reference to Node or Placeholder means the place is after the object it points to. Wrapper object means that the place is inside a Node or a Placeholder at the beginning.
 
-To insert DOM nodes into DOM tree of document or fragment we need to calculate DOM-place of Placeholder-places. Every Placeholder-place can be calculated to corresponding DOM place with the algorithm:
+To insert DOM nodes into DOM tree of document or fragment we need to calculate DOM-place of Placeholder-places. Every Placeholder-place can be calculated to corresponding DOM-place with the algorithm:
 
 * If a place is a Placeholder:
   * If the last node in content of the placeholder is a DOM Node - this node is the DOM-place after the placeholder
-  * If the last node in content of the placeholder is a child Placeholder - the DOM-place after the placeholder is the DOM-place after the child Placeholder (recursively).
-  * If the content of the Placeholder is empty - the DOM-place after the placeholder is the DOM-place of the place where this placeholder was created. It could be other Placeholder or parent Placeholder.
+  * If the last node in content of the placeholder is a child Placeholder - the DOM-place after the placeholder is the DOM-place after the child Placeholder (recursively)
+  * If the content of the Placeholder is empty - the DOM-place after the placeholder is the DOM-place of the place where this placeholder was created. It could be other Placeholder or parent Placeholder, so we need to calculate recursively.
 * If a place is at the beginning of a parent Placeholder - the resulting DOM-place is the DOM-place of a place where the parent Placeholder was created (recursively).
 
-This algorithm targets to chain of placeholder with nested placeholders at start or end of parent placeholders. If a Placeholder is surrounded with regular DOM Nodes and contains "static" DOM Nodes the bounds of its content in DOM tree is clear.
+This algorithm targets to chain of placeholders with nested placeholders at start or end of parent placeholders. If a Placeholder is surrounded with regular DOM Nodes and contains "static" DOM Nodes the bounds of its content in DOM tree is clear.
+
+## Dynamic list
+
+When we need to represent dynamic collection of items in DOM, we would need a collection of placeholders. *Dynamic list* is an ordered collection of placeholders. Every placeholder in dynamic list is created at place after previous placeholder. The first placeholder in a list is created at place of the list was created. Dynamic list behaves as placeholder in calculation of DOM-places. So, dynamic list can be used everywhere placeholder can but it has different set of operations.
+
+Dynamic list manages child placeholder as an indexed array. The possible operations are these:
+
+* **insert** some content at index to create item (child placeholder),
+* **remove** an item at index,
+* **replace** content of an item at index,
+* **move** item from index to other index (with shifting the middle items),
+* **swap** two items,
+* **clear** entire list.
+
+When dynamic list performs the operations, it maintains places of the placeholders so they are organized in linked list.
+
+Dynamic list can be used to represent dynamic collection with unknown size. Items can have different content. But it is practically convenient to create items of one dynamic list with one template component. So, dynamic list can be used to implement something like `for`-loop in markup. Items template can have arguments to accept corresponding data items. When data collection in view state is changed, the dynamic list inserts, updates, moves and removes corresponding items to actualize the view according to the view state.
