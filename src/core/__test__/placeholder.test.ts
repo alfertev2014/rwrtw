@@ -243,9 +243,9 @@ describe("Placeholder", () => {
 
   describe("Lifecycles", () => {
     let LIFECYCLE: {
-      mount: jest.Mock<any, any, any>
-      unmount: jest.Mock<any, any, any>
-      dispose: jest.Mock<any, any, any>
+      mount: jest.Mock<unknown, unknown[], unknown>
+      unmount: jest.Mock<unknown, unknown[], unknown>
+      dispose: jest.Mock<unknown, unknown[], unknown>
     }
 
     beforeEach(() => {
