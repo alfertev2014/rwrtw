@@ -1,6 +1,14 @@
+import { Observable, Source, source } from "./observable.js"
+
+export interface ListModelObserver<T> {
+  onInsert?: (i: number, element: Observable<T>) => void
+  onMove?: (from: number, to: number) => void
+  onRemove?: (i: number) => void
+}
 
 export interface ListModel<T> {
-  readonly data: T[]
+  readonly data: Observable<T>[]
+  observer: ListModelObserver<T> | null
 
   removeItem: (i: number) => void
   moveItem: (from: number, to: number, element: T) => void
@@ -9,43 +17,33 @@ export interface ListModel<T> {
   applyNewData: (data: T[]) => void
 }
 
-export interface ListModelObserver<T> {
-  onInsert?: (i: number, element: T) => void
-  onMove?: (from: number, to: number) => void
-  onRemove?: (i: number) => void
-  onChanged?: (i: number, element: T) => void
-}
-
 class ListModelImpl<T> implements ListModel<T> {
-  readonly data: T[]
-  readonly elementsEquality?: (e1: T, e2: T) => boolean
+  readonly _data: Source<T>[]
+  observer: ListModelObserver<T> | null
 
-  onInsert?: (i: number, element: T) => void
-  onMove?: (from: number, to: number) => void
-  onRemove?: (i: number) => void
-  onChanged?: (i: number, element: T) => void
+  constructor(initialData: T[]) {
+    this._data = initialData.map(item => source(item))
+    this.observer = null
+  }
 
-  constructor(initialData: T[], elementsEquality?: (e1: T, e2: T) => boolean) {
-    this.data = [...initialData]
-    this.elementsEquality = elementsEquality
+  get data(): Observable<T>[] {
+    return this._data
   }
 
   applyNewData(newData: T[]): void {
-    for (let i = 0; i < this.data.length; ) {
-      const element = this.data[i]
-      if (newData.findIndex((el) => this.elementsEquality?.(el, element) ?? el === element) < 0) {
+    for (let i = 0; i < this._data.length; ) {
+      const element = this._data[i]
+      if (newData.findIndex((el) => el === element) < 0) {
         this.removeItem(i)
       } else {
-        if (element !== newData[i]) {
-          this.onChanged?.(i, element)
-        }
+        element.change(newData[i])
         ++i
       }
     }
 
     for (let i = 0; i < newData.length; ++i) {
       const element = newData[i]
-      const elementIndex = this.data.findIndex((el) => this.elementsEquality?.(el, element) ?? el === element)
+      const elementIndex = this._data.findIndex((el) => el === element)
       if (elementIndex >= 0) {
         this.moveItem(elementIndex, i, element)
       } else {
@@ -55,22 +53,25 @@ class ListModelImpl<T> implements ListModel<T> {
   }
 
   removeItem(i: number): void {
-    this.data.splice(i, 1)
-    this.onRemove?.(i)
+    this._data.splice(i, 1)
+    this.observer?.onRemove?.(i)
   }
 
   moveItem(from: number, to: number, element: T): void {
-    this.data.splice(from, 1)
-    this.data.splice(to, 0, element)
-    this.onMove?.(from, to)
+    const item = this._data[from]
+    this._data.splice(from, 1)
+    item.change(element)
+    this._data.splice(to, 0, item)
+    this.observer?.onMove?.(from, to)
   }
 
   insertItem(i: number, element: T): void {
-    this.data.splice(i, 0, element)
-    this.onInsert?.(i, element)
+    const item = source(element)
+    this._data.splice(i, 0, item)
+    this.observer?.onInsert?.(i, item)
   }
 }
 
-export const createDynamicList = <T>(initialData: T[], elementsEquality?: (e1: T, e2: T) => boolean): ListModel<T> => {
-  return new ListModelImpl<T>(initialData, elementsEquality)
+export const createDynamicList = <T>(initialData: T[]): ListModel<T> => {
+  return new ListModelImpl<T>(initialData)
 }

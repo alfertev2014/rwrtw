@@ -444,7 +444,7 @@ let transactionDepth = 0
 
 export const source = <T>(initValue: T): Source<T> => {
   if (trackingSubscriber !== null) {
-    throw new Error("Creating source  in tracking context")
+    throw new Error("Creating source in tracking context")
   }
   return new SourceImpl<T>(initValue)
 }
