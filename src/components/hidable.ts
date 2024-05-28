@@ -1,5 +1,5 @@
-import { type PlaceholderComponent } from "../core/index.js"
-import { type TemplateContent, type TemplateHandler } from "../template/index.js"
+import { PlaceholderContent, type PlaceholderComponent } from "../core/index.js"
+import { type TemplateHandler } from "../template/index.js"
 import { ifElse } from "./ifElse.js"
 
 export interface Hidable {
@@ -8,7 +8,7 @@ export interface Hidable {
   visible: boolean
 }
 
-export const hidable = (content: TemplateContent, handler?: TemplateHandler<Hidable>): PlaceholderComponent =>
+export const hidable = (content: PlaceholderContent, handler?: TemplateHandler<Hidable>): PlaceholderComponent =>
   ifElse(true, content, null, (ifElse, context) => {
     handler?.(
       {

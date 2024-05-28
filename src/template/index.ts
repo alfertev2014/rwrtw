@@ -10,6 +10,7 @@ import {
   createListAt,
   insertNodeAt,
   type Lifecycle,
+  PlaceholderContent,
 } from "../core/index.js"
 
 export type TemplateHandler<T> = (element: T, context: PlaceholderContext) => void
@@ -43,17 +44,17 @@ export const el =
   }
 
 export const plh =
-  (content: TemplateContent, handler?: TemplateHandler<Placeholder>): PlaceholderComponent =>
+  (content: PlaceholderContent, handler?: TemplateHandler<Placeholder>): PlaceholderComponent =>
   (place, context) => {
-    const res = createChildPlaceholderAt(place, context, fr(content))
+    const res = createChildPlaceholderAt(place, context, content)
     handler?.(res, context)
     return res
   }
 
-export const list =
-  (contents: TemplateContent[], handler?: TemplateHandler<PlaceholderList>): PlaceholderComponent =>
+export const plhList =
+  (contents: PlaceholderContent[], handler?: TemplateHandler<PlaceholderList>): PlaceholderComponent =>
   (place, context) => {
-    const list = createListAt(place, context, contents.map(fr))
+    const list = createListAt(place, context, contents)
     handler?.(list, context)
     return list
   }

@@ -1,8 +1,8 @@
 import { type ScalarValue, setAttr } from "../dom/helpers.js"
-import { ifElse, type PlaceholderContext, type PlaceholderComponent } from "../index.js"
+import { type PlaceholderContext, type PlaceholderComponent, PlaceholderContent } from "../index.js"
 import { ListModel } from "../reactive/listModel.js"
 import { type Observable, effect } from "../reactive/observable.js"
-import { fr, list, plh, type TemplateContent, type TemplateElementAttrHandler } from "./index.js"
+import { plhList, plh, type TemplateElementAttrHandler } from "./index.js"
 
 export const reCompute = <T>(
   context: PlaceholderContext,
@@ -27,40 +27,46 @@ export const reAttr =
 
 export const reContent = <T>(
   trigger: Observable<T>,
-  contentFunc: (value: T) => TemplateContent,
+  contentFunc: (value: T) => PlaceholderContent,
 ): PlaceholderComponent => {
   return plh(contentFunc(trigger.current()), (placeholder, context) => {
     reCompute(context, trigger, (value) => {
-      placeholder.replaceContent(fr(contentFunc(value)))
+      placeholder.replaceContent(contentFunc(value))
     })
   })
 }
 
 export const reIf = (
   condition: Observable<boolean>,
-  trueBranch: TemplateContent,
-  falseBranch: TemplateContent,
+  trueBranch: PlaceholderContent,
+  falseBranch: PlaceholderContent,
 ): PlaceholderComponent => {
-  return reContent(condition, (value) => value ? trueBranch : falseBranch)
+  return reContent(condition, (value) => (value ? trueBranch : falseBranch))
 }
 
-export const reList = <T>(listModel: ListModel<T>, elementComponentFunc: (value: Observable<T>) => PlaceholderComponent): PlaceholderComponent => {
-  return list(listModel.data.map(item => elementComponentFunc(item)), (list, context) => {
-    listModel.observer = {
-      onInsert(i, element) {
-        list.insert(i, elementComponentFunc(element))
-      },
-      onMove(from, to) {
-        list.moveFromTo(from, to)
-      },
-      onRemove(i) {
-        list.removeAt(i)
+export const reList = <T>(
+  listModel: ListModel<T>,
+  elementComponentFunc: (value: Observable<T>) => PlaceholderComponent,
+): PlaceholderComponent => {
+  return plhList(
+    listModel.data.map((item) => elementComponentFunc(item)),
+    (plhList, context) => {
+      listModel.observer = {
+        onInsert(i, element) {
+          plhList.insert(i, elementComponentFunc(element))
+        },
+        onMove(from, to) {
+          plhList.moveFromTo(from, to)
+        },
+        onRemove(i) {
+          plhList.removeAt(i)
+        },
       }
-    }
-    context.registerLifecycle({
-      dispose() {
-        listModel.observer = null
-      },
-    })   
-  })
+      context.registerLifecycle({
+        dispose() {
+          listModel.observer = null
+        },
+      })
+    },
+  )
 }

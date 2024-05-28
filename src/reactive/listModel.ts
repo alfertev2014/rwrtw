@@ -22,7 +22,7 @@ class ListModelImpl<T> implements ListModel<T> {
   observer: ListModelObserver<T> | null
 
   constructor(initialData: T[]) {
-    this._data = initialData.map(item => source(item))
+    this._data = initialData.map((item) => source(item))
     this.observer = null
   }
 

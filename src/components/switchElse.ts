@@ -1,13 +1,17 @@
-import { type PlaceholderComponent } from "../core/index.js"
-import { fr, plh, type TemplateHandler, type TemplateContent } from "../template/index.js"
+import { PlaceholderContent, type PlaceholderComponent } from "../core/index.js"
+import { plh, type TemplateHandler } from "../template/index.js"
 
 export interface Switch<T> {
   value: T
 }
 
-export type CaseBranch<T> = [T, TemplateContent]
+export type CaseBranch<T> = [T, PlaceholderContent]
 
-const selectBranch = <T>(value: T, branches: Array<CaseBranch<T>>, defaultBranch: TemplateContent): TemplateContent => {
+const selectBranch = <T>(
+  value: T,
+  branches: Array<CaseBranch<T>>,
+  defaultBranch: PlaceholderContent,
+): PlaceholderContent => {
   for (const branch of branches) {
     if (value === branch[0]) {
       return branch[1]
@@ -19,7 +23,7 @@ const selectBranch = <T>(value: T, branches: Array<CaseBranch<T>>, defaultBranch
 export const switchElse = <T>(
   initValue: T,
   branches: Array<CaseBranch<T>>,
-  defaultBranch: TemplateContent,
+  defaultBranch: PlaceholderContent,
   handler?: TemplateHandler<Switch<T>>,
 ): PlaceholderComponent =>
   plh(selectBranch(initValue, branches, defaultBranch), (placeholder, context) => {
@@ -31,7 +35,7 @@ export const switchElse = <T>(
         },
         set value(value: T) {
           if (_value !== value) {
-            placeholder.replaceContent(fr(selectBranch(value, branches, defaultBranch)))
+            placeholder.replaceContent(selectBranch(value, branches, defaultBranch))
             _value = value
           }
         },

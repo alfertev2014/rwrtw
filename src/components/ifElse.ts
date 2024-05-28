@@ -1,5 +1,5 @@
-import { type PlaceholderComponent } from "../core/index.js"
-import { type TemplateContent, fr, type TemplateHandler, plh } from "../template/index.js"
+import { PlaceholderContent, type PlaceholderComponent } from "../core/index.js"
+import { type TemplateHandler, plh } from "../template/index.js"
 
 export interface IfElse {
   condition: boolean
@@ -7,8 +7,8 @@ export interface IfElse {
 
 export const ifElse = (
   initCondition: boolean,
-  trueBranch: TemplateContent,
-  falseBranch: TemplateContent,
+  trueBranch: PlaceholderContent,
+  falseBranch: PlaceholderContent,
   handler?: TemplateHandler<IfElse>,
 ): PlaceholderComponent =>
   plh(initCondition ? trueBranch : falseBranch, (placeholder, context) => {
@@ -20,7 +20,7 @@ export const ifElse = (
         },
         set condition(value: boolean) {
           if (_condition !== value) {
-            placeholder.replaceContent(fr(value ? trueBranch : falseBranch))
+            placeholder.replaceContent(value ? trueBranch : falseBranch)
             _condition = value
           }
         },
