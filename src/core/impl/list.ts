@@ -8,12 +8,6 @@ const spawnBefore = (placeholder: PlaceholderImpl, content: PlaceholderContent):
   return spawned
 }
 
-const moveToPlace = (placeholder: PlaceholderImpl, place: Place): void => {
-  const fragment = takeNodesFrom(placeholder._place, placeholder._lastPlace)
-  placeholder._place = place
-  insertNodeAt(placeholder._place, fragment)
-}
-
 export class PlaceholderListImpl implements PlaceholderList, Lifecycle {
   readonly _place: Place
   readonly _items: PlaceholderImpl[]
@@ -42,10 +36,6 @@ export class PlaceholderListImpl implements PlaceholderList, Lifecycle {
     } else {
       return this._place
     }
-  }
-
-  _placeAtIndex(index: number): Place {
-    return index > 0 ? this._items[index - 1] : this._place
   }
 
   insert(index: number, content: PlaceholderContent): void {
@@ -83,14 +73,18 @@ export class PlaceholderListImpl implements PlaceholderList, Lifecycle {
     if (fromIndex < this._items.length - 1) {
       this._items[fromIndex + 1]._place = placeholder._place
     }
-    moveToPlace(placeholder, this._items[toIndex - 1])
+    
+    const fragment = takeNodesFrom(placeholder._place, placeholder)
+    const toPlace = fromIndex < toIndex ? this._items[toIndex] : this._items[toIndex]._place
+    placeholder._place = toPlace
+    insertNodeAt(toPlace, fragment)
 
     if (fromIndex < toIndex) {
-      for (let i = fromIndex; i < toIndex - 1; ++i) {
+      for (let i = fromIndex; i < toIndex; ++i) {
         this._items[i] = this._items[i + 1]
       }
     } else {
-      for (let i = fromIndex; i > toIndex + 1; --i) {
+      for (let i = fromIndex; i > toIndex; --i) {
         this._items[i] = this._items[i - 1]
       }
     }
