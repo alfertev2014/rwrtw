@@ -6,10 +6,10 @@ import { plhList, plh, type TemplateElementAttrHandler } from "./index.js"
 
 export const reCompute = <T>(
   context: PlaceholderContext,
-  observable: Observable<T>,
+  trigger: Observable<T>,
   sideEffectFunc: (value: T) => void,
 ): void => {
-  const eff = effect(observable, sideEffectFunc)
+  const eff = effect(trigger, sideEffectFunc)
   context.registerLifecycle({
     dispose() {
       eff.unsubscribe()
@@ -18,10 +18,28 @@ export const reCompute = <T>(
 }
 
 export const reAttr =
-  (observable: Observable<ScalarValue>): TemplateElementAttrHandler =>
+  (trigger: Observable<ScalarValue>): TemplateElementAttrHandler =>
   (element, context, attrName) => {
-    reCompute(context, observable, (value) => {
+    setAttr(element, attrName, trigger.current())
+    reCompute(context, trigger, (value) => {
       setAttr(element, attrName, value)
+    })
+  }
+
+export const reEv =
+  <T>(trigger: Observable<T>, listenerFactory: (value: T) => EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions): TemplateElementAttrHandler =>
+  (element, context, eventName) => {
+    let listener = listenerFactory(trigger.current())
+    element.addEventListener(eventName, listener, options)
+    reCompute(context, trigger, (value) => {
+      element.removeEventListener(eventName, listener)
+      listener = listenerFactory(value)
+      element.addEventListener(eventName, listener, options)
+      context.registerLifecycle({
+        dispose() {
+          element.removeEventListener(eventName, listener)
+        }
+      })
     })
   }
 

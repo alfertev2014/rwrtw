@@ -361,7 +361,6 @@ class EffectImpl<T> implements Observer, Effect {
   constructor(trigger: ObservableImpl<T>, sideEffectFunc: (value: T) => void) {
     this._state = ChangedState.DANGLING
     this._trigger = trigger
-    this._trigger._subscribe(this)
     this._sideEffectFunc = sideEffectFunc
     this._schedule()
   }
@@ -388,7 +387,9 @@ class EffectImpl<T> implements Observer, Effect {
     scheduleTask(() => {
       if (this._state !== ChangedState.SUSPENDED) {
         const current = this._trigger.current()
-        if (this._state === ChangedState.CHANGED) {
+        if (this._state === ChangedState.DANGLING) {
+          this._trigger._subscribe(this)
+        } else if (this._state === ChangedState.CHANGED) {
           this._sideEffectFunc(current)
         }
         this._state = ChangedState.NOT_CHANGED
@@ -483,14 +484,14 @@ export const untrack = <T>(func: () => T): T => {
   }
 }
 
-export const transaction = (func: () => void): void => {
+export const transaction = <T>(func: () => T): T => {
   if (trackingSubscriber !== null) {
     throw new Error("Running transaction in tracking context")
   }
 
   transactionDepth++
   try {
-    func()
+    return func()
   } finally {
     transactionDepth--
     if (transactionDepth === 0) {

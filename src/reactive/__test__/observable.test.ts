@@ -508,7 +508,7 @@ describe("Observable", () => {
         expect(effectFunc).toBeCalledTimes(callCount)
       })
 
-      test.each([[1], [2], [10]])("Effect function should be called once after transaction end", (callCount) => {
+      test.each([[1], [2], [10]])("Effect function should not be called after transaction end with source changes", (callCount) => {
         const s = source("s")
         const effectFunc = jest.fn()
 
@@ -519,7 +519,7 @@ describe("Observable", () => {
           }
         })
 
-        expect(effectFunc).toBeCalledTimes(1)
+        expect(effectFunc).toBeCalledTimes(0)
       })
 
       test.each([[1], [2], [10]])("Effect function should not be called after unsubscribe", (callCount) => {
@@ -549,10 +549,10 @@ describe("Observable", () => {
           s.change("sChanged" + i)
         }
 
-        expect(effectFunc).toBeCalledTimes(callCount + 1)
+        expect(effectFunc).toBeCalledTimes(callCount)
       })
 
-      test.each([[1], [2], [10]])("Effect function should be called once after transaction end", (callCount) => {
+      test.each([[1], [2], [10]])("Effect function should not be called after transaction end with source changes", (callCount) => {
         const s = source("s")
         const c = computed(() => s.current())
         const effectFunc = jest.fn()
@@ -564,7 +564,7 @@ describe("Observable", () => {
           }
         })
 
-        expect(effectFunc).toBeCalledTimes(1)
+        expect(effectFunc).toBeCalledTimes(0)
       })
 
       test.each([[1], [2], [10]])("Effect function should not be called after unsubscribe", (callCount) => {
@@ -578,7 +578,7 @@ describe("Observable", () => {
           s.change("sChanged" + i)
         }
 
-        expect(effectFunc).toBeCalledTimes(1)
+        expect(effectFunc).toBeCalledTimes(0)
       })
     })
 
@@ -600,10 +600,10 @@ describe("Observable", () => {
           s.change("sChanged" + i)
         }
 
-        expect(effectFunc).toBeCalledTimes(callCount + 1)
+        expect(effectFunc).toBeCalledTimes(callCount)
       })
 
-      test.each([[1], [2], [10]])("Effect function should be called once after transaction end", (callCount) => {
+      test.each([[1], [2], [10]])("Effect function should not be called once after transaction end with source changes", (callCount) => {
         const s = source("s")
         const c1 = computed(() => s.current())
         const c2 = computed(() => s.current())
@@ -619,7 +619,7 @@ describe("Observable", () => {
           }
         })
 
-        expect(effectFunc).toBeCalledTimes(1)
+        expect(effectFunc).toBeCalledTimes(0)
       })
 
       test.each([[1], [2], [10]])("Effect function should not be called after unsubscribe", (callCount) => {
@@ -637,7 +637,7 @@ describe("Observable", () => {
           s.change("sChanged" + i)
         }
 
-        expect(effectFunc).toBeCalledTimes(1)
+        expect(effectFunc).toBeCalledTimes(0)
       })
     })
   })
