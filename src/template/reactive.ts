@@ -27,7 +27,11 @@ export const reAttr =
   }
 
 export const reEv =
-  <T>(trigger: Observable<T>, listenerFactory: (value: T) => EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions): TemplateElementAttrHandler =>
+  <T>(
+    trigger: Observable<T>,
+    listenerFactory: (value: T) => EventListenerOrEventListenerObject,
+    options?: boolean | AddEventListenerOptions,
+  ): TemplateElementAttrHandler =>
   (element, context, eventName) => {
     let listener = listenerFactory(trigger.current())
     element.addEventListener(eventName, listener, options)
@@ -38,7 +42,7 @@ export const reEv =
       context.registerLifecycle({
         dispose() {
           element.removeEventListener(eventName, listener)
-        }
+        },
       })
     })
   }

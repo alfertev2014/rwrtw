@@ -73,7 +73,7 @@ export class PlaceholderListImpl implements PlaceholderList, Lifecycle {
     if (fromIndex < this._items.length - 1) {
       this._items[fromIndex + 1]._place = placeholder._place
     }
-    
+
     const fragment = takeNodesFrom(placeholder._place, placeholder)
     const toPlace = fromIndex < toIndex ? this._items[toIndex] : this._items[toIndex]._place
     placeholder._place = toPlace
