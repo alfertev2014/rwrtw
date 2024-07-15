@@ -471,6 +471,10 @@ export const effect = <T>(trigger: Observable<T>, sideEffectFunc: (value: T) => 
   return res
 }
 
+export const autocompute = (computeFunc: () => void): Effect => {
+  return effect(computed(computeFunc), () => {})
+}
+
 export const untrack = <T>(func: () => T): T => {
   if (trackingSubscriber === null) {
     return func()

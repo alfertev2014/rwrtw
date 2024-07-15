@@ -10,7 +10,7 @@ export const placeAtBeginningOf = (node: ParentNode): DOMPlace => new ParentNode
 export type DOMPlace = Node | ParentNodePlace
 
 export interface PlaceholderNode {
-  lastDOMPlace: () => DOMPlace
+  readonly lastDOMPlace: () => DOMPlace
 }
 
 export type Place = DOMPlace | PlaceholderNode
