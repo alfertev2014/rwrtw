@@ -250,9 +250,9 @@ describe("Placeholder", () => {
 
     beforeEach(() => {
       LIFECYCLE = {
-        mount: jest.fn(),
-        unmount: jest.fn(),
-        dispose: jest.fn(),
+        mount: jest.fn<unknown, unknown[], unknown>(),
+        unmount: jest.fn<unknown, unknown[], unknown>(),
+        dispose: jest.fn<unknown, unknown[], unknown>(),
       }
     })
 

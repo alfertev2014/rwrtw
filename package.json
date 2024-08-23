@@ -11,7 +11,7 @@
   ],
   "scripts": {
     "test": "jest",
-    "lint": "eslint",
+    "lint": "eslint .",
     "prettier": "prettier --write src",
     "prepack": "npm run clean && npm run prettier && npm run lint && npm run build",
     "build": "tsc --project ./tsconfig.json",
@@ -34,15 +34,17 @@
   "author": "Vasiliy Alfertev <alfertev2012@gmail.com> (https://github.com/alfertev2014)",
   "license": "ISC",
   "devDependencies": {
-    "@eslint/js": "^9.3.0",
+    "@eslint/js": "^9.9.0",
+    "@types/eslint__js": "^8.42.3",
+    "@types/eslint-config-prettier": "^6.11.3",
     "@types/jest": "^29.5.12",
-    "eslint": "^8.57.0",
+    "eslint": "^9.9.0",
     "eslint-config-prettier": "^9.1.0",
     "jest": "^29.7.0",
     "jest-environment-jsdom": "^29.7.0",
-    "prettier": "^3.2.5",
-    "ts-jest": "^29.1.4",
-    "typescript": "^5.4.5",
-    "typescript-eslint": "^7.11.0"
+    "prettier": "^3.3.3",
+    "ts-jest": "^29.2.4",
+    "typescript": "^5.5.4",
+    "typescript-eslint": "^8.2.0"
   }
 }

@@ -171,7 +171,7 @@ class SourceImpl<T = unknown> extends ObservableImpl<T> implements Source<T> {
  * Computed value node in reactive graph.
  * Caches its current value if observable dependencies are not changed.
  */
-export interface Computed<out T = unknown> extends Observable<T> {}
+export type Computed<out T = unknown> = Observable<T>
 
 /**
  * @see Computed

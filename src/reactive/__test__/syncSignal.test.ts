@@ -62,8 +62,8 @@ describe("Synchronous signals", () => {
     test("Calling signal with arg should call all subscribers with the same arg", () => {
       const signal = createSyncSignal<unknown>()
 
-      const handler1 = jest.fn()
-      const handler2 = jest.fn()
+      const handler1 = jest.fn<unknown, unknown[], unknown>()
+      const handler2 = jest.fn<unknown, unknown[], unknown>()
 
       signal.subscribe(handler1)
       signal.subscribe(handler2)
