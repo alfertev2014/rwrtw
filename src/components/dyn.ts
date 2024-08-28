@@ -5,7 +5,10 @@ export interface Dynamic {
   refresh: () => void
 }
 
-export const dyn = (content: () => PlaceholderContent, handler?: TemplateHandler<Dynamic>): PlaceholderComponent => {
+export const dyn = (
+  content: () => PlaceholderContent,
+  handler?: TemplateHandler<Dynamic>,
+): PlaceholderComponent => {
   return plh(content(), (placeholder, context) => {
     handler?.(
       {

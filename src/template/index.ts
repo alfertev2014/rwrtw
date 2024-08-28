@@ -14,12 +14,20 @@ import {
 } from "../core/index.js"
 
 export type TemplateHandler<T> = (element: T, context: PlaceholderContext) => void
-export type TemplateElementAttrHandler = (element: HTMLElement, context: PlaceholderContext, attrName: string) => void
+export type TemplateElementAttrHandler = (
+  element: HTMLElement,
+  context: PlaceholderContext,
+  attrName: string,
+) => void
 
 export type TemplateElementAttrsMap = Record<string, ScalarValue | TemplateElementAttrHandler>
 
 export const el =
-  (tag: string, attrs?: TemplateElementAttrsMap | null, ...handlers: Array<TemplateHandler<HTMLElement>>) =>
+  (
+    tag: string,
+    attrs?: TemplateElementAttrsMap | null,
+    ...handlers: Array<TemplateHandler<HTMLElement>>
+  ) =>
   (...children: TemplateContent[]): PlaceholderComponent =>
   (place, context) => {
     const element = dce(tag)
@@ -52,7 +60,10 @@ export const plh =
   }
 
 export const plhList =
-  (contents: PlaceholderContent[], handler?: TemplateHandler<PlaceholderList>): PlaceholderComponent =>
+  (
+    contents: PlaceholderContent[],
+    handler?: TemplateHandler<PlaceholderList>,
+  ): PlaceholderComponent =>
   (place, context) => {
     const list = createListAt(place, context, contents)
     handler?.(list, context)
@@ -70,7 +81,11 @@ export type TemplateItem = ScalarValue | PlaceholderComponent
 
 export type TemplateContent = TemplateContent[] | TemplateItem
 
-const renderTemplateContent = (place: Place, context: PlaceholderContext, content: TemplateContent): Place => {
+const renderTemplateContent = (
+  place: Place,
+  context: PlaceholderContext,
+  content: TemplateContent,
+): Place => {
   if (typeof content === "boolean" || content == null) {
     return place
   }
@@ -94,10 +109,11 @@ export const fr =
     return renderTemplateContent(place, context, content)
   }
 
-export const on: (...args: Parameters<HTMLElement["addEventListener"]>) => TemplateHandler<HTMLElement> =
-  (event, listener, options) => (element) => {
-    element.addEventListener(event, listener, options)
-  }
+export const on: (
+  ...args: Parameters<HTMLElement["addEventListener"]>
+) => TemplateHandler<HTMLElement> = (event, listener, options) => (element) => {
+  element.addEventListener(event, listener, options)
+}
 
 export const ev =
   (

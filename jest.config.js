@@ -3,13 +3,13 @@ export default {
   preset: "ts-jest/presets/default-esm",
   testEnvironment: "jsdom",
   moduleNameMapper: {
-    '^(\\.{1,2}/.*)\\.js$': '$1',
+    "^(\\.{1,2}/.*)\\.js$": "$1",
   },
   transform: {
-    '^.+\\.test\\.tsx?$': [
-      'ts-jest',
+    "^.+\\.test\\.tsx?$": [
+      "ts-jest",
       {
-        tsconfig: './tsconfig.jest.json',
+        tsconfig: "./tsconfig.jest.json",
       },
     ],
   },

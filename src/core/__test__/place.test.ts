@@ -1,7 +1,12 @@
 import { describe, expect, test } from "@jest/globals"
 import { lastDOMPlaceOf, placeAtBeginningOf, type Place, insertNodeAt } from "../impl/place.js"
 import { createChildPlaceholderAt, createRootPlaceholderAt } from "../impl/placeholder.js"
-import { createListAt, type PlaceholderList, type Placeholder, type PlaceholderContent } from "../index.js"
+import {
+  createListAt,
+  type PlaceholderList,
+  type Placeholder,
+  type PlaceholderContent,
+} from "../index.js"
 
 describe("Place", () => {
   let PARENT_NODE: HTMLElement

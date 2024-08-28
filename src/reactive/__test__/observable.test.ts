@@ -59,18 +59,21 @@ describe("Observable", () => {
         expect(c.current()).toBe(returnedValue)
       })
 
-      test.each([[1], [2], [10]])("computed should return the cached value after first computing", (callCount) => {
-        const c = computed(() => returnedValue)
+      test.each([[1], [2], [10]])(
+        "computed should return the cached value after first computing",
+        (callCount) => {
+          const c = computed(() => returnedValue)
 
-        const values: unknown[] = []
-        for (let i = 0; i < callCount; ++i) {
-          values.push(c.current())
-        }
+          const values: unknown[] = []
+          for (let i = 0; i < callCount; ++i) {
+            values.push(c.current())
+          }
 
-        for (let i = 0; i < callCount; ++i) {
-          expect(values[i]).toBe(returnedValue)
-        }
-      })
+          for (let i = 0; i < callCount; ++i) {
+            expect(values[i]).toBe(returnedValue)
+          }
+        },
+      )
     })
   })
 
@@ -252,22 +255,25 @@ describe("Observable", () => {
         expect(computedFunc2).toBeCalledTimes(1)
       })
 
-      test.each([[1], [2], [10]])("Computed function should be called only once after source change", (callCount) => {
-        const s = source("s")
-        const computedFunc1 = jest.fn(() => "c1-" + s.current())
-        const c1 = computed(computedFunc1)
-        const computedFunc2 = jest.fn(() => "c2-" + c1.current())
-        const c2 = computed(computedFunc2)
+      test.each([[1], [2], [10]])(
+        "Computed function should be called only once after source change",
+        (callCount) => {
+          const s = source("s")
+          const computedFunc1 = jest.fn(() => "c1-" + s.current())
+          const c1 = computed(computedFunc1)
+          const computedFunc2 = jest.fn(() => "c2-" + c1.current())
+          const c2 = computed(computedFunc2)
 
-        s.change("sChanged")
+          s.change("sChanged")
 
-        for (let i = 0; i < callCount; ++i) {
-          c2.current()
-        }
+          for (let i = 0; i < callCount; ++i) {
+            c2.current()
+          }
 
-        expect(computedFunc1).toBeCalledTimes(1)
-        expect(computedFunc2).toBeCalledTimes(1)
-      })
+          expect(computedFunc1).toBeCalledTimes(1)
+          expect(computedFunc2).toBeCalledTimes(1)
+        },
+      )
     })
 
     describe("One source, two transient computed and one dependent computed", () => {
@@ -322,25 +328,28 @@ describe("Observable", () => {
         expect(computedFunc3).toBeCalledTimes(1)
       })
 
-      test.each([[1], [2], [10]])("Computed function should be called only once after source change", (callCount) => {
-        const s = source("s")
-        const computedFunc1 = jest.fn(() => "c1-" + s.current())
-        const c1 = computed(computedFunc1)
-        const computedFunc2 = jest.fn(() => "c2-" + s.current())
-        const c2 = computed(computedFunc2)
-        const computedFunc3 = jest.fn(() => `c3 ${c1.current()} ${c2.current()}`)
-        const c3 = computed(computedFunc3)
+      test.each([[1], [2], [10]])(
+        "Computed function should be called only once after source change",
+        (callCount) => {
+          const s = source("s")
+          const computedFunc1 = jest.fn(() => "c1-" + s.current())
+          const c1 = computed(computedFunc1)
+          const computedFunc2 = jest.fn(() => "c2-" + s.current())
+          const c2 = computed(computedFunc2)
+          const computedFunc3 = jest.fn(() => `c3 ${c1.current()} ${c2.current()}`)
+          const c3 = computed(computedFunc3)
 
-        s.change("sChanged")
+          s.change("sChanged")
 
-        for (let i = 0; i < callCount; ++i) {
-          c3.current()
-        }
+          for (let i = 0; i < callCount; ++i) {
+            c3.current()
+          }
 
-        expect(computedFunc1).toBeCalledTimes(1)
-        expect(computedFunc2).toBeCalledTimes(1)
-        expect(computedFunc3).toBeCalledTimes(1)
-      })
+          expect(computedFunc1).toBeCalledTimes(1)
+          expect(computedFunc2).toBeCalledTimes(1)
+          expect(computedFunc3).toBeCalledTimes(1)
+        },
+      )
     })
 
     describe("One source, two dependent computed and third computed conditionally depends on second computed if first computed is falsy", () => {
@@ -496,17 +505,20 @@ describe("Observable", () => {
         expect(effectFunc).toBeCalledTimes(0)
       })
 
-      test.each([[1], [2], [10]])("Effect function should be called after every source change", (callCount) => {
-        const s = source("s")
-        const effectFunc = jest.fn()
-        const e = effect(s, effectFunc)
+      test.each([[1], [2], [10]])(
+        "Effect function should be called after every source change",
+        (callCount) => {
+          const s = source("s")
+          const effectFunc = jest.fn()
+          const e = effect(s, effectFunc)
 
-        for (let i = 0; i < callCount; ++i) {
-          s.change("sChanged" + i)
-        }
+          for (let i = 0; i < callCount; ++i) {
+            s.change("sChanged" + i)
+          }
 
-        expect(effectFunc).toBeCalledTimes(callCount)
-      })
+          expect(effectFunc).toBeCalledTimes(callCount)
+        },
+      )
 
       test.each([[1], [2], [10]])(
         "Effect function should not be called after transaction end with source changes",
@@ -525,35 +537,41 @@ describe("Observable", () => {
         },
       )
 
-      test.each([[1], [2], [10]])("Effect function should not be called after unsubscribe", (callCount) => {
-        const s = source("s")
-        const effectFunc = jest.fn()
-        const e = effect(s, effectFunc)
-        e.unsubscribe()
+      test.each([[1], [2], [10]])(
+        "Effect function should not be called after unsubscribe",
+        (callCount) => {
+          const s = source("s")
+          const effectFunc = jest.fn()
+          const e = effect(s, effectFunc)
+          e.unsubscribe()
 
-        for (let i = 0; i < callCount; ++i) {
-          s.change("sChanged" + i)
-        }
+          for (let i = 0; i < callCount; ++i) {
+            s.change("sChanged" + i)
+          }
 
-        expect(effectFunc).toBeCalledTimes(0)
-      })
+          expect(effectFunc).toBeCalledTimes(0)
+        },
+      )
     })
 
     describe("One effect depends transitively on one source", () => {
       // s <-- c <-- e
 
-      test.each([[1], [2], [10]])("Effect function should be called after every source change", (callCount) => {
-        const s = source("s")
-        const c = computed(() => s.current())
-        const effectFunc = jest.fn()
-        const e = effect(c, effectFunc)
+      test.each([[1], [2], [10]])(
+        "Effect function should be called after every source change",
+        (callCount) => {
+          const s = source("s")
+          const c = computed(() => s.current())
+          const effectFunc = jest.fn()
+          const e = effect(c, effectFunc)
 
-        for (let i = 0; i < callCount; ++i) {
-          s.change("sChanged" + i)
-        }
+          for (let i = 0; i < callCount; ++i) {
+            s.change("sChanged" + i)
+          }
 
-        expect(effectFunc).toBeCalledTimes(callCount)
-      })
+          expect(effectFunc).toBeCalledTimes(callCount)
+        },
+      )
 
       test.each([[1], [2], [10]])(
         "Effect function should not be called after transaction end with source changes",
@@ -573,41 +591,47 @@ describe("Observable", () => {
         },
       )
 
-      test.each([[1], [2], [10]])("Effect function should not be called after unsubscribe", (callCount) => {
-        const s = source("s")
-        const c = computed(() => s.current())
-        const effectFunc = jest.fn()
-        const e = effect(c, effectFunc)
-        e.unsubscribe()
+      test.each([[1], [2], [10]])(
+        "Effect function should not be called after unsubscribe",
+        (callCount) => {
+          const s = source("s")
+          const c = computed(() => s.current())
+          const effectFunc = jest.fn()
+          const e = effect(c, effectFunc)
+          e.unsubscribe()
 
-        for (let i = 0; i < callCount; ++i) {
-          s.change("sChanged" + i)
-        }
+          for (let i = 0; i < callCount; ++i) {
+            s.change("sChanged" + i)
+          }
 
-        expect(effectFunc).toBeCalledTimes(0)
-      })
+          expect(effectFunc).toBeCalledTimes(0)
+        },
+      )
     })
 
     describe("One effect depends on two computed and transitively on one source", () => {
       // s <-- c1 <-- e
       //  \-- c2 <---/
 
-      test.each([[1], [2], [10]])("Effect function should be called after every source change", (callCount) => {
-        const s = source("s")
-        const c1 = computed(() => s.current())
-        const c2 = computed(() => s.current())
-        const effectFunc = jest.fn()
-        const e = effect(
-          computed(() => [c1.current(), c2.current()]),
-          effectFunc,
-        )
+      test.each([[1], [2], [10]])(
+        "Effect function should be called after every source change",
+        (callCount) => {
+          const s = source("s")
+          const c1 = computed(() => s.current())
+          const c2 = computed(() => s.current())
+          const effectFunc = jest.fn()
+          const e = effect(
+            computed(() => [c1.current(), c2.current()]),
+            effectFunc,
+          )
 
-        for (let i = 0; i < callCount; ++i) {
-          s.change("sChanged" + i)
-        }
+          for (let i = 0; i < callCount; ++i) {
+            s.change("sChanged" + i)
+          }
 
-        expect(effectFunc).toBeCalledTimes(callCount)
-      })
+          expect(effectFunc).toBeCalledTimes(callCount)
+        },
+      )
 
       test.each([[1], [2], [10]])(
         "Effect function should not be called once after transaction end with source changes",
@@ -631,23 +655,26 @@ describe("Observable", () => {
         },
       )
 
-      test.each([[1], [2], [10]])("Effect function should not be called after unsubscribe", (callCount) => {
-        const s = source("s")
-        const c1 = computed(() => s.current())
-        const c2 = computed(() => s.current())
-        const effectFunc = jest.fn()
-        const e = effect(
-          computed(() => [c1.current(), c2.current()]),
-          effectFunc,
-        )
-        e.unsubscribe()
+      test.each([[1], [2], [10]])(
+        "Effect function should not be called after unsubscribe",
+        (callCount) => {
+          const s = source("s")
+          const c1 = computed(() => s.current())
+          const c2 = computed(() => s.current())
+          const effectFunc = jest.fn()
+          const e = effect(
+            computed(() => [c1.current(), c2.current()]),
+            effectFunc,
+          )
+          e.unsubscribe()
 
-        for (let i = 0; i < callCount; ++i) {
-          s.change("sChanged" + i)
-        }
+          for (let i = 0; i < callCount; ++i) {
+            s.change("sChanged" + i)
+          }
 
-        expect(effectFunc).toBeCalledTimes(0)
-      })
+          expect(effectFunc).toBeCalledTimes(0)
+        },
+      )
     })
   })
 })

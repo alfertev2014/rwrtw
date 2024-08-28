@@ -1,7 +1,6 @@
-
 # RWRTW template DSL
 
-**Temlate DSL** is an *internal DSL* which allows to build component trees in a declarative way with strict type checking. "Internal" means that the DSL constructions are regular TypeScript expressions. So, TypeScript is the *host language*. The DSL's grammar, parsing, semantics and error handling are implemented as a TypeScripl library with heavy use of type checking.
+**Temlate DSL** is an _internal DSL_ which allows to build component trees in a declarative way with strict type checking. "Internal" means that the DSL constructions are regular TypeScript expressions. So, TypeScript is the _host language_. The DSL's grammar, parsing, semantics and error handling are implemented as a TypeScripl library with heavy use of type checking.
 
 The following is the fragment of the Counter app example:
 
@@ -13,7 +12,7 @@ el("div")(
     click: ev(handleClick),
     focus: ev(() => console.log("focus!")),
   })("Increment"),
-  el("div")(ifElse(true, el("p")("Even!"), el("span")("Odd!"), ref(evenOdd)))
+  el("div")(ifElse(true, el("p")("Even!"), el("span")("Odd!"), ref(evenOdd))),
 )
 ```
 
@@ -27,7 +26,7 @@ div()(
     click: ev(handleClick),
     focus: ev(() => console.log("focus!")),
   })("Increment"),
-  div()(ifElse(true, p()("Even!"), span()("Odd!"), ref(evenOdd)))
+  div()(ifElse(true, p()("Even!"), span()("Odd!"), ref(evenOdd))),
 )
 ```
 
@@ -37,14 +36,14 @@ The DSL contains building blocks for native HTML elements, primitives for condit
 
 There are the three primitive construction to build extended DOM trees:
 
-* `el` - HTML element
-* `plh` - placeholder
-* `plhList` - dynamic list of placeholders
+- `el` - HTML element
+- `plh` - placeholder
+- `plhList` - dynamic list of placeholders
 
 Also, there are util primitives:
 
-* `fr` - template fragment
-* `lc` - lifecycle hooks
+- `fr` - template fragment
+- `lc` - lifecycle hooks
 
 Every DSL primitive function returns controller factory function with sigrature (place, context) => void. But a developer could not think about places and lifecycle at all when using these building blocks together. Expression composition hides those complex details from developers.
 
@@ -68,18 +67,24 @@ el("div")(
     el("li", { class: "list-item" })("One"),
     el("li", { class: "list-item" })("Two"),
     el("li", { class: "list-item" })("Three"),
-  )
+  ),
 )
 
-el("form", { novalidate: true, submit: ev((event) => { /* ....  */ })})(
+el("form", {
+  novalidate: true,
+  submit: ev((event) => {
+    /* ....  */
+  }),
+})(
   el("div", { class: "form-field" })(
-    el("label", { "for": "username" })("Username:"), el("input", { type: "text", name: "username" })(),
+    el("label", { for: "username" })("Username:"),
+    el("input", { type: "text", name: "username" })(),
   ),
   el("div", { class: "form-field" })(
-    el("label", { "for": "password" })("Password:"), el("input", { type: "password", name: "password" })(),
-  )
+    el("label", { for: "password" })("Password:"),
+    el("input", { type: "password", name: "password" })(),
+  ),
 )
-
 ```
 
 ### Placeholder
@@ -92,13 +97,14 @@ let aPlaceholder: Placeholder
 const content = el("div")(
   plh(el("div")("Some initial content"), (placeholder, context) => {
     aPlaceholder = placeholder
-  })
+  }),
 )
 
 createRootPlaceholderAt(placeAtBeginningOf(document.body), content)
 
-aPlaceholder.replaceContent(el("div")("Some ", el("span", { class: "text-emphasize" })("modified"), " content"))
-
+aPlaceholder.replaceContent(
+  el("div")("Some ", el("span", { class: "text-emphasize" })("modified"), " content"),
+)
 ```
 
 ## DSL component composition
@@ -108,4 +114,3 @@ aPlaceholder.replaceContent(el("div")("Some ", el("span", { class: "text-emphasi
 ## DSL principles and restrictions
 
 ## Interaction with imperative and reactive programming
-

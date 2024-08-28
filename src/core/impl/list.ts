@@ -1,8 +1,16 @@
-import { type PlaceholderList, type PlaceholderContent, type Lifecycle, type PlaceholderContext } from "../index.js"
+import {
+  type PlaceholderList,
+  type PlaceholderContent,
+  type Lifecycle,
+  type PlaceholderContext,
+} from "../index.js"
 import { type DOMPlace, type Place, lastDOMPlaceOf, takeNodesFrom, insertNodeAt } from "./place.js"
 import { PlaceholderImpl } from "./placeholder.js"
 
-const spawnBefore = (placeholder: PlaceholderImpl, content: PlaceholderContent): PlaceholderImpl => {
+const spawnBefore = (
+  placeholder: PlaceholderImpl,
+  content: PlaceholderContent,
+): PlaceholderImpl => {
   const spawned = new PlaceholderImpl(placeholder._place, content)
   placeholder._place = spawned
   return spawned

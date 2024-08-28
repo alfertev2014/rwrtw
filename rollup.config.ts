@@ -1,6 +1,6 @@
-import { defineConfig } from "rollup";
+import { defineConfig } from "rollup"
 import ts from "rollup-plugin-ts"
-import terser from '@rollup/plugin-terser'
+import terser from "@rollup/plugin-terser"
 
 export default defineConfig({
   input: "src/index.ts",
@@ -12,6 +12,6 @@ export default defineConfig({
     ts({
       browserslist: false,
     }),
-    terser()
-  ]
+    terser(),
+  ],
 })

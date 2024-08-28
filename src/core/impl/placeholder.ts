@@ -1,5 +1,16 @@
-import { type PlaceholderContext, type Lifecycle, type Placeholder, type PlaceholderContent } from "../index.js"
-import { type DOMPlace, type Place, removeNodesAt, lastDOMPlaceOf, type PlaceholderNode } from "./place.js"
+import {
+  type PlaceholderContext,
+  type Lifecycle,
+  type Placeholder,
+  type PlaceholderContent,
+} from "../index.js"
+import {
+  type DOMPlace,
+  type Place,
+  removeNodesAt,
+  lastDOMPlaceOf,
+  type PlaceholderNode,
+} from "./place.js"
 
 export class ParentPlaceholderPlace implements PlaceholderNode {
   parent: PlaceholderImpl
@@ -81,6 +92,9 @@ export const createChildPlaceholderAt = (
   return context.registerLifecycle(new PlaceholderImpl(place, content))
 }
 
-export const createRootPlaceholderAt = (place: Place, content: PlaceholderContent): Placeholder & Lifecycle => {
+export const createRootPlaceholderAt = (
+  place: Place,
+  content: PlaceholderContent,
+): Placeholder & Lifecycle => {
   return new PlaceholderImpl(place, content)
 }

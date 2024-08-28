@@ -28,7 +28,9 @@ describe("Placeholder", () => {
     test("with one child Node - should insert this node at place", () => {
       const innerNode = document.createElement("div")
 
-      const placeholder = createRootPlaceholderAt(PARENT_PLACE, (place) => insertNodeAt(place, innerNode))
+      const placeholder = createRootPlaceholderAt(PARENT_PLACE, (place) =>
+        insertNodeAt(place, innerNode),
+      )
 
       expect(placeholder.lastDOMPlace()).toBe(innerNode)
       expect(innerNode.parentNode).toBe(PARENT_NODE)

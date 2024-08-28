@@ -28,8 +28,8 @@ export default tseslint.config(
       },
     },
     rules: {
-      "no-unused-expressions": "off"
-    }
+      "no-unused-expressions": "off",
+    },
   },
   {
     rules: {

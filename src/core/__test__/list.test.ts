@@ -19,18 +19,21 @@ describe("Dynamic list", () => {
   })
 
   describe("Creating list", () => {
-    test.each([[[]], [[null]], [[null, null]]])("with empty content - should do nothing with DOM", (listContent) => {
-      let list: PlaceholderList | undefined
-      const placeholder = createRootPlaceholderAt(PARENT_PLACE, (place, context) => {
-        list = createListAt(place, context, listContent)
-        return list
-      })
+    test.each([[[]], [[null]], [[null, null]]])(
+      "with empty content - should do nothing with DOM",
+      (listContent) => {
+        let list: PlaceholderList | undefined
+        const placeholder = createRootPlaceholderAt(PARENT_PLACE, (place, context) => {
+          list = createListAt(place, context, listContent)
+          return list
+        })
 
-      expect(list?.length).toBe(listContent.length)
-      expect(list?.lastDOMPlace()).toBe(PARENT_PLACE)
-      expect(placeholder.lastDOMPlace()).toBe(PARENT_PLACE)
-      expect(PARENT_NODE.childNodes.length).toBe(0)
-    })
+        expect(list?.length).toBe(listContent.length)
+        expect(list?.lastDOMPlace()).toBe(PARENT_PLACE)
+        expect(placeholder.lastDOMPlace()).toBe(PARENT_PLACE)
+        expect(PARENT_NODE.childNodes.length).toBe(0)
+      },
+    )
 
     test("with one item with one child Node inside - should insert this node at place", () => {
       const innerNode = document.createElement("div")
