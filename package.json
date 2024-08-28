@@ -9,6 +9,10 @@
     "lib",
     "README.md"
   ],
+  "exports": {
+    "types": "./lib/index.d.ts",
+    "import": "./lib/index.js"
+  },
   "scripts": {
     "test": "jest",
     "lint": "eslint .",
