@@ -14,7 +14,7 @@
     "lint": "eslint .",
     "prettier": "prettier --write src",
     "prepack": "npm run clean && npm run prettier && npm run lint && npm run build",
-    "build": "tsc --project ./tsconfig.json",
+    "build": "rollup -c rollup.config.ts --configPlugin @rollup/plugin-typescript",
     "clean": "rm -rf lib"
   },
   "repository": {
@@ -35,16 +35,20 @@
   "license": "ISC",
   "devDependencies": {
     "@eslint/js": "^9.9.0",
+    "@rollup/plugin-terser": "^0.4.4",
+    "@rollup/plugin-typescript": "^11.1.6",
     "@types/eslint__js": "^8.42.3",
     "@types/eslint-config-prettier": "^6.11.3",
     "@types/jest": "^29.5.12",
-    "eslint": "^9.9.0",
+    "eslint": "^9.9.1",
     "eslint-config-prettier": "^9.1.0",
     "jest": "^29.7.0",
     "jest-environment-jsdom": "^29.7.0",
     "prettier": "^3.3.3",
-    "ts-jest": "^29.2.4",
+    "rollup": "^4.21.1",
+    "rollup-plugin-ts": "^3.4.5",
+    "ts-jest": "^29.2.5",
     "typescript": "^5.5.4",
-    "typescript-eslint": "^8.2.0"
+    "typescript-eslint": "^8.3.0"
   }
 }

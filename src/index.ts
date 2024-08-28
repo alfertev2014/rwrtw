@@ -1,2 +1,7 @@
 export * from "./core/index.js"
+export * from "./dom/dsl.js"
+export * from "./dom/helpers.js"
 export * from "./components/index.js"
+export * from "./reactive/index.js"
+export * from "./template/index.js"
+export * from "./template/reactive.js"
