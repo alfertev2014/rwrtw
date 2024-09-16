@@ -1,17 +1,19 @@
 # RWRTW overview
 
+RWRTW is a tiny UI library for building of interactive web interfaces. It has zero dependencies and strives to be close to the native browser's API. It contains thin DOM helpers and minimal building blocks to structure and manage UI components, view-state and components' lifecycle.
+
 ## Motivation
 
-Existing frameworks are overcomplicated and relatively heavy in comparison with small libraries. These are some of problems:
+Existing frameworks are overcomplicated and relatively heavy in comparison with small libraries. Here are some problems:
 
-- Many abstraction layers which is almost always leaky.
-- Vender locking. Easy to use solutions from one ecosystem but hard to integrate and compose with others.
-- They could solve problems we are not interested for. But we have to pay for it with performance and learning time.
-- The solutions of these contrived problems may lead to new problems a framework is responsible to solve.
+- Many abstraction layers, which are almost always leaky.
+- Vendor locking. Easy to use solutions from one ecosystem, but hard to integrate and compose with others.
+- They could solve problems we are not interested in. But we have to pay for it with performance and learning time.
+- The solutions of these contrived problems may lead to new problems the framework responsible to solve.
 
-Building UI using vanilla JS still requires writing boilerplate and is error prone. But modern JavaScript and new browser's APIs allow writing cleaner code without old utility libraries and without redundant abstraction layers such as jQuery.
+Building UI using vanilla JS still requires writing boilerplate and is error-prone. But modern JavaScript and new browser's APIs allow writing cleaner code without old utility libraries and without redundant abstraction layers such as jQuery.
 
-There are some principles of software development that cannot be enforced using any library or framework in a project. A software developers still responsible to ensure it by themselves. There are always a lot of implicit conventions and assumptions in any code, especially in JavaScript code. No type checking system could express these conventions and assumptions. No static analysis tools could ensure all the conventions and assumptions. So, software developers still have to do this analysis by reading a code. OOP design patterns, SOLID, KISS, YAGNY, Clean Architecture, immutability, reactive programming are examples of such principles. Developer need not use any framework or library to ensure these principles.
+There are some principles of software development that cannot be enforced using any library or framework in a project. A software developers still responsible to ensure it by themselves. There are always a lot of implicit conventions and assumptions in any code, especially in JavaScript code. No type checking system could express these conventions and assumptions. No static analysis tools could ensure all the conventions and assumptions. So, software developers still have to do this analysis by reading a code. OOP design patterns, SOLID, KISS, YAGNI, Clean Architecture, immutability, reactive programming are examples of such principles. Developer need not use any framework or library to ensure these principles.
 
 ## Goals
 
@@ -37,7 +39,7 @@ There are some principles of software development that cannot be enforced using 
 ## Development principles and restrictions
 
 - Zero runtime dependencies, only vanilla JS and browser's APIs
-- Transparent logic for developers who knows HTML, CSS, DOM API, event handling, WebComponents etc.
+- Transparent logic for developers who know HTML, CSS, DOM API, event handling, WebComponents etc.
 - Implementation as close to DOM API as possible without tricky abstraction layers
 - Minimal size of library is more important than peak performance
 - Target modern JavaScript with native ES-modules in browser
@@ -57,7 +59,7 @@ There are some principles of software development that cannot be enforced using 
 - Prohibit creating of new properties on DOM Node objects and other built-in types
 - Prohibit dangerous "innerHtml" modifications
 - Don't create any hidden DOM-nodes for utility purposes such as nodes with "display: none", empty text nodes, comment nodes
-- Don't do tricky metaprogramming with properties and parameters:
+- Don't do tricky meta-programming with properties and parameters:
   - Don't assume naming conventions
   - Don't use computed property names
   - Don't invent any dependency injection
@@ -65,4 +67,4 @@ There are some principles of software development that cannot be enforced using 
 - Don't require any additional build step for special DSL (even JSX)
 - Don't create any inner languages inside string literals:
   - Don't create any conventions about strings content
-  - Don't parse any strings even using "split" or analyzing strings content char by char
+  - Don't parse any strings, even using "split" or analyzing strings content char by char

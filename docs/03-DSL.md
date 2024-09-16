@@ -1,6 +1,10 @@
 # RWRTW template DSL
 
-**Temlate DSL** is an _internal DSL_ which allows to build component trees in a declarative way with strict type checking. "Internal" means that the DSL constructions are regular TypeScript expressions. So, TypeScript is the _host language_. The DSL's grammar, parsing, semantics and error handling are implemented as a TypeScripl library with heavy use of type checking.
+This document describes convenient DSL-like API to build and compose UI components in declarative way using TypeScript.
+
+## Overview of Template DSL
+
+**Template DSL** is an _internal DSL_ which allows to build component trees in a declarative way with strict type checking. "Internal" means that the DSL constructions are regular TypeScript expressions. So, TypeScript is the _host language_. The DSL's grammar, parsing, semantics and error handling are implemented as a TypeScript library with heavy use of type checking.
 
 The following is the fragment of the Counter app example:
 
@@ -39,17 +43,24 @@ There are the three primitive construction to build extended DOM trees:
 - `el` - HTML element
 - `plh` - placeholder
 - `plhList` - dynamic list of placeholders
-
-Also, there are util primitives:
-
 - `fr` - template fragment
-- `lc` - lifecycle hooks
 
-Every DSL primitive function returns controller factory function with sigrature (place, context) => void. But a developer could not think about places and lifecycle at all when using these building blocks together. Expression composition hides those complex details from developers.
+Every DSL primitive function returns controller factory function with signature (place, context) => void. But a developer could not think about places and lifecycle at all when using these building blocks together. Expression composition hides those complex details from developers.
+
+If we need to do some low-level imperative logic on different phases of component lifecycle, the `lc` primitive function is used to register lifecycle hooks.
+
+There are the following helpers for convenient building and adjusting of HTML element:
+
+- `attr` - attribute of HTML element
+- `on` and `ev` - binding of event handler
+
+These primitive functions allows to add some details to elements.
+
+If we need access to real DOM nodes produced by DSL, the `ref` primitive functions is used as an escape hatch.
 
 ### HTML element
 
-Native HTML elements can be built with `el` factory function. It is high-order function which accepts HTML-tag, configuration object with attributes, event listeners, and other handlers which are to be called in rendering phace. `el` returns other function which accepts multiple children.
+Native HTML elements can be built with `el` factory function. It is high-order function which accepts HTML-tag, configuration object with attributes, event listeners, and other handlers which are to be called in rendering phase. `el` returns other function which accepts multiple children.
 
 These are some examples:
 
