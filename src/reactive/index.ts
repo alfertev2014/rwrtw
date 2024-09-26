@@ -9,9 +9,3 @@ export {
   computed,
   transaction,
 } from "./observable.js"
-export {
-  type SyncSignal,
-  type SignalHandler,
-  type UnsubscribeCallback,
-  createSyncSignal,
-} from "./syncSignal.js"
