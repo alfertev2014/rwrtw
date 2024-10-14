@@ -1,25 +1,28 @@
-import { Observable, Source, source } from "./observable.js"
+import { effect, Observable, Source, source } from "./observable.js"
+import { PlainData } from "./types.js"
 
-export interface ListModelObserver<T> {
+export interface ListObserver<T extends PlainData = PlainData> {
   onInsert?: (i: number, element: Observable<T>) => void
   onMove?: (from: number, to: number) => void
   onRemove?: (i: number) => void
 }
 
-export interface ListModel<T> {
+export interface ListObservable<T extends PlainData = PlainData> {
   readonly data: Observable<T>[]
-  observer: ListModelObserver<T> | null
+  observer: ListObserver<T> | null
+}
 
+export interface ListSource<T extends PlainData = PlainData> extends ListObservable<T> {
   removeItem: (i: number) => void
   moveItem: (from: number, to: number, element: T) => void
   insertItem: (i: number, element: T) => void
 
-  applyNewData: (data: T[]) => void
+  change: (data: T[]) => void
 }
 
-class ListModelImpl<T> implements ListModel<T> {
+export class ListSourceImpl<T extends PlainData = PlainData> implements ListSource<T> {
   readonly _data: Source<T>[]
-  observer: ListModelObserver<T> | null
+  observer: ListObserver<T> | null
 
   constructor(initialData: T[]) {
     this._data = initialData.map((item) => source(item))
@@ -30,10 +33,10 @@ class ListModelImpl<T> implements ListModel<T> {
     return this._data
   }
 
-  applyNewData(newData: T[]): void {
+  change(newData: T[]): void {
     for (let i = 0; i < this._data.length; ) {
       const element = this._data[i]
-      if (newData.findIndex((el) => el === element) < 0) {
+      if (newData.findIndex((el) => el === element.current()) < 0) {
         this.removeItem(i)
       } else {
         element.change(newData[i])
@@ -43,7 +46,7 @@ class ListModelImpl<T> implements ListModel<T> {
 
     for (let i = 0; i < newData.length; ++i) {
       const element = newData[i]
-      const elementIndex = this._data.findIndex((el) => el === element)
+      const elementIndex = this._data.findIndex((el) => el.current() === element)
       if (elementIndex >= 0) {
         this.moveItem(elementIndex, i, element)
       } else {
@@ -72,6 +75,32 @@ class ListModelImpl<T> implements ListModel<T> {
   }
 }
 
-export const createDynamicList = <T>(initialData: T[]): ListModel<T> => {
-  return new ListModelImpl<T>(initialData)
+export const listSource = <T extends PlainData>(initialData: T[]): ListSource<T> => {
+  return new ListSourceImpl<T>(initialData)
+}
+
+export const listFromArray = <T extends PlainData>(observable: Observable<T[]>): ListObservable<T> => {
+  const list = listSource(observable.current());
+  const e = effect(observable, (value) => {
+    list.change(value)
+  })
+  e.suspend()
+  return {
+    get data() {
+      return list.data
+    },
+
+    get observer() {
+      return list.observer
+    },
+
+    set observer(observer) {
+      list.observer = observer
+      if (observer) {
+        e.resume()
+      } else {
+        e.suspend()
+      }
+    }
+  }
 }

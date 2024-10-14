@@ -5,13 +5,13 @@ describe("Observable", () => {
   describe("Source", () => {
     test("Creating source with value should store this value", () => {
       const value = "s"
-      const s = source(value)
+      const s = source<string>(value)
 
       expect(s.current()).toBe(value)
     })
 
     test("Changing source value should change stored value", () => {
-      const s = source("s")
+      const s = source<string>("s")
 
       const value = "sChanged"
 
@@ -82,14 +82,14 @@ describe("Observable", () => {
       // s <-- c
 
       test("should return computed value", () => {
-        const s = source("s")
+        const s = source<string>("s")
         const c = computed(() => "c-" + s.current())
 
         expect(c.current()).toBe("c-s")
       })
 
       test("should recalculate value if source changed", () => {
-        const s = source("s")
+        const s = source<string>("s")
         const c = computed(() => "c-" + s.current())
 
         c.current()
@@ -99,7 +99,7 @@ describe("Observable", () => {
       })
 
       test("Computed function should not be called after source changed", () => {
-        const s = source("s")
+        const s = source<string>("s")
         const computedFunc = jest.fn(() => "c-" + s.current())
         const c = computed(computedFunc)
 
@@ -109,7 +109,7 @@ describe("Observable", () => {
       })
 
       test("Computed function should be called when requesting current value", () => {
-        const s = source("s")
+        const s = source<string>("s")
         const computedFunc = jest.fn(() => "c-" + s.current())
         const c = computed(computedFunc)
 
@@ -123,7 +123,7 @@ describe("Observable", () => {
       test.each([[1], [2], [10]])(
         "Computed function should be called only once if source value changed to the same value",
         (callCount) => {
-          const s = source("s")
+          const s = source<string>("s")
           const computedFunc = jest.fn(() => "c-" + s.current())
           const c = computed(computedFunc)
           c.current()
@@ -140,7 +140,7 @@ describe("Observable", () => {
       test.each([[1], [2], [10]])(
         "Computed function should be called every time when source value changed to a different value",
         (callCount) => {
-          const s = source("s")
+          const s = source<string>("s")
           const computedFunc = jest.fn(() => "c-" + s.current())
           const c = computed(computedFunc)
           c.current()
@@ -155,7 +155,7 @@ describe("Observable", () => {
       )
 
       test("Computed function should be called when requesting current value even if source is used multiple times", () => {
-        const s = source("s")
+        const s = source<string>("s")
         const computedFunc = jest.fn(() => "c-" + s.current() + s.current())
         const c = computed(computedFunc)
 
@@ -172,7 +172,7 @@ describe("Observable", () => {
       //   \-- c2
 
       test("should recalculate if source changed", () => {
-        const s = source("s")
+        const s = source<string>("s")
         const c1 = computed(() => "c1-" + s.current())
         const c2 = computed(() => "c2-" + s.current())
 
@@ -185,7 +185,7 @@ describe("Observable", () => {
       })
 
       test("Computed function should be called only if computed value called", () => {
-        const s = source("s")
+        const s = source<string>("s")
         const computedFunc1 = jest.fn(() => "c1-" + s.current())
         const c1 = computed(computedFunc1)
         const computedFunc2 = jest.fn(() => "c2-" + s.current())
@@ -203,7 +203,7 @@ describe("Observable", () => {
       // s <-- c1 <-- c2
 
       test("computed should return values returned by its computed functions", () => {
-        const s = source("s")
+        const s = source<string>("s")
         const c1 = computed(() => "c1-" + s.current())
         const c2 = computed(() => "c2-" + c1.current())
 
@@ -212,7 +212,7 @@ describe("Observable", () => {
       })
 
       test("should recalculate transient dependency if source changed", () => {
-        const s = source("s")
+        const s = source<string>("s")
         const c1 = computed(() => "c1-" + s.current())
         const c2 = computed(() => "c2-" + c1.current())
 
@@ -224,7 +224,7 @@ describe("Observable", () => {
       })
 
       test("should recalculate final computed if source changed", () => {
-        const s = source("s")
+        const s = source<string>("s")
         const c1 = computed(() => "c1-" + s.current())
         const c2 = computed(() => "c2-" + c1.current())
 
@@ -237,7 +237,7 @@ describe("Observable", () => {
       })
 
       test("Computed function should be called only if computed value called", () => {
-        const s = source("s")
+        const s = source<string>("s")
         const computedFunc1 = jest.fn(() => "c1-" + s.current())
         const c1 = computed(computedFunc1)
         const computedFunc2 = jest.fn(() => "c2-" + c1.current())
@@ -258,7 +258,7 @@ describe("Observable", () => {
       test.each([[1], [2], [10]])(
         "Computed function should be called only once after source change",
         (callCount) => {
-          const s = source("s")
+          const s = source<string>("s")
           const computedFunc1 = jest.fn(() => "c1-" + s.current())
           const c1 = computed(computedFunc1)
           const computedFunc2 = jest.fn(() => "c2-" + c1.current())
@@ -281,7 +281,7 @@ describe("Observable", () => {
       //  \-- c2 <---/
 
       test("computed should return values returned by its computed functions", () => {
-        const s = source("s")
+        const s = source<string>("s")
         const c1 = computed(() => "c1-" + s.current())
         const c2 = computed(() => "c2-" + s.current())
         const c3 = computed(() => `c3 ${c1.current()} ${c2.current()}`)
@@ -292,7 +292,7 @@ describe("Observable", () => {
       })
 
       test("should recalculate if source changed", () => {
-        const s = source("s")
+        const s = source<string>("s")
         const c1 = computed(() => "c1-" + s.current())
         const c2 = computed(() => "c2-" + s.current())
         const c3 = computed(() => `c3 ${c1.current()} ${c2.current()}`)
@@ -306,7 +306,7 @@ describe("Observable", () => {
       })
 
       test("Computed function should be called only if computed value called", () => {
-        const s = source("s")
+        const s = source<string>("s")
         const computedFunc1 = jest.fn(() => "c1-" + s.current())
         const c1 = computed(computedFunc1)
         const computedFunc2 = jest.fn(() => "c2-" + s.current())
@@ -331,7 +331,7 @@ describe("Observable", () => {
       test.each([[1], [2], [10]])(
         "Computed function should be called only once after source change",
         (callCount) => {
-          const s = source("s")
+          const s = source<string>("s")
           const computedFunc1 = jest.fn(() => "c1-" + s.current())
           const c1 = computed(computedFunc1)
           const computedFunc2 = jest.fn(() => "c2-" + s.current())
@@ -357,7 +357,7 @@ describe("Observable", () => {
       //  \-- c2 (if c1) <---/
 
       test("in true case computed should return values returned by its computed functions", () => {
-        const s = source("s")
+        const s = source<string>("s")
         const c1 = computed(() => "c1-" + s.current())
         const c2 = computed(() => (s.current() !== "" ? "c2-" + s.current() : ""))
         const c3 = computed(() => `c3 ${c1.current() !== "" ? c2.current() : "false"}`)
@@ -379,7 +379,7 @@ describe("Observable", () => {
       })
 
       test("should recalculate if source changed", () => {
-        const s = source("s")
+        const s = source<string>("s")
         const c1 = computed(() => (s.current() !== "" ? "c1-" + s.current() : ""))
         const c2 = computed(() => "c2-" + s.current())
         const c3 = computed(() => `c3 ${c1.current() !== "" ? c2.current() : "false"}`)
@@ -393,7 +393,7 @@ describe("Observable", () => {
       })
 
       test("in true case computed function should be called only if computed value called", () => {
-        const s = source("s")
+        const s = source<string>("s")
         const computedFunc1 = jest.fn(() => (s.current() !== "" ? "c1-" + s.current() : ""))
         const c1 = computed(computedFunc1)
         const computedFunc2 = jest.fn(() => "c2" + s.current())
@@ -416,7 +416,7 @@ describe("Observable", () => {
       })
 
       test("in false case computed function should be called only if computed value called", () => {
-        const s = source("s")
+        const s = source<string>("s")
         const computedFunc1 = jest.fn(() => (s.current() !== "" ? "c1-" + s.current() : ""))
         const c1 = computed(computedFunc1)
         const computedFunc2 = jest.fn(() => "c2" + s.current())
@@ -441,7 +441,7 @@ describe("Observable", () => {
       test.each([[1], [2], [10]])(
         "in false case after true case computed should unsubscribe from non needed dependency and and its compute function should not be called any more",
         (callCount) => {
-          const s = source("s")
+          const s = source<string>("s")
           const computedFunc1 = jest.fn(() => (s.current() !== "" ? "c1-" + s.current() : ""))
           const c1 = computed(computedFunc1)
           const computedFunc2 = jest.fn(() => "c2" + s.current())
@@ -474,7 +474,7 @@ describe("Observable", () => {
       // s <-- e
 
       test("Effect function should not be called after creation", () => {
-        const s = source("s")
+        const s = source<string>("s")
         const effectFunc = jest.fn()
         const e = effect(s, effectFunc)
 
@@ -484,7 +484,7 @@ describe("Observable", () => {
       test("Effect function should not be called after transaction end", () => {
         const effectFunc = jest.fn()
         transaction(() => {
-          const s = source("s")
+          const s = source<string>("s")
           const e = effect(s, effectFunc)
 
           expect(effectFunc).toBeCalledTimes(0)
@@ -495,7 +495,7 @@ describe("Observable", () => {
       test("Effect function should not be called for unsubscribed effect after transaction end", () => {
         const effectFunc = jest.fn()
         transaction(() => {
-          const s = source("s")
+          const s = source<string>("s")
           const e = effect(s, effectFunc)
 
           expect(effectFunc).toBeCalledTimes(0)
@@ -508,7 +508,7 @@ describe("Observable", () => {
       test.each([[1], [2], [10]])(
         "Effect function should be called after every source change",
         (callCount) => {
-          const s = source("s")
+          const s = source<string>("s")
           const effectFunc = jest.fn()
           const e = effect(s, effectFunc)
 
@@ -523,7 +523,7 @@ describe("Observable", () => {
       test.each([[1], [2], [10]])(
         "Effect function should not be called after transaction end with source changes",
         (callCount) => {
-          const s = source("s")
+          const s = source<string>("s")
           const effectFunc = jest.fn()
 
           transaction(() => {
@@ -540,7 +540,7 @@ describe("Observable", () => {
       test.each([[1], [2], [10]])(
         "Effect function should not be called after unsubscribe",
         (callCount) => {
-          const s = source("s")
+          const s = source<string>("s")
           const effectFunc = jest.fn()
           const e = effect(s, effectFunc)
           e.unsubscribe()
@@ -560,7 +560,7 @@ describe("Observable", () => {
       test.each([[1], [2], [10]])(
         "Effect function should be called after every source change",
         (callCount) => {
-          const s = source("s")
+          const s = source<string>("s")
           const c = computed(() => s.current())
           const effectFunc = jest.fn()
           const e = effect(c, effectFunc)
@@ -576,7 +576,7 @@ describe("Observable", () => {
       test.each([[1], [2], [10]])(
         "Effect function should not be called after transaction end with source changes",
         (callCount) => {
-          const s = source("s")
+          const s = source<string>("s")
           const c = computed(() => s.current())
           const effectFunc = jest.fn()
 
@@ -594,7 +594,7 @@ describe("Observable", () => {
       test.each([[1], [2], [10]])(
         "Effect function should not be called after unsubscribe",
         (callCount) => {
-          const s = source("s")
+          const s = source<string>("s")
           const c = computed(() => s.current())
           const effectFunc = jest.fn()
           const e = effect(c, effectFunc)
@@ -616,7 +616,7 @@ describe("Observable", () => {
       test.each([[1], [2], [10]])(
         "Effect function should be called after every source change",
         (callCount) => {
-          const s = source("s")
+          const s = source<string>("s")
           const c1 = computed(() => s.current())
           const c2 = computed(() => s.current())
           const effectFunc = jest.fn()
@@ -636,7 +636,7 @@ describe("Observable", () => {
       test.each([[1], [2], [10]])(
         "Effect function should not be called once after transaction end with source changes",
         (callCount) => {
-          const s = source("s")
+          const s = source<string>("s")
           const c1 = computed(() => s.current())
           const c2 = computed(() => s.current())
           const effectFunc = jest.fn()
@@ -658,7 +658,7 @@ describe("Observable", () => {
       test.each([[1], [2], [10]])(
         "Effect function should not be called after unsubscribe",
         (callCount) => {
-          const s = source("s")
+          const s = source<string>("s")
           const c1 = computed(() => s.current())
           const c2 = computed(() => s.current())
           const effectFunc = jest.fn()

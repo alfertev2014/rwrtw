@@ -1,7 +1,9 @@
+import { PlainData } from "./types.js"
+
 /**
  * Abstract observable node of reactive graph. Notifies its subscribers when stored value is changed.
  */
-export interface Observable<out T = unknown> {
+export interface Observable<out T extends PlainData = PlainData> {
   /**
    * Accessor for current value.
    *
@@ -10,7 +12,7 @@ export interface Observable<out T = unknown> {
    *
    * @returns current value
    */
-  current: () => T
+  readonly current: () => T
 }
 
 /**
@@ -48,7 +50,7 @@ enum ChangedState {
 /**
  * Reactive observable node to manage subscribers
  */
-class ObservableImpl<out T = unknown> implements Observable<T> {
+class ObservableImpl<out T extends PlainData = PlainData> implements Observable<T> {
   /**
    * Current stored value or last computed value.
    *
@@ -126,7 +128,7 @@ interface Observer {
 /**
  * Reactive mutable source node for scalar value types
  */
-export interface Source<T = unknown> extends Observable<T> {
+export interface Source<T extends PlainData = PlainData> extends Observable<T> {
   /**
    * Modifier of the value.
    *
@@ -137,13 +139,13 @@ export interface Source<T = unknown> extends Observable<T> {
    *
    * @param value New value
    */
-  change: (value: T) => void
+  readonly change: (value: T) => void
 }
 
 /**
  * @see Source
  */
-class SourceImpl<T = unknown> extends ObservableImpl<T> implements Source<T> {
+export class SourceImpl<T extends PlainData = PlainData> extends ObservableImpl<T> implements Source<T> {
   constructor(initValue: T) {
     super()
     this._current = initValue
@@ -171,12 +173,12 @@ class SourceImpl<T = unknown> extends ObservableImpl<T> implements Source<T> {
  * Computed value node in reactive graph.
  * Caches its current value if observable dependencies are not changed.
  */
-export type Computed<out T = unknown> = Observable<T>
+export type Computed<out T extends PlainData = PlainData> = Observable<T>
 
 /**
  * @see Computed
  */
-class ComputedImpl<out T = unknown> extends ObservableImpl<T> implements Computed<T>, Observer {
+class ComputedImpl<out T extends PlainData = PlainData> extends ObservableImpl<T> implements Computed<T>, Observer {
   /**
    * State of current value actuality
    */
@@ -349,12 +351,12 @@ class ComputedImpl<out T = unknown> extends ObservableImpl<T> implements Compute
 }
 
 export interface Effect {
-  unsubscribe: () => void
-  suspend: () => void
-  resume: () => void
+  readonly unsubscribe: () => void
+  readonly suspend: () => void
+  readonly resume: () => void
 }
 
-class EffectImpl<T> implements Observer, Effect {
+class EffectImpl<T extends PlainData = PlainData> implements Observer, Effect {
   _state: ChangedState
   readonly _trigger: ObservableImpl<T>
   readonly _sideEffectFunc: (value: T) => void
@@ -443,21 +445,21 @@ const runTasks = (): void => {
 
 let transactionDepth = 0
 
-export const source = <T>(initValue: T): Source<T> => {
+export const source = <T extends PlainData>(initValue: T): Source<T> => {
   if (trackingSubscriber !== null) {
     throw new Error("Creating source in tracking context")
   }
   return new SourceImpl<T>(initValue)
 }
 
-export const computed = <T>(func: () => T): Observable<T> => {
+export const computed = <T extends PlainData>(func: () => T): Observable<T> => {
   if (trackingSubscriber !== null) {
     throw new Error("Creating computed in tracking context")
   }
   return new ComputedImpl(func)
 }
 
-export const effect = <T>(trigger: Observable<T>, sideEffectFunc: (value: T) => void): Effect => {
+export const effect = <T extends PlainData>(trigger: Observable<T>, sideEffectFunc: (value: T) => void): Effect => {
   if (!(trigger instanceof ObservableImpl)) {
     throw new Error("Trigger of effect is not observable")
   }
@@ -469,10 +471,6 @@ export const effect = <T>(trigger: Observable<T>, sideEffectFunc: (value: T) => 
     runTasks()
   }
   return res
-}
-
-export const autocompute = (computeFunc: () => void): Effect => {
-  return effect(computed(computeFunc), () => {})
 }
 
 export const untrack = <T>(func: () => T): T => {

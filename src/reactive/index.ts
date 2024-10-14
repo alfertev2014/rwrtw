@@ -1,4 +1,4 @@
-export { type ListModelObserver, type ListModel, createDynamicList } from "./listModel.js"
+export { type ListObserver, type ListSource, listSource } from "./list.js"
 export {
   type Observable,
   type Source,

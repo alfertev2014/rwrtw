@@ -1,10 +1,11 @@
 import { type ScalarValue, setAttr } from "../dom/helpers.js"
 import { type PlaceholderContext, type PlaceholderComponent, PlaceholderContent } from "../index.js"
-import { ListModel } from "../reactive/listModel.js"
+import { ListObservable } from "../reactive/list.js"
 import { type Observable, effect } from "../reactive/observable.js"
+import { PlainData } from "../reactive/types.js"
 import { plhList, plh, type TemplateElementAttrHandler } from "./index.js"
 
-export const reCompute = <T>(
+export const reCompute = <T extends PlainData>(
   context: PlaceholderContext,
   trigger: Observable<T>,
   sideEffectFunc: (value: T) => void,
@@ -27,7 +28,7 @@ export const reAttr =
   }
 
 export const reEv =
-  <T>(
+  <T extends PlainData>(
     trigger: Observable<T>,
     listenerFactory: (value: T) => EventListenerOrEventListenerObject,
     options?: boolean | AddEventListenerOptions,
@@ -47,7 +48,7 @@ export const reEv =
     })
   }
 
-export const reContent = <T>(
+export const reContent = <T extends PlainData>(
   trigger: Observable<T>,
   contentFunc: (value: T) => PlaceholderContent,
 ): PlaceholderComponent => {
@@ -66,8 +67,8 @@ export const reIf = (
   return reContent(condition, (value) => (value ? trueBranch : falseBranch))
 }
 
-export const reList = <T>(
-  listModel: ListModel<T>,
+export const reList = <T extends PlainData>(
+  listModel: ListObservable<T>,
   elementComponentFunc: (value: Observable<T>) => PlaceholderComponent,
 ): PlaceholderComponent => {
   return plhList(
