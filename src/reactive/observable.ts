@@ -16,36 +16,42 @@ export interface Observable<out T extends PlainData = PlainData> {
 }
 
 /**
- * State of observable node in reactive graph. Use as flag in every node.
+ * Statuses of observable node in reactive graph. Used as flag in every node.
  */
-enum ChangedState {
-  /**
-   * Current value is actual and needn't be recomputed
-   */
-  NOT_CHANGED = 0,
 
-  /**
-   * Current value is possibly not actual.
-   * New value could differ from current value after recompute.
-   * But if dependencies are not changed recomputing is not needed.
-   */
-  POSSIBLY_CHANGED = 1,
+/**
+ * Current value is actual and needn't be recomputed
+ */
+const NOT_CHANGED = 0
 
-  /**
-   * Current value is definitely not actual and need to be recomputed.
-   */
-  CHANGED = 2,
+/**
+ * Current value is possibly not actual.
+ * New value could differ from current value after recompute.
+ * But if dependencies are not changed recomputing is not needed.
+ */
+const POSSIBLY_CHANGED = 1
 
-  /**
-   * Observable node is dangling and not connected to reactive graph.
-   */
-  DANGLING = -1,
+/**
+ * Current value is definitely not actual and need to be recomputed.
+ */
+const CHANGED = 2
 
-  /**
-   * Observable node is dangling and should not be connected to reactive graph
-   */
-  SUSPENDED = -2,
-}
+/**
+ * Observable node is dangling and not connected to reactive graph.
+ */
+const DANGLING = -1
+
+/**
+ * Observable node is dangling and should not be connected to reactive graph
+ */
+const SUSPENDED = -2
+
+type ChangedStatus =
+  | typeof NOT_CHANGED
+  | typeof POSSIBLY_CHANGED
+  | typeof CHANGED
+  | typeof DANGLING
+  | typeof SUSPENDED
 
 /**
  * Reactive observable node to manage subscribers
@@ -54,7 +60,7 @@ class ObservableImpl<out T extends PlainData = PlainData> implements Observable<
   /**
    * Current stored value or last computed value.
    *
-   * Not actual if this._changed !== NOT_CHANGED
+   * Not actual if this._status !== NOT_CHANGED
    */
   _current: T | undefined
 
@@ -154,7 +160,10 @@ export interface Source<T extends PlainData = PlainData> extends Observable<T> {
 /**
  * @see Source
  */
-export class SourceImpl<T extends PlainData = PlainData> extends ObservableImpl<T> implements Source<T> {
+export class SourceImpl<T extends PlainData = PlainData>
+  extends ObservableImpl<T>
+  implements Source<T>
+{
   override _current: T
   constructor(initValue: T) {
     super()
@@ -182,7 +191,7 @@ export class SourceImpl<T extends PlainData = PlainData> extends ObservableImpl<
    * @see Source.update
    */
   update(updater: (prev: T) => T): void {
-    this.change(updater(this._current));
+    this.change(updater(this._current))
   }
 }
 
@@ -195,11 +204,14 @@ export type Computed<out T extends PlainData = PlainData> = Observable<T>
 /**
  * @see Computed
  */
-class ComputedImpl<out T extends PlainData = PlainData> extends ObservableImpl<T> implements Computed<T>, Observer {
+class ComputedImpl<out T extends PlainData = PlainData>
+  extends ObservableImpl<T>
+  implements Computed<T>, Observer
+{
   /**
-   * State of current value actuality
+   * Status of current value actuality
    */
-  _state: ChangedState
+  _status: ChangedStatus
 
   /**
    * Compute function to recompute current value. Required to be pure!
@@ -207,30 +219,30 @@ class ComputedImpl<out T extends PlainData = PlainData> extends ObservableImpl<T
   readonly _computeFunc: () => T
 
   /**
-   * Observable dependencies needed to compute value ordered by usage in compute function
+   * Observable dependencies needed to compute value ordered by occurrences in compute function body
    */
-  readonly _dependencies: ObservableImpl[]
-  _dependenciesCount: number
+  readonly _deps: ObservableImpl[]
+  _depsCount: number
 
   constructor(computeFunc: () => T) {
     super()
-    this._state = ChangedState.DANGLING
+    this._status = DANGLING
     this._computeFunc = computeFunc
-    this._dependencies = []
-    this._dependenciesCount = 0
+    this._deps = []
+    this._depsCount = 0
   }
 
   /**
    * Set CHANGED state and propagate POSSIBLY_CHANGED recursively to subscribers.
    */
   _markChanged(): void {
-    if (this._state !== ChangedState.CHANGED) {
-      if (this._state !== ChangedState.POSSIBLY_CHANGED) {
+    if (this._status !== CHANGED) {
+      if (this._status !== POSSIBLY_CHANGED) {
         for (const subscriber of this._subscribers) {
           subscriber._markPossiblyChanged()
         }
       }
-      this._state = ChangedState.CHANGED
+      this._status = CHANGED
       this._current = undefined
     }
   }
@@ -239,8 +251,8 @@ class ComputedImpl<out T extends PlainData = PlainData> extends ObservableImpl<T
    * Set POSSIBLY_CHANGED state and propagate it recursively to subscribers.
    */
   _markPossiblyChanged(): void {
-    if (this._state === ChangedState.NOT_CHANGED) {
-      this._state = ChangedState.POSSIBLY_CHANGED
+    if (this._status === NOT_CHANGED) {
+      this._status = POSSIBLY_CHANGED
       for (const subscriber of this._subscribers) {
         subscriber._markPossiblyChanged()
       }
@@ -257,32 +269,32 @@ class ComputedImpl<out T extends PlainData = PlainData> extends ObservableImpl<T
    * @param dependency Observable dependency
    */
   _subscribeTo(dependency: ObservableImpl): void {
-    const count = this._dependenciesCount
-    const index = this._dependencies.indexOf(dependency)
+    const count = this._depsCount
+    const index = this._deps.indexOf(dependency)
     if (index < 0) {
       // if dependency is not present in list
 
-      if (count < this._dependencies.length) {
-        const d = this._dependencies[count]
-        this._dependencies[count] = dependency // place it at current tracking count index
-        this._dependencies.push(d) // move the old at the end without any array shifting
+      if (count < this._deps.length) {
+        const d = this._deps[count]
+        this._deps[count] = dependency // place it at current tracking count index
+        this._deps.push(d) // move the old at the end without any array shifting
       } else {
-        this._dependencies.push(dependency) // just push to the end
+        this._deps.push(dependency) // just push to the end
       }
 
       dependency._subscribe(this) // subscribe new dependency
-      this._dependenciesCount++
+      this._depsCount++
     } else if (index >= count) {
       // if dependency is present and is not tracked yet
 
       if (index > count) {
         // if it is nod already in right place
 
-        const d = this._dependencies[count]
-        this._dependencies[count] = dependency // place it at current tracking count index by swapping values
-        this._dependencies[index] = d
+        const d = this._deps[count]
+        this._deps[count] = dependency // place it at current tracking count index by swapping values
+        this._deps[index] = d
       }
-      this._dependenciesCount++
+      this._depsCount++
       // we needn't call _subscribe for the dependency because it was already in list
     }
   }
@@ -294,13 +306,13 @@ class ComputedImpl<out T extends PlainData = PlainData> extends ObservableImpl<T
    * @see Observable.recompute
    */
   override _recompute(): void {
-    if (this._state !== ChangedState.NOT_CHANGED) {
-      if (this._state === ChangedState.POSSIBLY_CHANGED) {
-        this._recomputeDependencies()
+    if (this._status !== NOT_CHANGED) {
+      if (this._status === POSSIBLY_CHANGED) {
+        this._recomputeDeps()
       }
       // could become CHANGED here
-      if (this._state === ChangedState.CHANGED || this._state === ChangedState.DANGLING) {
-        this._callComputeFunction()
+      if (this._status === CHANGED || this._status === DANGLING) {
+        this._callComputeFunc()
       }
     }
   }
@@ -312,21 +324,21 @@ class ComputedImpl<out T extends PlainData = PlainData> extends ObservableImpl<T
    * If all the dependencies are not actually changed
    *   the computed become NOT_CHANGED and no need to call compute function
    */
-  _recomputeDependencies(): void {
-    for (let i = 0; i < this._dependenciesCount; ++i) {
-      this._dependencies[i]._recompute()
-      if (this._state === ChangedState.CHANGED) {
-        this._dependenciesCount = i
+  _recomputeDeps(): void {
+    for (let i = 0; i < this._depsCount; ++i) {
+      this._deps[i]._recompute()
+      if (this._status === CHANGED) {
+        this._depsCount = i
         return
       }
     }
-    this._state = ChangedState.NOT_CHANGED
+    this._status = NOT_CHANGED
   }
 
   /**
    * Call the compute function in tracking context
    */
-  _callComputeFunction(): void {
+  _callComputeFunc(): void {
     const previousValue = this._current
     const prevTracking = trackingSubscriber
     trackingSubscriber = this // Establish new tracking context for this
@@ -336,10 +348,10 @@ class ComputedImpl<out T extends PlainData = PlainData> extends ObservableImpl<T
       trackingSubscriber = prevTracking // restore previous tracking context
 
       // Unsubscribe from not actual dependencies at tail of list
-      for (let i = this._dependenciesCount; i < this._dependencies.length; ++i) {
-        this._dependencies[i]._unsubscribe(this)
+      for (let i = this._depsCount; i < this._deps.length; ++i) {
+        this._deps[i]._unsubscribe(this)
       }
-      this._dependencies.length = this._dependenciesCount // Remove the old dependencies from list
+      this._deps.length = this._depsCount // Remove the old dependencies from list
     }
     if (this._current !== previousValue) {
       // Signal for all subscribers that the value was really changed
@@ -347,21 +359,21 @@ class ComputedImpl<out T extends PlainData = PlainData> extends ObservableImpl<T
         subscriber._markChanged()
       }
     }
-    this._state = ChangedState.NOT_CHANGED // The value is now in actual state
+    this._status = NOT_CHANGED // The value is now in actual state
   }
 
-  _clearDependencies(): void {
-    for (const dependency of this._dependencies) {
+  _clearDeps(): void {
+    for (const dependency of this._deps) {
       dependency._unsubscribe(this)
     }
-    this._dependencies.length = 0
+    this._deps.length = 0
   }
 
   override _onDangling(): void {
     scheduleTask(() => {
       if (this._subscribers.length === 0) {
-        this._clearDependencies()
-        this._state = ChangedState.DANGLING
+        this._clearDeps()
+        this._status = DANGLING
       }
     })
   }
@@ -374,62 +386,62 @@ export interface Effect {
 }
 
 class EffectImpl<T extends PlainData = PlainData> implements Observer, Effect {
-  _state: ChangedState
+  _status: ChangedStatus
   readonly _trigger: ObservableImpl<T>
   readonly _sideEffectFunc: (value: T) => void
   constructor(trigger: ObservableImpl<T>, sideEffectFunc: (value: T) => void) {
-    this._state = ChangedState.DANGLING
+    this._status = DANGLING
     this._trigger = trigger
     this._sideEffectFunc = sideEffectFunc
     this._schedule()
   }
 
   _markChanged(): void {
-    if (this._state !== ChangedState.SUSPENDED) {
-      if (this._state !== ChangedState.CHANGED && this._state !== ChangedState.POSSIBLY_CHANGED) {
+    if (this._status !== SUSPENDED) {
+      if (this._status !== CHANGED && this._status !== POSSIBLY_CHANGED) {
         this._schedule()
       }
-      this._state = ChangedState.CHANGED
+      this._status = CHANGED
     }
   }
 
   _markPossiblyChanged(): void {
-    if (this._state !== ChangedState.SUSPENDED) {
-      if (this._state !== ChangedState.CHANGED && this._state !== ChangedState.POSSIBLY_CHANGED) {
+    if (this._status !== SUSPENDED) {
+      if (this._status !== CHANGED && this._status !== POSSIBLY_CHANGED) {
         this._schedule()
-        this._state = ChangedState.POSSIBLY_CHANGED
+        this._status = POSSIBLY_CHANGED
       }
     }
   }
 
   _schedule(): void {
     scheduleTask(() => {
-      if (this._state !== ChangedState.SUSPENDED) {
+      if (this._status !== SUSPENDED) {
         const current = this._trigger.current()
-        if (this._state === ChangedState.DANGLING) {
+        if (this._status === DANGLING) {
           this._trigger._subscribe(this)
-        } else if (this._state === ChangedState.CHANGED) {
+        } else if (this._status === CHANGED) {
           this._sideEffectFunc(current)
         }
-        this._state = ChangedState.NOT_CHANGED
+        this._status = NOT_CHANGED
       }
     })
   }
 
   suspend(): void {
-    this._state = ChangedState.SUSPENDED
+    this._status = SUSPENDED
   }
 
   resume(): void {
-    if (this._state === ChangedState.SUSPENDED) {
+    if (this._status === SUSPENDED) {
       this._schedule()
-      this._state = ChangedState.POSSIBLY_CHANGED
+      this._status = POSSIBLY_CHANGED
     }
   }
 
   unsubscribe(): void {
     this._trigger._unsubscribe(this)
-    this._state = ChangedState.SUSPENDED
+    this._status = SUSPENDED
   }
 }
 
@@ -476,7 +488,10 @@ export const computed = <T extends PlainData>(func: () => T): Observable<T> => {
   return new ComputedImpl(func)
 }
 
-export const effect = <T extends PlainData>(trigger: Observable<T>, sideEffectFunc: (value: T) => void): Effect => {
+export const effect = <T extends PlainData>(
+  trigger: Observable<T>,
+  sideEffectFunc: (value: T) => void,
+): Effect => {
   if (!(trigger instanceof ObservableImpl)) {
     throw new Error("Trigger of effect is not observable")
   }
