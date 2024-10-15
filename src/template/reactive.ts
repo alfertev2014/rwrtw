@@ -20,7 +20,7 @@ export const reCompute = <T extends PlainData>(
 
 export const reAttr =
   (trigger: Observable<ScalarValue>): TemplateElementAttrHandler =>
-  (element, context, attrName) => {
+  (element, attrName, context) => {
     setAttr(element, attrName, trigger.current())
     reCompute(context, trigger, (value) => {
       setAttr(element, attrName, value)
@@ -33,7 +33,7 @@ export const reEv =
     listenerFactory: (value: T) => EventListenerOrEventListenerObject,
     options?: boolean | AddEventListenerOptions,
   ): TemplateElementAttrHandler =>
-  (element, context, eventName) => {
+  (element, eventName, context) => {
     let listener = listenerFactory(trigger.current())
     element.addEventListener(eventName, listener, options)
     reCompute(context, trigger, (value) => {

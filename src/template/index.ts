@@ -14,18 +14,36 @@ import {
 } from "../core/index.js"
 
 export type TemplateHandler<T> = (element: T, context: PlaceholderContext) => void
-export type TemplateElementAttrHandler = (
-  element: HTMLElement,
-  context: PlaceholderContext,
-  attrName: string,
-) => void
+export type TemplateElementAttrHandler<
+  E extends HTMLElement = HTMLElement,
+  A extends string = string,
+> = (element: E, attrName: A, context: PlaceholderContext) => void
 
-export type TemplateElementAttrsMap = Record<string, ScalarValue | TemplateElementAttrHandler>
+export type TemplateElementAttrsConfig<E extends HTMLElement = HTMLElement> = {
+  [key: string]: ScalarValue | TemplateElementAttrHandler<E, typeof key>;
+}
 
-export const el =
+export const el: {
+  <K extends keyof HTMLElementTagNameMap>(
+    tag: K,
+    attrs?: TemplateElementAttrsConfig<HTMLElementTagNameMap[K]> | null,
+    ...handlers: Array<TemplateHandler<HTMLElementTagNameMap[K]>>
+  ): (...children: TemplateContent[]) => PlaceholderComponent
+  /** @deprecated */
+  <K extends keyof HTMLElementDeprecatedTagNameMap>(
+    tag: K,
+    attrs?: TemplateElementAttrsConfig<HTMLElementDeprecatedTagNameMap[K]> | null,
+    ...handlers: Array<TemplateHandler<HTMLElementDeprecatedTagNameMap[K]>>
+  ): (...children: TemplateContent[]) => PlaceholderComponent
   (
     tag: string,
-    attrs?: TemplateElementAttrsMap | null,
+    attrs?: TemplateElementAttrsConfig | null,
+    ...handlers: Array<TemplateHandler<HTMLElement>>
+  ): (...children: TemplateContent[]) => PlaceholderComponent
+} =
+  (
+    tag: string,
+    attrs?: TemplateElementAttrsConfig | null,
     ...handlers: Array<TemplateHandler<HTMLElement>>
   ) =>
   (...children: TemplateContent[]): PlaceholderComponent =>
@@ -35,7 +53,7 @@ export const el =
     if (attrs != null) {
       for (const [name, value] of Object.entries(attrs)) {
         if (typeof value === "function") {
-          value(element, context, name)
+          value(element, name, context)
         } else {
           setAttr(element, name, value)
         }
@@ -109,18 +127,33 @@ export const fr =
     return renderTemplateContent(place, context, content)
   }
 
-export const on: (
-  ...args: Parameters<HTMLElement["addEventListener"]>
-) => TemplateHandler<HTMLElement> = (event, listener, options) => (element) => {
-  element.addEventListener(event, listener, options)
-}
+export const on: {
+  <K extends keyof HTMLElementEventMap, H extends HTMLElement = HTMLElement>(
+    event: K,
+    listener: (this: H, ev: HTMLElementEventMap[K]) => unknown,
+    options?: boolean | AddEventListenerOptions,
+  ): TemplateHandler<H>
+  (
+    event: string,
+    listener: EventListenerOrEventListenerObject,
+    options?: boolean | AddEventListenerOptions,
+  ): TemplateHandler<HTMLElement>
+} =
+  (
+    event: string,
+    listener: EventListenerOrEventListenerObject,
+    options?: boolean | AddEventListenerOptions,
+  ): TemplateHandler<HTMLElement> =>
+  (element) => {
+    element.addEventListener(event, listener, options)
+  }
 
 export const ev =
   (
     listener: EventListenerOrEventListenerObject,
     options?: boolean | AddEventListenerOptions,
   ): TemplateElementAttrHandler =>
-  (element, context, eventName) => {
+  (element, eventName, context) => {
     element.addEventListener(eventName, listener, options)
   }
 

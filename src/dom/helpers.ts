@@ -24,7 +24,12 @@ export const setAttr = (element: Element, name: string, value: ScalarValue): voi
  * @param tag HTML element name
  * @returns HTML element node
  */
-export const dce = (tag: string): HTMLElement => document.createElement(tag)
+export const dce: {
+  <K extends keyof HTMLElementTagNameMap>(tagName: K): HTMLElementTagNameMap[K]
+  /** @deprecated */
+  <K extends keyof HTMLElementDeprecatedTagNameMap>(tagName: K): HTMLElementDeprecatedTagNameMap[K]
+  (tagName: string): HTMLElement
+} = (tag: string): HTMLElement => document.createElement(tag)
 
 /**
  * Abbreviation for the document.createTextNode.
