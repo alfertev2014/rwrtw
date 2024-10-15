@@ -140,12 +140,22 @@ export interface Source<T extends PlainData = PlainData> extends Observable<T> {
    * @param value New value
    */
   readonly change: (value: T) => void
+
+  /**
+   * Modifier of the value with updating function.
+   *
+   * Updater function applies to previous value. The new value is passed to Source.change. @see Source.change
+   *
+   * @param updater Updater function.
+   */
+  readonly update: (updater: (prev: T) => T) => void
 }
 
 /**
  * @see Source
  */
 export class SourceImpl<T extends PlainData = PlainData> extends ObservableImpl<T> implements Source<T> {
+  override _current: T
   constructor(initValue: T) {
     super()
     this._current = initValue
@@ -166,6 +176,13 @@ export class SourceImpl<T extends PlainData = PlainData> extends ObservableImpl<
         runTasks()
       }
     }
+  }
+
+  /**
+   * @see Source.update
+   */
+  update(updater: (prev: T) => T): void {
+    this.change(updater(this._current));
   }
 }
 
