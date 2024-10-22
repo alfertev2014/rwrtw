@@ -7,5 +7,5 @@ export {
   source,
   effect,
   computed,
-  transaction,
+  batch,
 } from "./observable.js"

@@ -1,5 +1,5 @@
 import { describe, expect, test } from "@jest/globals"
-import { computed, effect, source, transaction } from "../observable"
+import { computed, effect, source, batch } from "../observable"
 
 describe("Observable", () => {
   describe("Source", () => {
@@ -481,9 +481,9 @@ describe("Observable", () => {
         expect(effectFunc).toBeCalledTimes(0)
       })
 
-      test("Effect function should not be called after transaction end", () => {
+      test("Effect function should not be called after batch end", () => {
         const effectFunc = jest.fn()
-        transaction(() => {
+        batch(() => {
           const s = source<string>("s")
           const e = effect(s, effectFunc)
 
@@ -492,9 +492,9 @@ describe("Observable", () => {
         expect(effectFunc).toBeCalledTimes(0)
       })
 
-      test("Effect function should not be called for unsubscribed effect after transaction end", () => {
+      test("Effect function should not be called for unsubscribed effect after batch end", () => {
         const effectFunc = jest.fn()
-        transaction(() => {
+        batch(() => {
           const s = source<string>("s")
           const e = effect(s, effectFunc)
 
@@ -521,12 +521,12 @@ describe("Observable", () => {
       )
 
       test.each([[1], [2], [10]])(
-        "Effect function should not be called after transaction end with source changes",
+        "Effect function should not be called after batch end with source changes",
         (callCount) => {
           const s = source<string>("s")
           const effectFunc = jest.fn()
 
-          transaction(() => {
+          batch(() => {
             const e = effect(s, effectFunc)
             for (let i = 0; i < callCount; ++i) {
               s.change("sChanged" + i)
@@ -574,13 +574,13 @@ describe("Observable", () => {
       )
 
       test.each([[1], [2], [10]])(
-        "Effect function should not be called after transaction end with source changes",
+        "Effect function should not be called after batch end with source changes",
         (callCount) => {
           const s = source<string>("s")
           const c = computed(() => s.current())
           const effectFunc = jest.fn()
 
-          transaction(() => {
+          batch(() => {
             const e = effect(c, effectFunc)
             for (let i = 0; i < callCount; ++i) {
               s.change("sChanged" + i)
@@ -634,14 +634,14 @@ describe("Observable", () => {
       )
 
       test.each([[1], [2], [10]])(
-        "Effect function should not be called once after transaction end with source changes",
+        "Effect function should not be called once after batch end with source changes",
         (callCount) => {
           const s = source<string>("s")
           const c1 = computed(() => s.current())
           const c2 = computed(() => s.current())
           const effectFunc = jest.fn()
 
-          transaction(() => {
+          batch(() => {
             const e = effect(
               computed(() => [c1.current(), c2.current()]),
               effectFunc,

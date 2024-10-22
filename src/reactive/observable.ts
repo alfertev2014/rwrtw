@@ -141,7 +141,7 @@ export interface Source<T extends PlainData = PlainData> extends Observable<T> {
    * Store new value into the source.
    * Checks if value has changed.
    * Mark as changed and propagate changed sign to subscribers.
-   * If called not in a transaction, run effects.
+   * If called not in a batch, run effects.
    *
    * @param value New value
    */
@@ -178,7 +178,7 @@ class SourceImpl<T extends PlainData = PlainData> extends ObservableImpl<T> impl
     if (value !== this._current) {
       this._propagateChanged()
       this._current = value
-      if (transactionDepth === 0) {
+      if (batchDepth === 0) {
         runQueues()
       }
     }
@@ -454,7 +454,7 @@ class EffectImpl<T extends PlainData = PlainData> implements Observer, RunnableE
 
 let trackingSubscriber: ComputedImpl | null = null
 
-let transactionDepth = 0
+let batchDepth = 0
 
 let effectsQueue: RunnableEffect[] = []
 let runningEffects: Array<RunnableEffect> = []
@@ -514,7 +514,7 @@ export const effect = <T extends PlainData>(
     throw new Error("Creating effect in tracking context")
   }
   const res = new EffectImpl<T>(trigger as ObservableImpl<T>, sideEffectFunc)
-  if (transactionDepth === 0) {
+  if (batchDepth === 0) {
     runQueues()
   }
   return res
@@ -533,17 +533,17 @@ export const untrack = <T>(func: () => T): T => {
   }
 }
 
-export const transaction = <T>(func: () => T): T => {
+export const batch = <T>(func: () => T): T => {
   if (trackingSubscriber !== null) {
-    throw new Error("Running transaction in tracking context")
+    throw new Error("Running batch in tracking context")
   }
 
-  transactionDepth++
+  batchDepth++
   try {
     return func()
   } finally {
-    transactionDepth--
-    if (transactionDepth === 0) {
+    batchDepth--
+    if (batchDepth === 0) {
       runQueues()
     }
   }
