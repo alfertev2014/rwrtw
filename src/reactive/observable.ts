@@ -16,10 +16,6 @@ export interface Observable<out T extends PlainData = PlainData> {
 }
 
 /**
- * Statuses of observable node in reactive graph. Used as flag in every node.
- */
-
-/**
  * Current value is actual and needn't be recomputed
  */
 const NOT_CHANGED = 0
@@ -42,10 +38,13 @@ const CHANGED = 2
 const DANGLING = -1
 
 /**
- * Observable node is dangling and should not be connected to reactive graph
+ * Observable node is dangling and should not be connected to reactive graph.
  */
 const SUSPENDED = -2
 
+/**
+ * Statuses of observable node in reactive graph.
+ */
 type ChangedStatus =
   | typeof NOT_CHANGED
   | typeof POSSIBLY_CHANGED
@@ -54,18 +53,18 @@ type ChangedStatus =
   | typeof SUSPENDED
 
 /**
- * Reactive observable node to manage subscribers
+ * Reactive observable node to manage subscribers.
  */
 class ObservableImpl<out T extends PlainData = PlainData> implements Observable<T> {
   /**
    * Current stored value or last computed value.
    *
-   * Not actual if this._status !== NOT_CHANGED
+   * Not actual if this._status !== NOT_CHANGED.
    */
   _current: T | undefined
 
   /**
-   * List of nodes that depends on this node
+   * List of nodes that depends on this node.
    */
   readonly _subscribers: Observer[] // TODO: Use Set?
 
@@ -129,6 +128,7 @@ class ObservableImpl<out T extends PlainData = PlainData> implements Observable<
 interface Observer {
   readonly _markChanged: () => void
   readonly _markPossiblyChanged: () => void
+  readonly _cleanup: () => void
 }
 
 /**
@@ -160,10 +160,7 @@ export interface Source<T extends PlainData = PlainData> extends Observable<T> {
 /**
  * @see Source
  */
-export class SourceImpl<T extends PlainData = PlainData>
-  extends ObservableImpl<T>
-  implements Source<T>
-{
+class SourceImpl<T extends PlainData = PlainData> extends ObservableImpl<T> implements Source<T> {
   override _current: T
   constructor(initValue: T) {
     super()
@@ -182,7 +179,7 @@ export class SourceImpl<T extends PlainData = PlainData>
       this._propagateChanged()
       this._current = value
       if (transactionDepth === 0) {
-        runTasks()
+        runQueues()
       }
     }
   }
@@ -362,20 +359,18 @@ class ComputedImpl<out T extends PlainData = PlainData>
     this._status = NOT_CHANGED // The value is now in actual state
   }
 
-  _clearDeps(): void {
-    for (const dependency of this._deps) {
-      dependency._unsubscribe(this)
+  _cleanup(): void {
+    if (this._subscribers.length === 0) {
+      for (const dependency of this._deps) {
+        dependency._unsubscribe(this)
+      }
+      this._deps.length = 0
+      this._status = DANGLING
     }
-    this._deps.length = 0
   }
 
   override _onDangling(): void {
-    scheduleTask(() => {
-      if (this._subscribers.length === 0) {
-        this._clearDeps()
-        this._status = DANGLING
-      }
-    })
+    cleanupQueue.push(this)
   }
 }
 
@@ -385,14 +380,18 @@ export interface Effect {
   readonly resume: () => void
 }
 
-class EffectImpl<T extends PlainData = PlainData> implements Observer, Effect {
+interface RunnableEffect extends Effect {
+  _run(): void
+}
+
+class EffectImpl<T extends PlainData = PlainData> implements Observer, RunnableEffect {
   _status: ChangedStatus
   readonly _trigger: ObservableImpl<T>
-  readonly _sideEffectFunc: (value: T) => void
-  constructor(trigger: ObservableImpl<T>, sideEffectFunc: (value: T) => void) {
+  readonly _effectFunc: (value: T) => void
+  constructor(trigger: ObservableImpl<T>, effectFunc: (value: T) => void) {
     this._status = DANGLING
     this._trigger = trigger
-    this._sideEffectFunc = sideEffectFunc
+    this._effectFunc = effectFunc
     this._schedule()
   }
 
@@ -414,18 +413,20 @@ class EffectImpl<T extends PlainData = PlainData> implements Observer, Effect {
     }
   }
 
-  _schedule(): void {
-    scheduleTask(() => {
-      if (this._status !== SUSPENDED) {
-        const current = this._trigger.current()
-        if (this._status === DANGLING) {
-          this._trigger._subscribe(this)
-        } else if (this._status === CHANGED) {
-          this._sideEffectFunc(current)
-        }
-        this._status = NOT_CHANGED
+  _run(): void {
+    if (this._status !== SUSPENDED) {
+      const current = this._trigger.current()
+      if (this._status === DANGLING) {
+        this._trigger._subscribe(this)
+      } else if (this._status === CHANGED) {
+        this._effectFunc(current)
       }
-    })
+      this._status = NOT_CHANGED
+    }
+  }
+
+  _schedule(): void {
+    effectsQueue.push(this)
   }
 
   suspend(): void {
@@ -439,40 +440,54 @@ class EffectImpl<T extends PlainData = PlainData> implements Observer, Effect {
     }
   }
 
+  _cleanup(): void {
+    if (this._status === SUSPENDED) {
+      this._trigger._unsubscribe(this)
+    }
+  }
+
   unsubscribe(): void {
-    this._trigger._unsubscribe(this)
     this._status = SUSPENDED
+    cleanupQueue.push(this)
   }
 }
 
 let trackingSubscriber: ComputedImpl | null = null
 
-let taskQueue: Array<() => void> = []
-let runningTasks: Array<() => void> = []
-
-const scheduleTask = (task: () => void): void => {
-  taskQueue.push(task)
-}
-
-const runTasks = (): void => {
-  transactionDepth++
-  while (taskQueue.length > 0) {
-    const tmp = runningTasks
-    runningTasks = taskQueue
-    taskQueue = tmp
-    for (const task of runningTasks) {
-      try {
-        task()
-      } catch (e) {
-        console.error(e)
-      }
-    }
-    runningTasks.length = 0
-  }
-  transactionDepth--
-}
-
 let transactionDepth = 0
+
+let effectsQueue: RunnableEffect[] = []
+let runningEffects: Array<RunnableEffect> = []
+let cleanupQueue: Array<Observer> = []
+let runningCleanup: Array<Observer> = []
+
+const runQueues = (): void => {
+  while (cleanupQueue.length > 0 || effectsQueue.length > 0) {
+    if (cleanupQueue.length > 0) {
+      const tmp = runningCleanup
+      runningCleanup = cleanupQueue
+      cleanupQueue = tmp
+      for (const observer of runningCleanup) {
+        observer._cleanup()
+      }
+      runningCleanup.length = 0
+    }
+
+    if (effectsQueue.length > 0) {
+      const tmp = runningEffects
+      runningEffects = effectsQueue
+      effectsQueue = tmp
+      for (const effect of runningEffects) {
+        try {
+          effect._run()
+        } catch (e) {
+          console.error(e)
+        }
+      }
+      runningEffects.length = 0
+    }
+  }
+}
 
 export const source = <T extends PlainData>(initValue: T): Source<T> => {
   if (trackingSubscriber !== null) {
@@ -500,7 +515,7 @@ export const effect = <T extends PlainData>(
   }
   const res = new EffectImpl<T>(trigger as ObservableImpl<T>, sideEffectFunc)
   if (transactionDepth === 0) {
-    runTasks()
+    runQueues()
   }
   return res
 }
@@ -529,7 +544,7 @@ export const transaction = <T>(func: () => T): T => {
   } finally {
     transactionDepth--
     if (transactionDepth === 0) {
-      runTasks()
+      runQueues()
     }
   }
 }

@@ -79,8 +79,10 @@ export const listSource = <T extends PlainData>(initialData: T[]): ListSource<T>
   return new ListSourceImpl<T>(initialData)
 }
 
-export const listFromArray = <T extends PlainData>(observable: Observable<T[]>): ListObservable<T> => {
-  const list = listSource(observable.current());
+export const listFromArray = <T extends PlainData>(
+  observable: Observable<T[]>,
+): ListObservable<T> => {
+  const list = listSource(observable.current())
   const e = effect(observable, (value) => {
     list.change(value)
   })
@@ -101,6 +103,6 @@ export const listFromArray = <T extends PlainData>(observable: Observable<T[]>):
       } else {
         e.suspend()
       }
-    }
+    },
   }
 }

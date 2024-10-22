@@ -20,7 +20,7 @@ export type TemplateElementAttrHandler<
 > = (element: E, attrName: A, context: PlaceholderContext) => void
 
 export type TemplateElementAttrsConfig<E extends HTMLElement = HTMLElement> = {
-  [key: string]: ScalarValue | TemplateElementAttrHandler<E, typeof key>;
+  [key: string]: ScalarValue | TemplateElementAttrHandler<E, typeof key>
 }
 
 export const el: {
