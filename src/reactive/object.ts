@@ -3,7 +3,6 @@ import { PlainData } from "./types.js"
 
 export interface ObjectObserver<T extends PlainData = PlainData> {
   onInsert?: (key: string | number, element: Observable<T>) => void
-  onMove?: (from: string | number, to: string | number) => void
   onRemove?: (key: string | number) => void
 }
 
@@ -16,7 +15,6 @@ export interface ObjectObservable<T extends PlainData = PlainData> {
 
 export interface ObjectSource<T extends PlainData = PlainData> extends ObjectObservable<T> {
   removeItem: (key: string | number) => void
-  moveItem: (from: string | number, to: string | number, element: T) => void
   insertItem: (key: string | number, element: T) => void
 
   change: (data: {
@@ -46,22 +44,17 @@ export class ObjectSourceImpl<T extends PlainData = PlainData> implements Object
   change(newData: {
     [key: string | number]: T
   }): void {
-    for (const [key, element] of Object.entries(this._data)) {
-      const newEntry = Object.entries(newData).find(([k, e]) => e === element.current())
-      if (!newEntry) {
+    for (const [key] of Object.keys(this._data)) {
+      if (!(key in newData)) {
         this.removeItem(key)
-      } else {
-        element.change(newData[key])
       }
     }
 
-    for (let i = 0; i < newData.length; ++i) {
-      const element = newData[i]
-      const elementIndex = this._data.findIndex((el) => el.current() === element)
-      if (elementIndex >= 0) {
-        this.moveItem(elementIndex, i, element)
+    for (const [key, element] of Object.entries(newData)) {
+      if (key in this._data) {
+        this._data[key].change(element)
       } else {
-        this.insertItem(i, element)
+        this.insertItem(key, element)
       }
     }
   }
@@ -69,14 +62,6 @@ export class ObjectSourceImpl<T extends PlainData = PlainData> implements Object
   removeItem(key: number | string): void {
     delete this._data[key]
     this.observer?.onRemove?.(key)
-  }
-
-  moveItem(from: string | number, to: string | number, element: T): void {
-    const item = this._data[from]
-    this._data.splice(from, 1)
-    item.change(element)
-    this._data.splice(to, 0, item)
-    this.observer?.onMove?.(from, to)
   }
 
   insertItem(key: number | string, element: T): void {

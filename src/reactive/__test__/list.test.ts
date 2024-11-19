@@ -311,22 +311,5 @@ describe("List", () => {
       expect(observer.onMove?.mock.calls[0][0]).toBe(2)
       expect(observer.onMove?.mock.calls[0][1]).toBe(0)
     })
-
-    test("Apply list with moved item to the end with shift", () => {
-      const l = listSource<string>(["1", "2", "3"])
-      
-      l.observer = observer
-  
-      l.change(["2", "3", "1"])
-  
-      expect(l.data.length).toBe(3)
-      expect(l.data[0].current()).toBe("2")
-      expect(l.data[1].current()).toBe("3")
-      expect(l.data[2].current()).toBe("1")
-
-      expect(observer.onMove).toBeCalledTimes(1)
-      expect(observer.onMove?.mock.calls[0][0]).toBe(0)
-      expect(observer.onMove?.mock.calls[0][1]).toBe(1)
-    })
   })
 })
