@@ -29,6 +29,8 @@ export default tseslint.config(
     },
     rules: {
       "no-unused-expressions": "off",
+      "@typescript-eslint/no-unsafe-member-access": "off",
+      "@typescript-eslint/no-unsafe-assignment": "off",
     },
   },
   {

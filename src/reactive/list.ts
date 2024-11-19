@@ -14,7 +14,8 @@ export interface ListObservable<T extends PlainData = PlainData> {
 
 export interface ListSource<T extends PlainData = PlainData> extends ListObservable<T> {
   removeItem: (i: number) => void
-  moveItem: (from: number, to: number, element: T) => void
+  moveItem: (from: number, to: number) => void
+  replaceItem: (i: number, element: T) => void
   insertItem: (i: number, element: T) => void
 
   change: (data: T[]) => void
@@ -28,18 +29,17 @@ export class ListSourceImpl<T extends PlainData = PlainData> implements ListSour
     this._data = initialData.map((item) => source(item))
     this.observer = null
   }
-
+  
   get data(): Observable<T>[] {
     return this._data
   }
-
+  
   change(newData: T[]): void {
     for (let i = 0; i < this._data.length; ) {
       const element = this._data[i]
       if (newData.findIndex((el) => el === element.current()) < 0) {
         this.removeItem(i)
       } else {
-        element.change(newData[i])
         ++i
       }
     }
@@ -48,24 +48,32 @@ export class ListSourceImpl<T extends PlainData = PlainData> implements ListSour
       const element = newData[i]
       const elementIndex = this._data.findIndex((el) => el.current() === element)
       if (elementIndex >= 0) {
-        this.moveItem(elementIndex, i, element)
+        if (elementIndex !== i) {
+          this.moveItem(elementIndex, i)
+        }
+        this._data[i].change(element)
       } else {
         this.insertItem(i, element)
       }
     }
   }
-
+  
   removeItem(i: number): void {
     this._data.splice(i, 1)
     this.observer?.onRemove?.(i)
   }
 
-  moveItem(from: number, to: number, element: T): void {
-    const item = this._data[from]
-    this._data.splice(from, 1)
-    item.change(element)
-    this._data.splice(to, 0, item)
-    this.observer?.onMove?.(from, to)
+  moveItem(from: number, to: number): void {
+    if (from !== to) {
+      const item = this._data[from]
+      this._data.splice(from, 1)
+      this._data.splice(to, 0, item)
+      this.observer?.onMove?.(from, to)
+    }
+  }
+  
+  replaceItem(i: number, element: T): void {
+    this._data[i].change(element)
   }
 
   insertItem(i: number, element: T): void {
