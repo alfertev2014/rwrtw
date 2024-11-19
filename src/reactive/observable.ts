@@ -462,30 +462,35 @@ let cleanupQueue: Array<Observer> = []
 let runningCleanup: Array<Observer> = []
 
 const runQueues = (): void => {
-  while (cleanupQueue.length > 0 || effectsQueue.length > 0) {
-    if (cleanupQueue.length > 0) {
-      const tmp = runningCleanup
-      runningCleanup = cleanupQueue
-      cleanupQueue = tmp
-      for (const observer of runningCleanup) {
-        observer._cleanup()
-      }
-      runningCleanup.length = 0
-    }
-
-    if (effectsQueue.length > 0) {
-      const tmp = runningEffects
-      runningEffects = effectsQueue
-      effectsQueue = tmp
-      for (const effect of runningEffects) {
-        try {
-          effect._run()
-        } catch (e) {
-          console.error(e)
+  batchDepth++
+  try {
+    while (cleanupQueue.length > 0 || effectsQueue.length > 0) {
+      if (cleanupQueue.length > 0) {
+        const tmp = runningCleanup
+        runningCleanup = cleanupQueue
+        cleanupQueue = tmp
+        for (const observer of runningCleanup) {
+          observer._cleanup()
         }
+        runningCleanup.length = 0
       }
-      runningEffects.length = 0
+
+      if (effectsQueue.length > 0) {
+        const tmp = runningEffects
+        runningEffects = effectsQueue
+        effectsQueue = tmp
+        for (const effect of runningEffects) {
+          try {
+            effect._run()
+          } catch (e) {
+            console.error(e)
+          }
+        }
+        runningEffects.length = 0
+      }
     }
+  } finally {
+    batchDepth--
   }
 }
 
