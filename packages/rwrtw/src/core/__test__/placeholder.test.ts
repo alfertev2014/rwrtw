@@ -1,4 +1,4 @@
-import { describe, expect, test } from "@jest/globals"
+import { jest, describe, expect, test, beforeEach } from "@jest/globals"
 import {
   type Placeholder,
   createChildPlaceholderAt,
@@ -245,16 +245,16 @@ describe("Placeholder", () => {
 
   describe("Lifecycles", () => {
     let LIFECYCLE: {
-      mount: jest.Mock<unknown, unknown[], unknown>
-      unmount: jest.Mock<unknown, unknown[], unknown>
-      dispose: jest.Mock<unknown, unknown[], unknown>
+      mount: jest.Mock<VoidFunction>
+      unmount: jest.Mock<VoidFunction>
+      dispose: jest.Mock<VoidFunction>
     }
 
     beforeEach(() => {
       LIFECYCLE = {
-        mount: jest.fn<unknown, unknown[], unknown>(),
-        unmount: jest.fn<unknown, unknown[], unknown>(),
-        dispose: jest.fn<unknown, unknown[], unknown>(),
+        mount: jest.fn<VoidFunction>(),
+        unmount: jest.fn<VoidFunction>(),
+        dispose: jest.fn<VoidFunction>(),
       }
     })
 

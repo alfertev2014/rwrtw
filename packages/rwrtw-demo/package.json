@@ -1,0 +1,36 @@
+{
+  "name": "rwrtw-demo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "eslint src",
+    "prettier": "prettier --write src",
+    "start": "webpack serve --mode development --open",
+    "build": "webpack"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@eslint/js": "^9.9.0",
+    "@types/eslint__js": "^8.42.3",
+    "@types/eslint-config-prettier": "^6.11.3",
+    "css-loader": "^7.1.2",
+    "eslint": "^9.16.0",
+    "eslint-config-prettier": "^9.1.0",
+    "html-webpack-plugin": "^5.6.3",
+    "prettier": "^3.4.1",
+    "style-loader": "^4.0.0",
+    "ts-loader": "^9.5.1",
+    "typescript": "~5.5.4",
+    "typescript-eslint": "^8.17.0",
+    "webpack": "^5.96.1",
+    "webpack-cli": "^5.1.4",
+    "webpack-dev-server": "^5.1.0"
+  },
+  "dependencies": {
+    "rwrtw": "^0.0.10"
+  }
+}

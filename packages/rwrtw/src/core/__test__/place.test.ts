@@ -1,4 +1,4 @@
-import { describe, expect, test } from "@jest/globals"
+import { describe, expect, test, beforeEach } from "@jest/globals"
 import { lastDOMPlaceOf, placeAtBeginningOf, type Place, insertNodeAt } from "../impl/place.js"
 import { createChildPlaceholderAt, createRootPlaceholderAt } from "../impl/placeholder.js"
 import {
@@ -81,7 +81,7 @@ describe("Place", () => {
         if (placeholder != null) {
           expect(lastDOMPlaceOf(placeholder)).toBe(CHILD_NODE)
         } else {
-          fail("placeholder is not initialized")
+          throw new Error("placeholder is not initialized")
         }
       })
 
@@ -101,7 +101,7 @@ describe("Place", () => {
         if (placeholder != null) {
           expect(lastDOMPlaceOf(placeholder)).toBe(innerNode)
         } else {
-          fail("placeholder is not initialized")
+          throw new Error("placeholder is not initialized")
         }
       })
     })
@@ -171,7 +171,7 @@ describe("Place", () => {
             if (list != null) {
               expect(lastDOMPlaceOf(list)).toBe(INNER_CHILD_NODE)
             } else {
-              fail("list is not initialized")
+              throw new Error("list is not initialized")
             }
           })
 
@@ -191,7 +191,7 @@ describe("Place", () => {
             if (list != null && listPlace != null) {
               expect(lastDOMPlaceOf(list)).toBe(listPlace)
             } else {
-              fail("list or listPlace are not initialized")
+              throw new Error("list or listPlace are not initialized")
             }
           })
 
@@ -209,7 +209,7 @@ describe("Place", () => {
             if (list != null) {
               expect(lastDOMPlaceOf(list)).toBe(INNER_CHILD_NODE)
             } else {
-              fail("list is not initialized")
+              throw new Error("list is not initialized")
             }
           })
 
@@ -227,7 +227,7 @@ describe("Place", () => {
             if (list != null) {
               expect(lastDOMPlaceOf(list)).toBe(INNER_CHILD_NODE)
             } else {
-              fail("list is not initialized")
+              throw new Error("list is not initialized")
             }
           })
         },

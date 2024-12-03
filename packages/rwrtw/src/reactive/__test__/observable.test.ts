@@ -1,5 +1,6 @@
-import { describe, expect, test } from "@jest/globals"
+import { jest, describe, expect, test } from "@jest/globals"
 import { computed, effect, source, batch } from "../observable"
+import { PlainData } from "../types"
 
 describe("Observable", () => {
   describe("Source", () => {
@@ -23,7 +24,7 @@ describe("Observable", () => {
 
   describe("Computed", () => {
     test("Creating computed value should not call compute function immediately", () => {
-      const computeFunc = jest.fn()
+      const computeFunc = jest.fn<()=>PlainData>()
       const c = computed(computeFunc)
 
       expect(computeFunc).toBeCalledTimes(0)
