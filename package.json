@@ -8,5 +8,8 @@
   "repository": {
     "type": "git",
     "url": "git@github.com:alfertev2014/rwrtw.git"
+  },
+  "devDependencies": {
+    "nx": "20.1.4"
   }
 }

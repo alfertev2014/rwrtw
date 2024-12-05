@@ -6,10 +6,11 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "lint": "eslint src",
+    "lint": "eslint .",
     "prettier": "prettier --write src",
-    "start": "webpack serve --mode development --open",
-    "build": "webpack"
+    "serve": "webpack serve --mode development --open",
+    "build": "webpack",
+    "typecheck": "tsc"
   },
   "author": "",
   "license": "ISC",
