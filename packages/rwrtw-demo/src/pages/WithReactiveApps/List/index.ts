@@ -1,17 +1,15 @@
 import {
   computed,
-  createRef,
-  effect,
   el,
   ev,
   fr,
   listSource,
+  on,
   PlaceholderComponent,
   reAttr,
   reContent,
-  reEv,
-  ref,
   reList,
+  reProp,
   Source,
   source,
 } from "rwrtw"
@@ -19,23 +17,15 @@ import {
 import "./style.css"
 
 const Input = (value: Source<string>): PlaceholderComponent => {
-  const input = createRef<HTMLElement>()
-
-  effect(value, (v) => {
-    if (input.current) {
-      ;(input.current as HTMLInputElement).value = v
-    }
-  })
-
   return el(
     "input",
     {
       type: "text",
-      change: ev((e) => {
-        value.change((e.target as HTMLInputElement).value ?? "")
-      }),
     },
-    ref(input),
+    reProp("value", value),
+    on("change", (e) => {
+      value.change((e.target as HTMLInputElement).value ?? "")
+    }),
   )()
 }
 
@@ -69,67 +59,77 @@ const List = (): PlaceholderComponent => {
             reContent(item, (value) => fr(`"${value.text}"`)),
           ),
           el("span")(
-            el("button", {
-              click: reEv(id, (id) => () => {
+            el(
+              "button",
+              null,
+              on("click", () => {
                 const index = items.data.findIndex(
-                  (item) => item.current().id === id,
+                  (item) => item.current().id === id.current(),
                 )
                 if (index >= 0) {
                   items.moveItem(index, 0)
                 }
               }),
-              "data-id": reAttr(id),
-            })("Edit"),
+              reAttr("data-id", id),
+            )("Edit"),
             " ",
-            el("button", {
-              click: reEv(id, (id) => () => {
+            el(
+              "button",
+              null,
+              on("click", () => {
                 const index = items.data.findIndex(
-                  (item) => item.current().id === id,
+                  (item) => item.current().id === id.current(),
                 )
                 if (index >= 0) {
                   items.moveItem(index, 0)
                 }
               }),
-              "data-id": reAttr(id),
-            })("Move to the top"),
+              reAttr("data-id", id),
+            )("Move to the top"),
             " ",
 
-            el("button", {
-              click: reEv(id, (id) => () => {
+            el(
+              "button",
+              null,
+              on("click", () => {
                 const index = items.data.findIndex(
-                  (item) => item.current().id === id,
+                  (item) => item.current().id === id.current(),
                 )
                 if (index >= 0) {
                   items.moveItem(index, items.data.length - 1)
                 }
               }),
-              "data-id": reAttr(id),
-            })("Move to the bottom"),
+              reAttr("data-id", id),
+            )("Move to the bottom"),
             " ",
 
-            el("button", {
-              click: reEv(id, (id) => () => {
+            el(
+              "button",
+              null,
+              on("click", () => {
                 const index = items.data.findIndex(
-                  (item) => item.current().id === id,
+                  (item) => item.current().id === id.current(),
                 )
                 if (index >= 0) {
                   items.removeItem(index)
                 }
               }),
-              "data-id": reAttr(id),
-            })("Remove"),
+              reAttr("data-id", id),
+            )("Remove"),
           ),
         )
       }),
     ),
     el("div", { class: "list-add-item-form" })(
       Input(newValue),
-      el("button", {
-        click: ev(() => {
+      el(
+        "button",
+        null,
+        on("click", () => {
           items.insertItem(items.data.length, createItem(newValue.current()))
           newValue.change("")
         }),
-      })("Add"),
+      )("Add"),
     ),
   )
 }

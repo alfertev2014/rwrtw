@@ -1,4 +1,4 @@
-import { dce, setAttr, type ScalarValue, txt } from "../dom/helpers.js"
+import { dce, setAttr, txt } from "../dom/helpers.js"
 import {
   type PlaceholderList,
   type Placeholder,
@@ -12,6 +12,7 @@ import {
   type Lifecycle,
   PlaceholderContent,
 } from "../core/index.js"
+import { type ScalarData } from "src/types.js"
 
 export type TemplateHandler<T> = (element: T, context: PlaceholderContext) => void
 export type TemplateElementAttrHandler<
@@ -20,7 +21,7 @@ export type TemplateElementAttrHandler<
 > = (element: E, attrName: A, context: PlaceholderContext) => void
 
 export type TemplateElementAttrsConfig<E extends HTMLElement = HTMLElement> = {
-  [key: string]: ScalarValue | TemplateElementAttrHandler<E, typeof key>
+  [key: string]: ScalarData | TemplateElementAttrHandler<E, typeof key>
 }
 
 export const el: {
@@ -95,7 +96,7 @@ export const lc =
     return place
   }
 
-export type TemplateItem = ScalarValue | PlaceholderComponent
+export type TemplateItem = ScalarData | PlaceholderComponent
 
 export type TemplateContent = TemplateContent[] | TemplateItem
 
@@ -109,7 +110,7 @@ const renderTemplateContent = (
   }
   if (typeof content === "string") {
     place = insertNodeAt(place, txt(content))
-  } else if (typeof content === "number") {
+  } else if (typeof content === "number" || typeof content === "bigint") {
     place = insertNodeAt(place, txt(content.toString()))
   } else if (typeof content === "function") {
     place = content(place, context)
@@ -144,8 +145,25 @@ export const on: {
     listener: EventListenerOrEventListenerObject,
     options?: boolean | AddEventListenerOptions,
   ): TemplateHandler<HTMLElement> =>
-  (element) => {
+  (element, context) => {
     element.addEventListener(event, listener, options)
+    context.registerLifecycle({
+      dispose() {
+        element.removeEventListener(event, listener, options)
+      },
+    })
+  }
+
+export const attr =
+  (name: string, value: ScalarData): TemplateHandler<HTMLElement> =>
+  (element) => {
+    setAttr(element, name, value)
+  }
+
+export const prop =
+  <T extends HTMLElement, N extends keyof T>(name: N, value: T[N]): TemplateHandler<T> =>
+  (element) => {
+    element[name] = value
   }
 
 export const ev =

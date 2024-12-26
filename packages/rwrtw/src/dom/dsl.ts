@@ -1,8 +1,9 @@
-import { dce, setAttr, type ScalarValue } from "./helpers.js"
+import { ScalarData } from "src/types.js"
+import { dce, setAttr } from "./helpers.js"
 
-export type ElementAttrsMap = Record<string, ScalarValue>
+export type ElementAttrsMap = Record<string, ScalarData>
 
-export type ChildrenItem = Node | ScalarValue
+export type ChildrenItem = Node | ScalarData
 
 export const hel =
   (tag: string, attrs: ElementAttrsMap | null = null) =>
@@ -19,7 +20,9 @@ export const hel =
       if (typeof child === "boolean" || child == null) {
         continue
       }
-      element.append(typeof child === "number" ? child.toString() : child)
+      element.append(
+        typeof child !== "string" && !(child instanceof Node) ? child.toString() : child,
+      )
     }
     return element
   }

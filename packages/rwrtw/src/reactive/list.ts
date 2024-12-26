@@ -1,5 +1,5 @@
 import { effect, Observable, Source, source } from "./observable.js"
-import { PlainData } from "./types.js"
+import { PlainData } from "../types.js"
 
 export interface ListObserver<T extends PlainData = PlainData> {
   onInsert?: (i: number, element: Observable<T>) => void
@@ -29,11 +29,11 @@ export class ListSourceImpl<T extends PlainData = PlainData> implements ListSour
     this._data = initialData.map((item) => source(item))
     this.observer = null
   }
-  
+
   get data(): Observable<T>[] {
     return this._data
   }
-  
+
   change(newData: T[]): void {
     for (let i = 0; i < this._data.length; ) {
       const element = this._data[i]
@@ -57,7 +57,7 @@ export class ListSourceImpl<T extends PlainData = PlainData> implements ListSour
       }
     }
   }
-  
+
   removeItem(i: number): void {
     this._data.splice(i, 1)
     this.observer?.onRemove?.(i)
@@ -71,7 +71,7 @@ export class ListSourceImpl<T extends PlainData = PlainData> implements ListSour
       this.observer?.onMove?.(from, to)
     }
   }
-  
+
   replaceItem(i: number, element: T): void {
     this._data[i].change(element)
   }

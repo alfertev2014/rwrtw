@@ -3,6 +3,7 @@ import {
   el,
   ev,
   fr,
+  on,
   PlaceholderComponent,
   reContent,
   reIf,
@@ -17,12 +18,16 @@ const Counter = (): PlaceholderComponent => {
     el("p", { class: "paragraph" })(
       reContent(counter, () => fr(`Hello world ${counter.current()} times!`)),
     ),
-    el("button", {
-      click: ev(() => {
+    el(
+      "button",
+      null,
+      on("click", () => {
         counter.update((prev) => prev + 1)
       }),
-      focus: ev(() => console.log("fuck")),
-    })("Increment"),
+      on("focus", () => {
+        console.log("fuck")
+      }),
+    )("Increment"),
     el("div")(
       reIf(
         computed(() => counter.current() % 2 === 0),

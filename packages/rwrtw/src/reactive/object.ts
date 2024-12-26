@@ -1,5 +1,5 @@
 import { effect, Observable, Source, source } from "./observable.js"
-import { PlainData } from "./types.js"
+import { PlainData } from "../types.js"
 
 export interface ObjectObserver<T extends PlainData = PlainData> {
   onInsert?: (key: string | number, element: Observable<T>) => void
@@ -17,9 +17,7 @@ export interface ObjectSource<T extends PlainData = PlainData> extends ObjectObs
   removeItem: (key: string | number) => void
   insertItem: (key: string | number, element: T) => void
 
-  change: (data: {
-    [key: string | number]: T
-  }) => void
+  change: (data: { [key: string | number]: T }) => void
 }
 
 export class ObjectSourceImpl<T extends PlainData = PlainData> implements ObjectSource<T> {
@@ -28,10 +26,10 @@ export class ObjectSourceImpl<T extends PlainData = PlainData> implements Object
   }
   observer: ObjectObserver<T> | null
 
-  constructor(initialData: {
-    [key: string | number]: T
-  }) {
-    this._data = Object.fromEntries(Object.entries(initialData).map(([key, item]) => [key, source(item)]))
+  constructor(initialData: { [key: string | number]: T }) {
+    this._data = Object.fromEntries(
+      Object.entries(initialData).map(([key, item]) => [key, source(item)]),
+    )
     this.observer = null
   }
 
@@ -41,9 +39,7 @@ export class ObjectSourceImpl<T extends PlainData = PlainData> implements Object
     return this._data
   }
 
-  change(newData: {
-    [key: string | number]: T
-  }): void {
+  change(newData: { [key: string | number]: T }): void {
     for (const [key] of Object.keys(this._data)) {
       if (!(key in newData)) {
         this.removeItem(key)

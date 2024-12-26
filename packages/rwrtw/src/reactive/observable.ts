@@ -1,4 +1,4 @@
-import { PlainData } from "./types.js"
+import { PlainData } from "../types.js"
 
 /**
  * Abstract observable node of reactive graph. Notifies its subscribers when stored value is changed.
@@ -196,7 +196,7 @@ class SourceImpl<T extends PlainData = PlainData> extends ObservableImpl<T> impl
  * Computed value node in reactive graph.
  * Caches its current value if observable dependencies are not changed.
  */
-export type Computed<out T extends PlainData = PlainData> = Observable<T>
+export interface Computed<out T extends PlainData = PlainData> extends Observable<T> {}
 
 /**
  * @see Computed
@@ -508,9 +508,11 @@ export const computed = <T extends PlainData>(func: () => T): Observable<T> => {
   return new ComputedImpl(func)
 }
 
+const noop = () => {}
+
 export const effect = <T extends PlainData>(
   trigger: Observable<T>,
-  sideEffectFunc: (value: T) => void,
+  sideEffectFunc: (value: T) => void = noop,
 ): Effect => {
   if (!(trigger instanceof ObservableImpl)) {
     throw new Error("Trigger of effect is not observable")

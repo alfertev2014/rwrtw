@@ -1,36 +1,35 @@
 import { describe, expect, test, beforeEach, jest } from "@jest/globals"
-import { listSource } from '../list'
+import { listSource } from "../list"
 
 describe("List", () => {
-
   let observer: {
-    onInsert: jest.Mock;
-    onMove: jest.Mock;
-    onRemove: jest.Mock;
+    onInsert: jest.Mock
+    onMove: jest.Mock
+    onRemove: jest.Mock
   }
 
   beforeEach(() => {
     observer = {
       onInsert: jest.fn(),
       onMove: jest.fn(),
-      onRemove: jest.fn()
-    } 
+      onRemove: jest.fn(),
+    }
   })
 
   describe("Initialize", () => {
     test("Empty list", () => {
       const l = listSource([])
-      
+
       l.observer = observer
-  
+
       expect(l.data.length).toBe(0)
     })
 
     test("Non empty list", () => {
       const l = listSource<string>(["1", "2", "3"])
-      
+
       l.observer = observer
-  
+
       expect(l.data.length).toBe(3)
       expect(l.data[0].current()).toBe("1")
       expect(l.data[1].current()).toBe("2")
@@ -221,24 +220,23 @@ describe("List", () => {
   })
 
   describe("Apply new data", () => {
-
     test("Apply empty list", () => {
       const l = listSource([])
-      
+
       l.observer = observer
-  
+
       l.change([])
-  
+
       expect(l.data.length).toBe(0)
     })
 
     test("Clear with empty list", () => {
       const l = listSource(["1", "2", "3"])
-      
+
       l.observer = observer
-  
+
       l.change([])
-  
+
       expect(l.data.length).toBe(0)
       expect(observer.onRemove).toBeCalledTimes(3)
       expect(observer.onRemove).toBeCalledWith(0)
@@ -246,11 +244,11 @@ describe("List", () => {
 
     test("Apply non empty list", () => {
       const l = listSource<string>([])
-      
+
       l.observer = observer
-  
+
       l.change(["1", "2", "3"])
-  
+
       expect(l.data.length).toBe(3)
       expect(l.data[0].current()).toBe("1")
       expect(l.data[1].current()).toBe("2")
@@ -267,11 +265,11 @@ describe("List", () => {
 
     test("Apply the same list", () => {
       const l = listSource<string>(["1", "2", "3"])
-      
+
       l.observer = observer
-  
+
       l.change(["1", "2", "3"])
-  
+
       expect(l.data.length).toBe(3)
       expect(l.data[0].current()).toBe("1")
       expect(l.data[1].current()).toBe("2")
@@ -280,11 +278,11 @@ describe("List", () => {
 
     test("Apply list with swapped adjacent items", () => {
       const l = listSource<string>(["1", "2", "3"])
-      
+
       l.observer = observer
-  
+
       l.change(["2", "1", "3"])
-  
+
       expect(l.data.length).toBe(3)
       expect(l.data[0].current()).toBe("2")
       expect(l.data[1].current()).toBe("1")
@@ -297,11 +295,11 @@ describe("List", () => {
 
     test("Apply list with moved item with shift", () => {
       const l = listSource<string>(["1", "2", "3"])
-      
+
       l.observer = observer
-  
+
       l.change(["3", "1", "2"])
-  
+
       expect(l.data.length).toBe(3)
       expect(l.data[0].current()).toBe("3")
       expect(l.data[1].current()).toBe("1")

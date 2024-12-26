@@ -1,9 +1,16 @@
-import { type ScalarValue, setAttr } from "../dom/helpers.js"
+import { setAttr } from "../dom/helpers.js"
 import { type PlaceholderContext, type PlaceholderComponent, PlaceholderContent } from "../index.js"
 import { ListObservable } from "../reactive/list.js"
-import { type Observable, effect } from "../reactive/observable.js"
-import { PlainData } from "../reactive/types.js"
-import { plhList, plh, type TemplateElementAttrHandler } from "./index.js"
+import { type Observable, computed, effect } from "../reactive/observable.js"
+import { PlainData, ScalarData } from "../types.js"
+import {
+  plhList,
+  plh,
+  type TemplateElementAttrHandler,
+  TemplateHandler,
+  attr,
+  prop,
+} from "./index.js"
 
 export const reCompute = <T extends PlainData>(
   context: PlaceholderContext,
@@ -19,7 +26,26 @@ export const reCompute = <T extends PlainData>(
 }
 
 export const reAttr =
-  (trigger: Observable<ScalarValue>): TemplateElementAttrHandler =>
+  <T extends HTMLElement>(name: string, trigger: Observable<ScalarData>): TemplateHandler<T> =>
+  (element, context) => {
+    reCompute(context, trigger, (value) => {
+      setAttr(element, name, value)
+    })
+  }
+
+export const reProp =
+  <T extends HTMLElement, N extends keyof T>(
+    name: N,
+    trigger: T[N] extends PlainData ? Observable<T[N]> : never,
+  ): TemplateHandler<T> =>
+  (element, context) => {
+    reCompute(context, trigger, (value) => {
+      element[name] = value
+    })
+  }
+
+export const reAt =
+  (trigger: Observable<ScalarData>): TemplateElementAttrHandler =>
   (element, attrName, context) => {
     setAttr(element, attrName, trigger.current())
     reCompute(context, trigger, (value) => {
@@ -42,7 +68,7 @@ export const reEv =
       element.addEventListener(eventName, listener, options)
       context.registerLifecycle({
         dispose() {
-          element.removeEventListener(eventName, listener)
+          element.removeEventListener(eventName, listener, options)
         },
       })
     })

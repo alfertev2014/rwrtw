@@ -1,7 +1,4 @@
-/**
- * Value type for elements' attributes.
- */
-export type ScalarValue = number | string | boolean | null | undefined
+import { ScalarData } from "src/types.js"
 
 /**
  * Set attribute of HTML element.
@@ -10,7 +7,7 @@ export type ScalarValue = number | string | boolean | null | undefined
  * @param name Name of the attribute
  * @param value New value of the attribute. If it is falsy value, the attribute will be removed.
  */
-export const setAttr = (element: Element, name: string, value: ScalarValue): void => {
+export const setAttr = (element: Element, name: string, value: ScalarData): void => {
   if (value != null && value !== false) {
     element.setAttribute(name, value === true ? "" : value.toString())
   } else {

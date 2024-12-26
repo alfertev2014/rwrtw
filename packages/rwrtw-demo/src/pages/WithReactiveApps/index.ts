@@ -1,7 +1,7 @@
 import {
   computed,
   el,
-  ev,
+  on,
   PlaceholderComponent,
   reAttr,
   reContent,
@@ -18,12 +18,15 @@ const WithReactiveApps = (): PlaceholderComponent => {
   }
 
   const tabButton = (app: string) =>
-    el("button", {
-      class: reAttr(
+    el(
+      "button",
+      null,
+      reAttr(
+        "class",
         computed(() => (selectedApp.current() === app ? "app-selected" : null)),
       ),
-      click: ev(handleClick(app)),
-    })
+      on("click", handleClick(app)),
+    )
 
   return el("div", { class: "apps-container" })(
     el("div", { class: "apps-selector" })(

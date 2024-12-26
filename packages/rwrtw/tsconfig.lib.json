@@ -9,9 +9,7 @@
     "emitDeclarationOnly": false,
     "declaration": true
   },
-  "include": [
-    "**/*.ts"
-  ],
+  "include": ["**/*.ts"],
   "references": [],
   "exclude": [
     "dist",

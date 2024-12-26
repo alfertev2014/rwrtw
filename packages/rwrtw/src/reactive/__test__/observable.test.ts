@@ -24,7 +24,7 @@ describe("Observable", () => {
 
   describe("Computed", () => {
     test("Creating computed value should not call compute function immediately", () => {
-      const computeFunc = jest.fn<()=>PlainData>()
+      const computeFunc = jest.fn<() => PlainData>()
       const c = computed(computeFunc)
 
       expect(computeFunc).toBeCalledTimes(0)
