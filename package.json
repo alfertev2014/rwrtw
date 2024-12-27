@@ -1,7 +1,8 @@
 {
   "name": "rwrtw-root",
   "private": true,
-  "description": "Tiny UI library for browser applications, thin DOM helpers and component building blocks with transparent and convenient DSL",
+  "type": "module",
+  "description": "The root project for RWRTW libraries, tools and examples",
   "workspaces": [
     "packages/*"
   ],
@@ -10,6 +11,11 @@
     "url": "git@github.com:alfertev2014/rwrtw.git"
   },
   "devDependencies": {
-    "nx": "20.1.4"
+    "@nx/js": "20.3.0",
+    "@swc-node/register": "~1.9.1",
+    "@swc/core": "~1.5.7",
+    "@swc/helpers": "~0.5.11",
+    "nx": "20.3.0",
+    "tslib": "^2.3.0"
   }
 }

@@ -9,8 +9,7 @@
     "lint": "eslint .",
     "prettier": "prettier --write src",
     "serve": "webpack serve --mode development --open",
-    "build": "webpack",
-    "typecheck": "tsc"
+    "build": "webpack"
   },
   "author": "",
   "license": "ISC",
@@ -25,7 +24,7 @@
     "prettier": "^3.4.2",
     "style-loader": "^4.0.0",
     "ts-loader": "^9.5.1",
-    "typescript": "~5.5.4",
+    "typescript": "~5.7.2",
     "typescript-eslint": "^8.18.2",
     "webpack": "^5.97.1",
     "webpack-cli": "^5.1.4",

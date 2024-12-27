@@ -16,7 +16,6 @@
     "test": "jest . --config=jest.config.js",
     "lint": "eslint .",
     "prettier": "prettier --write .",
-    "prepack": "npm run prettier && npm run lint && npm run build",
     "build": "tsc --build tsconfig.lib.json",
     "typecheck": "tsc"
   },
@@ -47,7 +46,7 @@
     "jest-environment-jsdom": "^29.7.0",
     "prettier": "^3.4.2",
     "ts-jest": "^29.2.5",
-    "typescript": "~5.5.4",
+    "typescript": "~5.7.2",
     "typescript-eslint": "^8.18.2"
   }
 }
