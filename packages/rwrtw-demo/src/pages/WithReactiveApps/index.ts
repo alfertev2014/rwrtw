@@ -4,6 +4,7 @@ import {
   on,
   PlaceholderComponent,
   reAttr,
+  reClass,
   reContent,
   source,
 } from "rwrtw"
@@ -21,10 +22,7 @@ const WithReactiveApps = (): PlaceholderComponent => {
     el(
       "button",
       null,
-      reAttr(
-        "class",
-        computed(() => (selectedApp.current() === app ? "app-selected" : null)),
-      ),
+      reClass("app-selected", computed(() => selectedApp.current() === app)),
       on("click", handleClick(app)),
     )
 

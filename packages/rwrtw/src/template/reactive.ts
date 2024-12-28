@@ -1,34 +1,36 @@
-import { setAttr } from "../dom/helpers.js"
-import { type PlaceholderContext, type PlaceholderComponent, PlaceholderContent } from "../index.js"
+import { setAttr, toText, txt } from "../dom/helpers.js"
+import { type PlaceholderContext, type PlaceholderComponent, PlaceholderContent, insertNodeAt } from "../index.js"
 import { ListObservable } from "../reactive/list.js"
-import { type Observable, computed, effect } from "../reactive/observable.js"
+import { type Observable, effect, isObservable } from "../reactive/observable.js"
 import { PlainData, ScalarData } from "../types.js"
-import {
-  plhList,
-  plh,
-  type TemplateElementAttrHandler,
-  TemplateHandler,
-  attr,
-  prop,
-} from "./index.js"
+import { plhList, plh, type TemplateElementAttrHandler, TemplateHandler } from "./index.js"
+
+export type ReactiveValue<T extends PlainData> = Observable<T> | T
 
 export const reCompute = <T extends PlainData>(
   context: PlaceholderContext,
-  trigger: Observable<T>,
+  trigger: ReactiveValue<T>,
   sideEffectFunc: (value: T) => void,
 ): void => {
-  const eff = effect(trigger, sideEffectFunc)
-  context.registerLifecycle({
-    dispose() {
-      eff.unsubscribe()
-    },
-  })
+  if (isObservable(trigger)) {
+    const eff = effect(trigger, sideEffectFunc)
+    context.registerLifecycle({
+      dispose() {
+        eff.unsubscribe()
+      },
+    })
+  } else {
+    sideEffectFunc(trigger)
+  }
 }
 
 export const reAttr =
-  <T extends HTMLElement>(name: string, trigger: Observable<ScalarData>): TemplateHandler<T> =>
+  <T extends HTMLElement, V extends ScalarData>(
+    name: string,
+    value: ReactiveValue<V>,
+  ): TemplateHandler<T> =>
   (element, context) => {
-    reCompute(context, trigger, (value) => {
+    reCompute(context, value, (value) => {
       setAttr(element, name, value)
     })
   }
@@ -36,41 +38,51 @@ export const reAttr =
 export const reProp =
   <T extends HTMLElement, N extends keyof T>(
     name: N,
-    trigger: T[N] extends PlainData ? Observable<T[N]> : never,
+    value: T[N] extends PlainData ? ReactiveValue<T[N]> : never,
   ): TemplateHandler<T> =>
   (element, context) => {
-    reCompute(context, trigger, (value) => {
+    reCompute(context, value, (value) => {
       element[name] = value
     })
   }
 
-export const reAt =
-  (trigger: Observable<ScalarData>): TemplateElementAttrHandler =>
-  (element, attrName, context) => {
-    setAttr(element, attrName, trigger.current())
-    reCompute(context, trigger, (value) => {
-      setAttr(element, attrName, value)
+export const reClass =
+  <T extends HTMLElement>(
+    className: string,
+    toggle: ReactiveValue<string | null | undefined | boolean>,
+  ): TemplateHandler<T> =>
+  (element, context) => {
+    reCompute(context, toggle, (toggle) => {
+      if (toggle) {
+        element.classList.add(className)
+      } else {
+        element.classList.remove(className)
+      }
     })
   }
 
-export const reEv =
-  <T extends PlainData>(
-    trigger: Observable<T>,
-    listenerFactory: (value: T) => EventListenerOrEventListenerObject,
-    options?: boolean | AddEventListenerOptions,
-  ): TemplateElementAttrHandler =>
-  (element, eventName, context) => {
-    let listener = listenerFactory(trigger.current())
-    element.addEventListener(eventName, listener, options)
+export const reStyle =
+  <T extends HTMLElement>(
+    styleName: string,
+    value: ReactiveValue<string | null | undefined>,
+  ): TemplateHandler<T> =>
+  (element, context) => {
+    reCompute(context, value, (value) => {
+      if (value != null) {
+        element.style.setProperty(styleName, value)
+      } else {
+        element.style.removeProperty(styleName)
+      }
+    })
+  }
+
+export const reAt =
+  <H extends HTMLElement, T extends ScalarData>(
+    trigger: ReactiveValue<T>,
+  ): TemplateElementAttrHandler<H> =>
+  (element, attrName, context) => {
     reCompute(context, trigger, (value) => {
-      element.removeEventListener(eventName, listener)
-      listener = listenerFactory(value)
-      element.addEventListener(eventName, listener, options)
-      context.registerLifecycle({
-        dispose() {
-          element.removeEventListener(eventName, listener, options)
-        },
-      })
+      setAttr(element, attrName, value)
     })
   }
 
@@ -83,6 +95,21 @@ export const reContent = <T extends PlainData>(
       placeholder.replaceContent(contentFunc(value))
     })
   })
+}
+
+export const reText = (value: ReactiveValue<ScalarData>): PlaceholderComponent => {
+  if (isObservable(value)) {
+    const content = value.current()
+    return (place, context) => {
+      const t = txt(content)
+      reCompute(context, value, (value) => {
+        t.textContent = toText(value)
+      })
+      return insertNodeAt(place, t)
+    }
+  } else {
+    return (place) => insertNodeAt(place, txt(value))
+  }
 }
 
 export const reIf = (

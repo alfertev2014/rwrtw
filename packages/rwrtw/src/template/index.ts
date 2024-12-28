@@ -173,6 +173,11 @@ export const ev =
   ): TemplateElementAttrHandler =>
   (element, eventName, context) => {
     element.addEventListener(eventName, listener, options)
+    context.registerLifecycle({
+      dispose() {
+        element.removeEventListener(eventName, listener, options)
+      },
+    })
   }
 
 export interface TemplateRefObject<T> {

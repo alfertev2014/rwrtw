@@ -10,6 +10,7 @@ import {
   reContent,
   reList,
   reProp,
+  reText,
   Source,
   source,
 } from "rwrtw"
@@ -52,11 +53,9 @@ const List = (): PlaceholderComponent => {
       reList(items, (item) => {
         const id = computed(() => item.current().id)
         return el("li", { class: "list-item" })(
-          el("span", { class: "list-item-id" })(
-            reContent(item, (value) => fr(`[${value.id}]`)),
-          ),
+          el("span", { class: "list-item-id" })("[", reText(id), "]"),
           el("span", { class: "list-item-value" })(
-            reContent(item, (value) => fr(`"${value.text}"`)),
+            reText(computed(() => item.current().text)),
           ),
           el("span")(
             el(

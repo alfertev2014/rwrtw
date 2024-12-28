@@ -28,10 +28,13 @@ export const dce: {
   (tagName: string): HTMLElement
 } = (tag: string): HTMLElement => document.createElement(tag)
 
+export const toText = (value: ScalarData) => value != null && typeof value !== "boolean" ? value.toString() : ""
+
 /**
  * Abbreviation for the document.createTextNode.
  *
  * @param str String content of text node.
  * @returns HTML text node.
  */
-export const txt = (str: string): Text => document.createTextNode(str)
+export const txt = (value: ScalarData): Text =>
+  document.createTextNode(toText(value))

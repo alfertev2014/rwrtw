@@ -125,6 +125,9 @@ class ObservableImpl<out T extends PlainData = PlainData> implements Observable<
   }
 }
 
+export const isObservable = (value: PlainData | Observable<PlainData>): value is Observable => value instanceof ObservableImpl
+export const currentOf = <T extends PlainData>(value: T | Observable<T>): T => isObservable(value) ? value.current() : value
+
 interface Observer {
   readonly _markChanged: () => void
   readonly _markPossiblyChanged: () => void
@@ -196,6 +199,7 @@ class SourceImpl<T extends PlainData = PlainData> extends ObservableImpl<T> impl
  * Computed value node in reactive graph.
  * Caches its current value if observable dependencies are not changed.
  */
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface Computed<out T extends PlainData = PlainData> extends Observable<T> {}
 
 /**

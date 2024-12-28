@@ -1,12 +1,11 @@
 import {
   computed,
   el,
-  ev,
   fr,
   on,
   PlaceholderComponent,
-  reContent,
   reIf,
+  reText,
   source,
 } from "rwrtw"
 
@@ -15,9 +14,7 @@ const Counter = (): PlaceholderComponent => {
 
   return el("div")(
     el("h1")("It Works!"),
-    el("p", { class: "paragraph" })(
-      reContent(counter, () => fr(`Hello world ${counter.current()} times!`)),
-    ),
+    el("p", { class: "paragraph" })("Hello world ", reText(counter), " times!"),
     el(
       "button",
       null,
