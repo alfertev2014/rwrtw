@@ -1,10 +1,8 @@
 import { jest, describe, expect, test, beforeEach } from "@jest/globals"
 import {
   type Placeholder,
-  createChildPlaceholderAt,
   createRootPlaceholderAt,
   placeAtBeginningOf,
-  insertNodeAt,
   type DOMPlace,
 } from ".."
 
@@ -28,8 +26,8 @@ describe("Placeholder", () => {
     test("with one child Node - should insert this node at place", () => {
       const innerNode = document.createElement("div")
 
-      const placeholder = createRootPlaceholderAt(PARENT_PLACE, (place) =>
-        insertNodeAt(place, innerNode),
+      const placeholder = createRootPlaceholderAt(PARENT_PLACE, (renderer) =>
+        renderer.insertNode(innerNode),
       )
 
       expect(placeholder.lastDOMPlace()).toBe(innerNode)
@@ -43,12 +41,11 @@ describe("Placeholder", () => {
 
       const NODES_COUNT = 10
 
-      const placeholder = createRootPlaceholderAt(PARENT_PLACE, (place) => {
-        insertNodeAt(place, node)
+      const placeholder = createRootPlaceholderAt(PARENT_PLACE, (renderer) => {
+        renderer.insertNode(node)
         for (let i = 1; i < NODES_COUNT; ++i) {
-          node = insertNodeAt(node, document.createTextNode("some text"))
+          node = renderer.insertNode(document.createTextNode("some text"))
         }
-        return node
       })
 
       expect(placeholder.lastDOMPlace()).toBe(node)
@@ -63,9 +60,8 @@ describe("Placeholder", () => {
     test("at start of placeholder - should be at starting place", () => {
       let childPlaceholder: Placeholder | undefined
 
-      createRootPlaceholderAt(PARENT_PLACE, (place, context) => {
-        childPlaceholder = createChildPlaceholderAt(place, context, null)
-        return childPlaceholder
+      createRootPlaceholderAt(PARENT_PLACE, (renderer) => {
+        childPlaceholder = renderer.insertPlaceholder(null)
       })
 
       expect(childPlaceholder?.lastDOMPlace()).toBe(PARENT_PLACE)
@@ -76,12 +72,10 @@ describe("Placeholder", () => {
       let childPlaceholder: Placeholder | undefined
       let innerNode: Node | undefined
 
-      const parentPlaceholder = createRootPlaceholderAt(PARENT_PLACE, (place, context) => {
-        childPlaceholder = createChildPlaceholderAt(place, context, (place) => {
-          innerNode = insertNodeAt(place, document.createElement("div"))
-          return innerNode
+      const parentPlaceholder = createRootPlaceholderAt(PARENT_PLACE, (renderer) => {
+        childPlaceholder = renderer.insertPlaceholder((renderer) => {
+          innerNode = renderer.insertNode(document.createElement("div"))
         })
-        return childPlaceholder
       })
 
       expect(childPlaceholder?.lastDOMPlace()).toBe(innerNode)
@@ -96,16 +90,13 @@ describe("Placeholder", () => {
       let innerNode1: Node | undefined
       let innerNode2: Node | undefined
 
-      const parentPlaceholder = createRootPlaceholderAt(PARENT_PLACE, (place, context) => {
-        childPlaceholder1 = createChildPlaceholderAt(place, context, (place) => {
-          innerNode1 = insertNodeAt(place, document.createElement("div"))
-          return innerNode1
+      const parentPlaceholder = createRootPlaceholderAt(PARENT_PLACE, (renderer) => {
+        childPlaceholder1 = renderer.insertPlaceholder((renderer) => {
+          innerNode1 = renderer.insertNode(document.createElement("div"))
         })
-        childPlaceholder2 = createChildPlaceholderAt(childPlaceholder1, context, (place) => {
-          innerNode2 = insertNodeAt(place, document.createElement("div"))
-          return innerNode2
+        childPlaceholder2 = renderer.insertPlaceholder((renderer) => {
+          innerNode2 = renderer.insertNode(document.createElement("div"))
         })
-        return childPlaceholder2
       })
 
       expect(PARENT_NODE.childNodes.length).toBe(2)
@@ -123,14 +114,12 @@ describe("Placeholder", () => {
       let childPlaceholder: Placeholder | undefined
       let innerNode: Node | undefined
 
-      const parentPlaceholder = createRootPlaceholderAt(PARENT_PLACE, (place, context) => {
-        childPlaceholder = createChildPlaceholderAt(place, context, null)
-        return childPlaceholder
+      const parentPlaceholder = createRootPlaceholderAt(PARENT_PLACE, (renderer) => {
+        childPlaceholder = renderer.insertPlaceholder(null)
       })
 
-      childPlaceholder?.replaceContent((place) => {
-        innerNode = insertNodeAt(place, document.createElement("div"))
-        return innerNode
+      childPlaceholder?.replaceContent((renderer) => {
+        innerNode = renderer.insertNode(document.createElement("div"))
       })
 
       expect(PARENT_NODE.childNodes.length).toBe(1)
@@ -142,20 +131,16 @@ describe("Placeholder", () => {
 
     test("instead of nodes - should insert new content and correct lastDOMPlace of parent placeholder", () => {
       let childPlaceholder: Placeholder | undefined
-      let oldNode: Node | undefined
       let innerNode: Node | undefined
 
-      const parentPlaceholder = createRootPlaceholderAt(PARENT_PLACE, (place, context) => {
-        childPlaceholder = createChildPlaceholderAt(place, context, (place) => {
-          oldNode = insertNodeAt(place, document.createElement("div"))
-          return oldNode
+      const parentPlaceholder = createRootPlaceholderAt(PARENT_PLACE, (renderer) => {
+        childPlaceholder = renderer.insertPlaceholder((renderer) => {
+          renderer.insertNode(document.createElement("div"))
         })
-        return childPlaceholder
       })
 
-      childPlaceholder?.replaceContent((place) => {
-        innerNode = insertNodeAt(place, document.createElement("div"))
-        return innerNode
+      childPlaceholder?.replaceContent((renderer) => {
+        innerNode = renderer.insertNode(document.createElement("div"))
       })
 
       expect(PARENT_NODE.childNodes.length).toBe(1)
@@ -167,14 +152,11 @@ describe("Placeholder", () => {
 
     test("empty content instead of nodes - should remove old content and correct lastDOMPlace of parent placeholder", () => {
       let childPlaceholder: Placeholder | undefined
-      let oldNode: Node | undefined
 
-      const parentPlaceholder = createRootPlaceholderAt(PARENT_PLACE, (place, context) => {
-        childPlaceholder = createChildPlaceholderAt(place, context, (place) => {
-          oldNode = insertNodeAt(place, document.createElement("div"))
-          return oldNode
+      const parentPlaceholder = createRootPlaceholderAt(PARENT_PLACE, (renderer) => {
+        childPlaceholder = renderer.insertPlaceholder((renderer) => {
+          renderer.insertNode(document.createElement("div"))
         })
-        return childPlaceholder
       })
 
       childPlaceholder?.replaceContent(null)
@@ -189,18 +171,14 @@ describe("Placeholder", () => {
       let childPlaceholder1: Placeholder | undefined
       let childPlaceholder2: Placeholder | undefined
       let innerNode1: Node | undefined
-      let innerNode2: Node | undefined
 
-      const parentPlaceholder = createRootPlaceholderAt(PARENT_PLACE, (place, context) => {
-        childPlaceholder1 = createChildPlaceholderAt(place, context, (place) => {
-          innerNode1 = insertNodeAt(place, document.createElement("div"))
-          return innerNode1
+      const parentPlaceholder = createRootPlaceholderAt(PARENT_PLACE, (renderer) => {
+        childPlaceholder1 = renderer.insertPlaceholder((renderer) => {
+          innerNode1 = renderer.insertNode(document.createElement("div"))
         })
-        childPlaceholder2 = createChildPlaceholderAt(childPlaceholder1, context, (place) => {
-          innerNode2 = insertNodeAt(place, document.createElement("div"))
-          return innerNode2
+        childPlaceholder2 = renderer.insertPlaceholder((renderer) => {
+          renderer.insertNode(document.createElement("div"))
         })
-        return childPlaceholder2
       })
 
       childPlaceholder2?.replaceContent(null)
@@ -217,19 +195,15 @@ describe("Placeholder", () => {
     test("removing content of first child placeholder - should correct second's lastDOMPlace to parent place", () => {
       let childPlaceholder1: Placeholder | undefined
       let childPlaceholder2: Placeholder | undefined
-      let innerNode1: Node | undefined
       let innerNode2: Node | undefined
 
-      const parentPlaceholder = createRootPlaceholderAt(PARENT_PLACE, (place, context) => {
-        childPlaceholder1 = createChildPlaceholderAt(place, context, (place) => {
-          innerNode1 = insertNodeAt(place, document.createElement("div"))
-          return innerNode1
+      const parentPlaceholder = createRootPlaceholderAt(PARENT_PLACE, (renderer) => {
+        childPlaceholder1 = renderer.insertPlaceholder((renderer) => {
+          renderer.insertNode(document.createElement("div"))
         })
-        childPlaceholder2 = createChildPlaceholderAt(childPlaceholder1, context, (place) => {
-          innerNode2 = insertNodeAt(place, document.createElement("div"))
-          return innerNode2
+        childPlaceholder2 = renderer.insertPlaceholder((renderer) => {
+          innerNode2 = renderer.insertNode(document.createElement("div"))
         })
-        return childPlaceholder2
       })
 
       childPlaceholder1?.replaceContent(null)
@@ -260,9 +234,8 @@ describe("Placeholder", () => {
 
     describe("Registration of one lifecycle", () => {
       test("should call handlers in order on placeholder's handler", () => {
-        const placeholder = createRootPlaceholderAt(PARENT_PLACE, (place, context) => {
-          context.registerLifecycle(LIFECYCLE)
-          return place
+        const placeholder = createRootPlaceholderAt(PARENT_PLACE, (renderer) => {
+          renderer.registerLifecycle(LIFECYCLE)
         })
 
         expect(LIFECYCLE.mount).toBeCalledTimes(0)
@@ -286,10 +259,9 @@ describe("Placeholder", () => {
       })
 
       test("double registration should call handlers twice in order on placeholder's handler", () => {
-        const placeholder = createRootPlaceholderAt(PARENT_PLACE, (place, context) => {
-          context.registerLifecycle(LIFECYCLE)
-          context.registerLifecycle(LIFECYCLE)
-          return place
+        const placeholder = createRootPlaceholderAt(PARENT_PLACE, (renderer) => {
+          renderer.registerLifecycle(LIFECYCLE)
+          renderer.registerLifecycle(LIFECYCLE)
         })
 
         expect(LIFECYCLE.mount).toBeCalledTimes(0)
@@ -315,10 +287,9 @@ describe("Placeholder", () => {
       test("should call handlers in order on parent placeholder's handlers", () => {
         let childPlaceholder: Placeholder | undefined
 
-        const parentPlaceholder = createRootPlaceholderAt(PARENT_PLACE, (place, context) => {
-          childPlaceholder = createChildPlaceholderAt(place, context, (place, context) => {
-            context.registerLifecycle(LIFECYCLE)
-            return place
+        const parentPlaceholder = createRootPlaceholderAt(PARENT_PLACE, (renderer) => {
+          childPlaceholder = renderer.insertPlaceholder((renderer) => {
+            renderer.registerLifecycle(LIFECYCLE)
           })
           return childPlaceholder
         })
@@ -346,9 +317,8 @@ describe("Placeholder", () => {
 
     describe("Lifecycle on replacing content", () => {
       test("should call unmount and dispose for old content", () => {
-        const placeholder = createRootPlaceholderAt(PARENT_PLACE, (place, context) => {
-          context.registerLifecycle(LIFECYCLE)
-          return place
+        const placeholder = createRootPlaceholderAt(PARENT_PLACE, (renderer) => {
+          renderer.registerLifecycle(LIFECYCLE)
         })
 
         placeholder.mount?.()
@@ -369,9 +339,8 @@ describe("Placeholder", () => {
 
         placeholder.mount?.()
 
-        placeholder.replaceContent((place, context) => {
-          context.registerLifecycle(LIFECYCLE)
-          return place
+        placeholder.replaceContent((renderer) => {
+          renderer.registerLifecycle(LIFECYCLE)
         })
 
         expect(LIFECYCLE.mount).toBeCalledTimes(1)
@@ -388,16 +357,14 @@ describe("Placeholder", () => {
           dispose: jest.fn(),
         }
 
-        const placeholder = createRootPlaceholderAt(PARENT_PLACE, (place, context) => {
-          context.registerLifecycle(oldLifecycle)
-          return place
+        const placeholder = createRootPlaceholderAt(PARENT_PLACE, (renderer) => {
+          renderer.registerLifecycle(oldLifecycle)
         })
 
         placeholder.mount?.()
 
-        placeholder.replaceContent((place, context) => {
-          context.registerLifecycle(newLifecycle)
-          return place
+        placeholder.replaceContent((renderer) => {
+          renderer.registerLifecycle(newLifecycle)
         })
 
         expect(oldLifecycle.unmount).toBeCalledTimes(1)
@@ -422,19 +389,17 @@ describe("Placeholder", () => {
           dispose: jest.fn(),
         }
 
-        const placeholder = createRootPlaceholderAt(PARENT_PLACE, (place, context) => {
-          const placeholder = createChildPlaceholderAt(place, context, (place, context) => {
-            context.registerLifecycle(oldLifecycle)
-            return place
+        const placeholder = createRootPlaceholderAt(PARENT_PLACE, (renderer) => {
+          const placeholder = renderer.insertPlaceholder((renderer) => {
+            renderer.registerLifecycle(oldLifecycle)
           })
           return placeholder
         })
 
         placeholder.mount?.()
 
-        placeholder.replaceContent((place, context) => {
-          context.registerLifecycle(newLifecycle)
-          return place
+        placeholder.replaceContent((renderer) => {
+          renderer.registerLifecycle(newLifecycle)
         })
 
         expect(oldLifecycle.unmount).toBeCalledTimes(1)

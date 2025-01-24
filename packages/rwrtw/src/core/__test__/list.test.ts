@@ -1,9 +1,7 @@
 import { describe, expect, test, beforeEach } from "@jest/globals"
 import {
-  createListAt,
   createRootPlaceholderAt,
   DOMPlace,
-  insertNodeAt,
   placeAtBeginningOf,
   type PlaceholderContent,
   type PlaceholderList,
@@ -23,9 +21,8 @@ describe("Dynamic list", () => {
       "with empty content - should do nothing with DOM",
       (listContent) => {
         let list: PlaceholderList | undefined
-        const placeholder = createRootPlaceholderAt(PARENT_PLACE, (place, context) => {
-          list = createListAt(place, context, listContent)
-          return list
+        const placeholder = createRootPlaceholderAt(PARENT_PLACE, (renderer) => {
+          list = renderer.insertList(listContent)
         })
 
         expect(list?.length).toBe(listContent.length)
@@ -39,9 +36,8 @@ describe("Dynamic list", () => {
       const innerNode = document.createElement("div")
 
       let list: PlaceholderList | undefined
-      const placeholder = createRootPlaceholderAt(PARENT_PLACE, (place, context) => {
-        list = createListAt(place, context, [(place) => insertNodeAt(place, innerNode)])
-        return list
+      const placeholder = createRootPlaceholderAt(PARENT_PLACE, (renderer) => {
+        list = renderer.insertList([(renderer) => renderer.insertNode(innerNode)])
       })
 
       expect(list?.length).toBe(1)
@@ -57,18 +53,15 @@ describe("Dynamic list", () => {
 
       const NODES_COUNT = 10
 
-      let list: PlaceholderList | undefined
-      const placeholder = createRootPlaceholderAt(PARENT_PLACE, (place, context) => {
-        list = createListAt(place, context, [
-          (place) => {
-            insertNodeAt(place, node)
+      const placeholder = createRootPlaceholderAt(PARENT_PLACE, (renderer) => {
+        renderer.insertList([
+          (renderer) => {
+            renderer.insertNode(node)
             for (let i = 1; i < NODES_COUNT; ++i) {
-              node = insertNodeAt(node, document.createTextNode("some text"))
+              node = renderer.insertNode(document.createTextNode("some text"))
             }
-            return node
           },
         ])
-        return list
       })
 
       expect(placeholder.lastDOMPlace()).toBe(node)
@@ -85,27 +78,25 @@ describe("Dynamic list", () => {
       const NODES_COUNT = 10
 
       let list: PlaceholderList | undefined
-      const placeholder = createRootPlaceholderAt(PARENT_PLACE, (place, context) => {
+      const placeholder = createRootPlaceholderAt(PARENT_PLACE, (renderer) => {
         const listContent: PlaceholderContent[] = [
-          (place) => {
-            return insertNodeAt(place, node)
+          (renderer) => {
+            renderer.insertNode(node)
           },
         ]
 
         for (let i = 1; i < NODES_COUNT; ++i) {
-          listContent.push((place) => {
-            node = insertNodeAt(place, document.createTextNode("some text"))
-            return node
+          listContent.push((renderer) => {
+            node = renderer.insertNode(document.createTextNode("some text"))
           })
         }
 
-        list = createListAt(place, context, listContent)
+        renderer.insertList(listContent)
         return list
       })
 
       expect(placeholder.lastDOMPlace()).toBe(node)
       expect(firstNode.parentNode).toBe(PARENT_NODE)
-      expect(node.parentNode).toBe(PARENT_NODE)
       expect(PARENT_NODE.firstChild).toBe(firstNode)
       expect(PARENT_NODE.childNodes.length).toBe(NODES_COUNT)
     })

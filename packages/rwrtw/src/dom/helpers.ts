@@ -1,4 +1,4 @@
-import { ScalarData } from "src/types.js"
+import { ScalarData } from "../types.js"
 
 /**
  * Set attribute of HTML element.

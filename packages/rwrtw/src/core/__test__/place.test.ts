@@ -1,6 +1,6 @@
 import { describe, expect, test, beforeEach } from "@jest/globals"
 import { lastDOMPlaceOf, placeAtBeginningOf, type Place, insertNodeAt } from "../impl/place.js"
-import { createChildPlaceholderAt, createRootPlaceholderAt } from "../impl/placeholder.js"
+import { createRootPlaceholderAt } from "../impl/placeholder.js"
 import {
   createListAt,
   type PlaceholderList,
@@ -62,8 +62,8 @@ describe("Place", () => {
       test("after DOM Node followed by other not empty placeholder - should return last DOM Node of content of that placeholder", () => {
         const innerNode = document.createElement("div")
 
-        const beforePlaceholder = createRootPlaceholderAt(CHILD_NODE, (place) => {
-          return insertNodeAt(place, innerNode)
+        const beforePlaceholder = createRootPlaceholderAt(CHILD_NODE, (renderer) => {
+          renderer.insertNode(innerNode)
         })
 
         const placeholder = createRootPlaceholderAt(beforePlaceholder, null)
@@ -73,9 +73,8 @@ describe("Place", () => {
 
       test("at the beginning of other placeholder which follows a DOM Node - should return that node", () => {
         let placeholder: Placeholder | undefined
-        createRootPlaceholderAt(CHILD_NODE, (place, context) => {
-          placeholder = createChildPlaceholderAt(place, context, null)
-          return placeholder
+        createRootPlaceholderAt(CHILD_NODE, (renderer) => {
+          placeholder = renderer.insertPlaceholder(null)
         })
 
         if (placeholder != null) {
@@ -88,14 +87,13 @@ describe("Place", () => {
       test("at the beginning of other placeholder which follows a third placeholder - should return last DOM Node of content of that placeholder", () => {
         const innerNode = document.createElement("div")
 
-        const beforePlaceholder = createRootPlaceholderAt(CHILD_NODE, (place) => {
-          return insertNodeAt(place, innerNode)
+        const beforePlaceholder = createRootPlaceholderAt(CHILD_NODE, (renderer) => {
+          renderer.insertNode(innerNode)
         })
 
         let placeholder: Placeholder | undefined
-        createRootPlaceholderAt(beforePlaceholder, (place, context) => {
-          placeholder = createChildPlaceholderAt(place, context, null)
-          return placeholder
+        createRootPlaceholderAt(beforePlaceholder, (renderer) => {
+          placeholder = renderer.insertPlaceholder(null)
         })
 
         if (placeholder != null) {
@@ -110,16 +108,16 @@ describe("Place", () => {
       test("when placeholder's content ends with Node - should return this Node", () => {
         const innerNode = document.createElement("div")
 
-        const placeholder = createRootPlaceholderAt(CHILD_NODE, (place) => {
-          return insertNodeAt(place, innerNode)
+        const placeholder = createRootPlaceholderAt(CHILD_NODE, (renderer) => {
+          renderer.insertNode(innerNode)
         })
 
         expect(lastDOMPlaceOf(placeholder)).toBe(innerNode)
       })
 
       test("when placeholder contains only empty Placeholder - should return DOM place of itself", () => {
-        const placeholder = createRootPlaceholderAt(CHILD_NODE, (place, context) => {
-          return createChildPlaceholderAt(place, context, null)
+        const placeholder = createRootPlaceholderAt(CHILD_NODE, (renderer) => {
+          renderer.insertPlaceholder(null)
         })
 
         expect(lastDOMPlaceOf(placeholder)).toBe(CHILD_NODE)
@@ -128,9 +126,9 @@ describe("Place", () => {
       test("when placeholder's content ends with Node and empty Placeholder - should return that Node", () => {
         const innerNode = document.createElement("div")
 
-        const placeholder = createRootPlaceholderAt(CHILD_NODE, (place, context) => {
-          place = insertNodeAt(place, innerNode)
-          return createChildPlaceholderAt(place, context, null)
+        const placeholder = createRootPlaceholderAt(CHILD_NODE, (renderer) => {
+          renderer.insertNode(innerNode)
+          renderer.insertPlaceholder(null)
         })
 
         expect(lastDOMPlaceOf(placeholder)).toBe(innerNode)
@@ -139,9 +137,9 @@ describe("Place", () => {
       test("when placeholder content ends with Placeholder with Node inside -  should return that Node", () => {
         const innerNode = document.createElement("div")
 
-        const placeholder = createRootPlaceholderAt(CHILD_NODE, (place, context) => {
-          return createChildPlaceholderAt(place, context, (place) => {
-            return insertNodeAt(place, innerNode)
+        const placeholder = createRootPlaceholderAt(CHILD_NODE, (renderer) => {
+          renderer.insertPlaceholder((renderer) => {
+            renderer.insertNode(innerNode)
           })
         })
 
@@ -162,10 +160,9 @@ describe("Place", () => {
           test("when list after Node - should return that Node", () => {
             let list: PlaceholderList | undefined
 
-            createRootPlaceholderAt(CHILD_NODE, (place, context) => {
-              place = insertNodeAt(place, INNER_CHILD_NODE)
-              list = createListAt(place, context, LIST_ITEMS)
-              return list
+            createRootPlaceholderAt(CHILD_NODE, (renderer) => {
+              renderer.insertNode(INNER_CHILD_NODE)
+              list = renderer.insertList(LIST_ITEMS)
             })
 
             if (list != null) {
@@ -179,13 +176,12 @@ describe("Place", () => {
             let list: PlaceholderList | undefined
             let listPlace: Place | undefined
 
-            createRootPlaceholderAt(CHILD_NODE, (place, context) => {
-              place = insertNodeAt(place, INNER_CHILD_NODE)
+            createRootPlaceholderAt(CHILD_NODE, (renderer) => {
+              renderer.insertNode(INNER_CHILD_NODE)
 
               listPlace = placeAtBeginningOf(INNER_CHILD_NODE)
-              list = createListAt(listPlace, context, LIST_ITEMS)
-
-              return place
+              const subrenderer = renderer.createRendererAt(listPlace)
+              list = subrenderer.insertList(LIST_ITEMS)
             })
 
             if (list != null && listPlace != null) {
@@ -198,12 +194,11 @@ describe("Place", () => {
           test("when list after Placeholder with Node inside - should return that Node", () => {
             let list: PlaceholderList | undefined
 
-            createRootPlaceholderAt(CHILD_NODE, (place, context) => {
-              place = createChildPlaceholderAt(place, context, (place) => {
-                return insertNodeAt(place, INNER_CHILD_NODE)
+            createRootPlaceholderAt(CHILD_NODE, (renderer) => {
+              renderer.insertPlaceholder((renderer) => {
+                renderer.insertNode(INNER_CHILD_NODE)
               })
-              list = createListAt(place, context, LIST_ITEMS)
-              return list
+              list = renderer.insertList(LIST_ITEMS)
             })
 
             if (list != null) {
@@ -216,12 +211,11 @@ describe("Place", () => {
           test("when list at the beginning of Placeholder", () => {
             let list: PlaceholderList | undefined
 
-            createRootPlaceholderAt(CHILD_NODE, (place, context) => {
-              place = createChildPlaceholderAt(place, context, (place) => {
-                return insertNodeAt(place, INNER_CHILD_NODE)
+            createRootPlaceholderAt(CHILD_NODE, (renderer) => {
+              renderer.insertPlaceholder((renderer) => {
+                renderer.insertNode(INNER_CHILD_NODE)
               })
-              list = createListAt(place, context, LIST_ITEMS)
-              return list
+              list = renderer.insertList(LIST_ITEMS)
             })
 
             if (list != null) {
@@ -291,8 +285,8 @@ describe("Place", () => {
 
     test("if placeholder contains nodes it should insert nodes after content of placeholder", () => {
       const innerNode = document.createElement("div")
-      const placeholder = createRootPlaceholderAt(CHILD_NODE, (place) => {
-        return insertNodeAt(place, innerNode)
+      const placeholder = createRootPlaceholderAt(CHILD_NODE, (renderer) => {
+        renderer.insertNode(innerNode)
       })
       const node = document.createElement("div")
 
@@ -307,8 +301,8 @@ describe("Place", () => {
     test("if placeholder is empty it should insert nodes at lastDOMPlace of placeholder", () => {
       const node = document.createElement("div")
 
-      const placeholder = createRootPlaceholderAt(CHILD_NODE, (place, context) => {
-        return insertNodeAt(place, node)
+      const placeholder = createRootPlaceholderAt(CHILD_NODE, (renderer) => {
+        renderer.insertNode(node)
       })
 
       expect(node.previousSibling).toBe(CHILD_NODE)
@@ -318,9 +312,9 @@ describe("Place", () => {
     test("if placeholder contains nodes it should insert nodes before content of placeholder", () => {
       const innerNode = document.createElement("div")
       const innerAfterNode = document.createElement("div")
-      const placeholder = createRootPlaceholderAt(CHILD_NODE, (place) => {
-        place = insertNodeAt(place, innerNode)
-        return insertNodeAt(place, innerAfterNode)
+      const placeholder = createRootPlaceholderAt(CHILD_NODE, (renderer) => {
+        renderer.insertNode(innerNode)
+        renderer.insertNode(innerAfterNode)
       })
 
       expect(innerNode.previousSibling).toBe(CHILD_NODE)

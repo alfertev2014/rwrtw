@@ -2,13 +2,12 @@ import {
   PlaceholderComponent,
   Switch,
   hel,
-  insertNodeAt,
   placeAtBeginningOf,
   switchElse,
 } from "rwrtw"
 import Counter from "./Counter"
 
-const LowLevelApps = (): PlaceholderComponent => (place, context) => {
+const LowLevelApps = (): PlaceholderComponent => (renderer) => {
   let switchRef: Switch<string>
   let appContainer: HTMLElement
 
@@ -32,16 +31,14 @@ const LowLevelApps = (): PlaceholderComponent => (place, context) => {
     (appContainer = hel("div", { class: "app-container" })()),
   )
 
-  const sw = switchElse(
+  switchElse(
     "Counter",
     [["Counter", Counter()]],
     null,
     (_) => (switchRef = _),
-  )
+  )(renderer.createRendererAt(placeAtBeginningOf(appContainer)))
 
-  sw(placeAtBeginningOf(appContainer), context)
-
-  return insertNodeAt(place, root)
+  renderer.insertNode(root)
 }
 
 export default LowLevelApps

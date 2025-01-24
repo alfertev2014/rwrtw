@@ -3,16 +3,13 @@ import {
   type PlaceholderList,
   type Placeholder,
   type PlaceholderContext,
-  type Place,
   placeAtBeginningOf,
   type PlaceholderComponent,
-  createChildPlaceholderAt,
-  createListAt,
-  insertNodeAt,
   type Lifecycle,
   PlaceholderContent,
+  Renderer,
 } from "../core/index.js"
-import { type ScalarData } from "src/types.js"
+import { type ScalarData } from "../types.js"
 
 export type TemplateHandler<T> = (element: T, context: PlaceholderContext) => void
 export type TemplateElementAttrHandler<
@@ -48,13 +45,13 @@ export const el: {
     ...handlers: Array<TemplateHandler<HTMLElement>>
   ) =>
   (...children: TemplateContent[]): PlaceholderComponent =>
-  (place, context) => {
+  (renderer) => {
     const element = dce(tag)
 
     if (attrs != null) {
       for (const [name, value] of Object.entries(attrs)) {
         if (typeof value === "function") {
-          value(element, name, context)
+          value(element, name, renderer.context)
         } else {
           setAttr(element, name, value)
         }
@@ -62,20 +59,19 @@ export const el: {
     }
 
     for (const handler of handlers) {
-      handler(element, context)
+      handler(element, renderer.context)
     }
 
-    renderTemplateContent(element.lastChild ?? placeAtBeginningOf(element), context, children)
+    renderTemplateContent(renderer.createRendererAt(element.lastChild ?? placeAtBeginningOf(element)), children)
 
-    return insertNodeAt(place, element)
+    renderer.insertNode(element)
   }
 
 export const plh =
   (content: PlaceholderContent, handler?: TemplateHandler<Placeholder>): PlaceholderComponent =>
-  (place, context) => {
-    const res = createChildPlaceholderAt(place, context, content)
-    handler?.(res, context)
-    return res
+  (renderer) => {
+    const res = renderer.insertPlaceholder(content)
+    handler?.(res, renderer.context)
   }
 
 export const plhList =
@@ -83,17 +79,15 @@ export const plhList =
     contents: PlaceholderContent[],
     handler?: TemplateHandler<PlaceholderList>,
   ): PlaceholderComponent =>
-  (place, context) => {
-    const list = createListAt(place, context, contents)
-    handler?.(list, context)
-    return list
+  (renderer) => {
+    const list = renderer.insertList(contents)
+    handler?.(list, renderer.context)
   }
 
 export const lc =
   (lifecycle: Lifecycle): PlaceholderComponent =>
-  (place, context) => {
-    context.registerLifecycle(lifecycle)
-    return place
+  (renderer: Renderer) => {
+    renderer.registerLifecycle(lifecycle)
   }
 
 export type TemplateItem = ScalarData | PlaceholderComponent
@@ -101,31 +95,29 @@ export type TemplateItem = ScalarData | PlaceholderComponent
 export type TemplateContent = TemplateContent[] | TemplateItem
 
 const renderTemplateContent = (
-  place: Place,
-  context: PlaceholderContext,
+  renderer: Renderer,
   content: TemplateContent,
-): Place => {
+): void => {
   if (typeof content === "boolean" || content == null) {
-    return place
+    return
   }
   if (typeof content === "string") {
-    place = insertNodeAt(place, txt(content))
+    renderer.insertNode(txt(content))
   } else if (typeof content === "number" || typeof content === "bigint") {
-    place = insertNodeAt(place, txt(content.toString()))
+    renderer.insertNode(txt(content.toString()))
   } else if (typeof content === "function") {
-    place = content(place, context)
+    content(renderer)
   } else if (Array.isArray(content)) {
     for (const item of content) {
-      place = renderTemplateContent(place, context, item)
+      renderTemplateContent(renderer, item)
     }
   }
-  return place
 }
 
 export const fr =
   (...content: TemplateContent[]): PlaceholderComponent =>
-  (place, context) => {
-    return renderTemplateContent(place, context, content)
+  (renderer) => {
+    return renderTemplateContent(renderer, content)
   }
 
 export const on: {

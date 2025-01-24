@@ -100,15 +100,15 @@ export const reContent = <T extends PlainData>(
 export const reText = (value: ReactiveValue<ScalarData>): PlaceholderComponent => {
   if (isObservable(value)) {
     const content = value.current()
-    return (place, context) => {
+    return (renderer) => {
       const t = txt(content)
-      reCompute(context, value, (value) => {
+      reCompute(renderer.context, value, (value) => {
         t.textContent = toText(value)
       })
-      return insertNodeAt(place, t)
+      renderer.insertNode(t)
     }
   } else {
-    return (place) => insertNodeAt(place, txt(value))
+    return (renderer) => renderer.insertNode(txt(value))
   }
 }
 

@@ -2,13 +2,12 @@ import {
   hel,
   ifElse,
   IfElse,
-  insertNodeAt,
   placeAtBeginningOf,
   PlaceholderComponent,
   txt,
 } from "rwrtw"
 
-const Counter = (): PlaceholderComponent => (place, context) => {
+const Counter = (): PlaceholderComponent => (renderer) => {
   let counter = 0
   let evenOdd: IfElse
   let hello: Text
@@ -20,8 +19,7 @@ const Counter = (): PlaceholderComponent => (place, context) => {
     evenOdd.condition = counter % 2 === 0
   }
 
-  const root = insertNodeAt(
-    place,
+  renderer.insertNode(
     hel("div")(
       hel("h1")("It Works!"),
       hel("p", { class: "paragraph" })((hello = txt("Hello world!"))),
@@ -34,16 +32,14 @@ const Counter = (): PlaceholderComponent => (place, context) => {
 
   ifElse(
     true,
-    (place, context) => {
-      return insertNodeAt(place, hel("p")("Even!"))
+    (renderer) => {
+      renderer.insertNode(hel("p")("Even!"))
     },
-    (place, context) => {
-      return insertNodeAt(place, hel("span")("Odd!"))
+    (renderer) => {
+      renderer.insertNode(hel("span")("Odd!"))
     },
     (_) => (evenOdd = _),
-  )(placeAtBeginningOf(output), context)
-
-  return root
+  )(renderer.createRendererAt(placeAtBeginningOf(output)))
 }
 
 export default Counter

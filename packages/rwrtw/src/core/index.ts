@@ -20,7 +20,17 @@ export interface PlaceholderContext {
   readonly registerLifecycle: <L extends Lifecycle>(lifecycle: L) => L
 }
 
-export type PlaceholderComponent = (place: Place, context: PlaceholderContext) => Place
+export interface Renderer {
+  readonly registerLifecycle: <L extends Lifecycle>(lifecycle: L) => L
+  readonly insertNode: <T extends Node>(node: T) => T
+  readonly insertPlaceholder: (content: PlaceholderContent) => Placeholder
+  readonly insertList: (contents: PlaceholderContent[]) => PlaceholderList
+  readonly lastPlace: Place
+  readonly context: PlaceholderContext
+  readonly createRendererAt: (place: Place) => Renderer
+}
+
+export type PlaceholderComponent = (renderer: Renderer) => void
 
 export type PlaceholderContent = PlaceholderComponent | null
 

@@ -1,4 +1,4 @@
-import { ScalarData } from "src/types.js"
+import { ScalarData } from "../types.js"
 import { dce, setAttr } from "./helpers.js"
 
 export type ElementAttrsMap = Record<string, ScalarData>

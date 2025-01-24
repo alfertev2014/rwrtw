@@ -1,6 +1,6 @@
 import { jest, describe, expect, test } from "@jest/globals"
 import { computed, effect, source, batch } from "../observable"
-import { PlainData } from "../types"
+import { PlainData } from "../../types"
 
 describe("Observable", () => {
   describe("Source", () => {
