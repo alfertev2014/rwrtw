@@ -89,7 +89,7 @@ const ItemForm = ({ initItem, onSave, onCancel }: ItemFormProps) => {
         eff.unsubscribe()
       },
     }),
-    reContent(computed(() => initItem.current()?.id ?? null), (id) => id ? el("span")(`[${id}]`) : null),
+    reContent(computed(() => initItem.current()?.id), (id) => id ? el("span")(`[${id}]`) : null),
     Checkbox(checked),
     TextInput(textValue),
     el("button", null, on("click", handleClick))("Save"),

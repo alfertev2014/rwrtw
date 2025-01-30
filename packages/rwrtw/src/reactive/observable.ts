@@ -244,7 +244,6 @@ class ComputedImpl<out T extends PlainData = PlainData>
         }
       }
       this._status = CHANGED
-      this._current = undefined
     }
   }
 
