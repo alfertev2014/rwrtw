@@ -1,28 +1,24 @@
 .list-container {
-  padding: 1rem;
-  border: 1px dotted gray;
   display: flex;
   flex-flow: column nowrap;
-  gap: 1rem;
   align-items: center;
-
-  button {
-    padding: 0 0.5rem;
-  }
 }
 
 .list-content {
   width: 100%;
   padding: 0;
+  margin: 0.5rem 0;
+  padding: 1rem;
+  border: 1px dotted gray;
 }
 
 .list-item {
+  padding-block: 0.25rem;
   list-style: none;
   display: flex;
   flex-flow: row nowrap;
   gap: 1rem;
   justify-content: space-between;
-  margin-block: 0.5rem;
 
   .list-item-id {
     opacity: 0.7;
@@ -31,6 +27,19 @@
   .list-item-value {
     flex-grow: 1;
   }
+
+  &:hover {
+    background-color: #eee;
+  }
+
+  &.list-item-selected {
+    background-color: #ccc;
+  }
+}
+
+.list-item-actions {
+  display: flex;
+  gap: 0.2rem;
 }
 
 .list-add-item-form {

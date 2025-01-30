@@ -30,6 +30,22 @@ h6 {
   font-size: 1.1rem;
 }
 
+button {
+  display: inline-block;
+  padding: 0.125rem 0.5rem;
+  border-radius: 0.2rem;
+  border: 1px solid #999;
+  background-color: #eee;
+  &:hover {
+    background-color: #ccc;
+    border-color: #777;
+  }
+  &:focus {
+    border-color: #666;
+    background-color: #bbb;
+  }
+}
+
 .main-layout {
   max-width: 1200px;
   margin: 0 auto;

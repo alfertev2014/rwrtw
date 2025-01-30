@@ -10,7 +10,7 @@ import {
   on,
   PlaceholderComponent,
   reAttr,
-  reCompute,
+  reClass,
   reContent,
   reList,
   reProp,
@@ -55,12 +55,6 @@ type Item = {
 
 let idGenerator = 0
 
-const createItem = (text: string, checked: boolean = false): Item => ({
-  id: ++idGenerator,
-  text,
-  checked,
-})
-
 type ItemFormProps = {
   initItem: Observable<Item | null>
   onSave: (item: Item) => void
@@ -95,27 +89,23 @@ const ItemForm = ({ initItem, onSave, onCancel }: ItemFormProps) => {
         eff.unsubscribe()
       },
     }),
-    el("span")(
-      reText(
-        computed(() =>
-          initItem.current()?.id ? `[${initItem.current()?.id}]` : null,
-        ),
-      ),
-    ),
+    reContent(computed(() => initItem.current()?.id ?? null), (id) => id ? el("span")(`[${id}]`) : null),
     Checkbox(checked),
     TextInput(textValue),
     el("button", null, on("click", handleClick))("Save"),
-    el("button", null, on("click", onCancel))("Cancel")
+    el("button", null, on("click", onCancel))("Cancel"),
   )
 }
 
 const List = (): PlaceholderComponent => {
   const items = listSource<Item>(
-    ["One", "Two", "Three", "Four", "Five", "Six", "Seven"].map((text) =>
-      createItem(text),
-    ),
+    ["One", "Two", "Three", "Four", "Five", "Six", "Seven"].map((text) => ({
+      id: ++idGenerator,
+      text,
+      checked: false,
+    })),
   )
-  
+
   const selectedItem = source<Item | null>(null)
 
   return el("div", { class: "list-container" })(
@@ -123,8 +113,17 @@ const List = (): PlaceholderComponent => {
     el("ol", { class: "list-content" })(
       reList(items, (item) => {
         const id = computed(() => item.current().id)
-        return el("li", { class: "list-item" })(
-          el("span", { class: "list-item-id" })("[", reText(id), "]"),
+        return el(
+          "li",
+          { class: "list-item" },
+          reClass(
+            "list-item-selected",
+            computed(() => selectedItem.current()?.id === id.current()),
+          ),
+        )(
+          el("span", { class: "list-item-id" })(
+            reText(computed(() => `[${id.current()}]`)),
+          ),
           el("span", { class: "list-item-value" })(
             reText(
               computed(
@@ -133,7 +132,7 @@ const List = (): PlaceholderComponent => {
               ),
             ),
           ),
-          el("span")(
+          el("span", { class: "list-item-actions" })(
             el(
               "button",
               null,
@@ -142,7 +141,6 @@ const List = (): PlaceholderComponent => {
               }),
               reAttr("data-id", id),
             )("Edit"),
-            " ",
             el(
               "button",
               null,
@@ -156,7 +154,6 @@ const List = (): PlaceholderComponent => {
               }),
               reAttr("data-id", id),
             )("^"),
-            " ",
 
             el(
               "button",
@@ -171,7 +168,6 @@ const List = (): PlaceholderComponent => {
               }),
               reAttr("data-id", id),
             )("v"),
-            " ",
 
             el(
               "button",
@@ -194,7 +190,7 @@ const List = (): PlaceholderComponent => {
       ItemForm({
         initItem: selectedItem,
         onSave: (item) => {
-          const found = items.data.find(i => i.current().id === item.id)
+          const found = items.data.find((i) => i.current().id === item.id)
           if (found) {
             found.change(item)
           } else {
@@ -203,7 +199,7 @@ const List = (): PlaceholderComponent => {
         },
         onCancel: () => {
           selectedItem.change(null)
-        }
+        },
       }),
     ),
   )

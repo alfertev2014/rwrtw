@@ -1,7 +1,6 @@
 import {
   computed,
   el,
-  fr,
   on,
   PlaceholderComponent,
   reIf,
@@ -14,7 +13,9 @@ const Counter = (): PlaceholderComponent => {
 
   return el("div")(
     el("h1")("It Works!"),
-    el("p", { class: "paragraph" })("Hello world ", reText(counter), " times!"),
+    el("p", { class: "paragraph" })(
+      reText(computed(() => `Hello world ${counter.current()} times!`)),
+    ),
     el(
       "button",
       null,
@@ -22,14 +23,14 @@ const Counter = (): PlaceholderComponent => {
         counter.update((prev) => prev + 1)
       }),
       on("focus", () => {
-        console.log("fuck")
+        console.log("Increment button is focused")
       }),
     )("Increment"),
     el("div")(
       reIf(
         computed(() => counter.current() % 2 === 0),
         el("p")("Even!"),
-        el("span")("Odd!"),
+        el("p")("Odd!"),
       ),
     ),
   )
