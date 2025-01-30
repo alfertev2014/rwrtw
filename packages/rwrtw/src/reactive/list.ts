@@ -13,6 +13,7 @@ export interface ListObservable<T extends PlainData = PlainData> {
 }
 
 export interface ListSource<T extends PlainData = PlainData> extends ListObservable<T> {
+  readonly data: Source<T>[]
   removeItem: (i: number) => void
   moveItem: (from: number, to: number) => void
   replaceItem: (i: number, element: T) => void
@@ -30,7 +31,7 @@ export class ListSourceImpl<T extends PlainData = PlainData> implements ListSour
     this.observer = null
   }
 
-  get data(): Observable<T>[] {
+  get data(): Source<T>[] {
     return this._data
   }
 

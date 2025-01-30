@@ -1,5 +1,5 @@
 import { setAttr, toText, txt } from "../dom/helpers.js"
-import { type PlaceholderContext, type PlaceholderComponent, PlaceholderContent, insertNodeAt } from "../index.js"
+import { type PlaceholderContext, type PlaceholderComponent, PlaceholderContent } from "../index.js"
 import { ListObservable } from "../reactive/list.js"
 import { type Observable, effect, isObservable } from "../reactive/observable.js"
 import { PlainData, ScalarData } from "../types.js"
