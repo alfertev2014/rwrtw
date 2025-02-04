@@ -1,4 +1,4 @@
-export { type ListObserver, type ListSource, listSource } from "./list.js"
+export { type ListObserver, type ListSource, listSource, listFromArray } from "./list.js"
 export {
   type Observable,
   type Source,

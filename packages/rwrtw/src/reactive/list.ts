@@ -14,12 +14,12 @@ export interface ListObservable<T extends PlainData = PlainData> {
 
 export interface ListSource<T extends PlainData = PlainData> extends ListObservable<T> {
   readonly data: Source<T>[]
-  removeItem: (i: number) => void
-  moveItem: (from: number, to: number) => void
-  replaceItem: (i: number, element: T) => void
-  insertItem: (i: number, element: T) => void
+  readonly removeItem: (i: number) => void
+  readonly moveItem: (from: number, to: number) => void
+  readonly replaceItem: (i: number, element: T) => void
+  readonly insertItem: (i: number, element: T) => void
 
-  change: (data: T[]) => void
+  readonly change: (data: T[]) => void
 }
 
 export class ListSourceImpl<T extends PlainData = PlainData> implements ListSource<T> {

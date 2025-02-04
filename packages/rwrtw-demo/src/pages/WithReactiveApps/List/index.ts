@@ -2,10 +2,9 @@ import {
   computed,
   effect,
   el,
-  ev,
   fr,
   lc,
-  listSource,
+  listFromArray,
   Observable,
   on,
   PlaceholderComponent,
@@ -61,44 +60,49 @@ type ItemFormProps = {
   onCancel: () => void
 }
 
-const ItemForm = ({ initItem, onSave, onCancel }: ItemFormProps) => {
-  const textValue = source<string>("")
-  const checked = source<boolean>(false)
+const ItemForm =
+  ({ initItem, onSave, onCancel }: ItemFormProps): PlaceholderComponent =>
+  (renderer) => {
+    const textValue = source<string>("")
+    const checked = source<boolean>(false)
 
-  const eff = effect(initItem, (initValue) => {
-    if (initValue) {
-      textValue.change(initValue.text)
-      checked.change(initValue.checked)
-    } else {
-      textValue.change("")
-      checked.change(false)
-    }
-  })
-
-  const handleClick = () => {
-    onSave({
-      id: initItem.current()?.id ?? idGenerator++,
-      text: textValue.current(),
-      checked: checked.current(),
+    const eff = effect(initItem, (initValue) => {
+      if (initValue) {
+        textValue.change(initValue.text)
+        checked.change(initValue.checked)
+      } else {
+        textValue.change("")
+        checked.change(false)
+      }
     })
+
+    const handleClick = () => {
+      onSave({
+        id: initItem.current()?.id ?? ++idGenerator,
+        text: textValue.current(),
+        checked: checked.current(),
+      })
+    }
+
+    return fr(
+      lc({
+        dispose() {
+          eff.unsubscribe()
+        },
+      }),
+      reContent(
+        computed(() => initItem.current()?.id),
+        (id) => (id ? el("span")(`[${id}]`) : null),
+      ),
+      Checkbox(checked),
+      TextInput(textValue),
+      el("button", null, on("click", handleClick))("Save"),
+      el("button", null, on("click", onCancel))("Cancel"),
+    )(renderer)
   }
 
-  return fr(
-    lc({
-      dispose() {
-        eff.unsubscribe()
-      },
-    }),
-    reContent(computed(() => initItem.current()?.id), (id) => id ? el("span")(`[${id}]`) : null),
-    Checkbox(checked),
-    TextInput(textValue),
-    el("button", null, on("click", handleClick))("Save"),
-    el("button", null, on("click", onCancel))("Cancel"),
-  )
-}
-
 const List = (): PlaceholderComponent => {
-  const items = listSource<Item>(
+  const items = source<Item[]>(
     ["One", "Two", "Three", "Four", "Five", "Six", "Seven"].map((text) => ({
       id: ++idGenerator,
       text,
@@ -106,12 +110,17 @@ const List = (): PlaceholderComponent => {
     })),
   )
 
-  const selectedItem = source<Item | null>(null)
+  const selectedId = source<number | null>(null)
+  const selectedItem = computed(() => items.current().find(i => i.id === selectedId.current()) ?? null)
+  const count = computed(() => items.current().length)
+  const checkedCount = computed(
+    () => items.current().filter((i) => i.checked).length,
+  )
 
   return el("div", { class: "list-container" })(
     el("h1")("Dynamic list"),
     el("ol", { class: "list-content" })(
-      reList(items, (item) => {
+      reList(listFromArray(items), (item) => {
         const id = computed(() => item.current().id)
         return el(
           "li",
@@ -137,7 +146,7 @@ const List = (): PlaceholderComponent => {
               "button",
               null,
               on("click", () => {
-                selectedItem.change(item.current())
+                selectedId.change(id.current())
               }),
               reAttr("data-id", id),
             )("Edit"),
@@ -145,12 +154,21 @@ const List = (): PlaceholderComponent => {
               "button",
               null,
               on("click", () => {
-                const index = items.data.findIndex(
-                  (item) => item.current().id === id.current(),
-                )
-                if (index >= 0) {
-                  items.moveItem(index, 0)
-                }
+                items.update((items) => {
+                  const index = items.findIndex(
+                    (item) => item.id === id.current(),
+                  )
+
+                  if (index >= 0) {
+                    const res = [...items]
+                    const item = items[index]
+                    res.splice(index, 1)
+                    res.splice(0, 0, item)
+                    return res
+                  } else {
+                    return items
+                  }
+                })
               }),
               reAttr("data-id", id),
             )("^"),
@@ -159,12 +177,21 @@ const List = (): PlaceholderComponent => {
               "button",
               null,
               on("click", () => {
-                const index = items.data.findIndex(
-                  (item) => item.current().id === id.current(),
-                )
-                if (index >= 0) {
-                  items.moveItem(index, items.data.length - 1)
-                }
+                items.update((items) => {
+                  const index = items.findIndex(
+                    (item) => item.id === id.current(),
+                  )
+
+                  if (index >= 0) {
+                    const res = [...items]
+                    const item = items[index]
+                    res.splice(index, 1)
+                    res.push(item)
+                    return res
+                  } else {
+                    return items
+                  }
+                })
               }),
               reAttr("data-id", id),
             )("v"),
@@ -172,33 +199,43 @@ const List = (): PlaceholderComponent => {
             el(
               "button",
               null,
-              on("click", () => {
-                const index = items.data.findIndex(
-                  (item) => item.current().id === id.current(),
-                )
-                if (index >= 0) {
-                  items.removeItem(index)
-                }
-              }),
+              on("click", () =>
+                items.update((items) =>
+                  items.filter((i) => i.id !== id.current()),
+                ),
+              ),
               reAttr("data-id", id),
             )("Remove"),
           ),
         )
       }),
+      el("hr")(),
+      el(
+        "div",
+        {},
+      )(
+        el("span")(
+          reText(
+            computed(() => `${checkedCount.current()} / ${count.current()}`),
+          ),
+        ),
+      ),
     ),
     el("div", { class: "list-add-item-form" })(
       ItemForm({
         initItem: selectedItem,
-        onSave: (item) => {
-          const found = items.data.find((i) => i.current().id === item.id)
-          if (found) {
-            found.change(item)
-          } else {
-            items.insertItem(items.data.length, item)
-          }
+        onSave: (newItem) => {
+          items.update(items => {
+            const found = items.find(i => i.id === newItem.id)
+            if (found) {
+              return items.map(i => i.id === newItem.id ? newItem : i)
+            } else {
+              return items.concat([newItem])
+            }
+          })
         },
         onCancel: () => {
-          selectedItem.change(null)
+          selectedId.change(null)
         },
       }),
     ),

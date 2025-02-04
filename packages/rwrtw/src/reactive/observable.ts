@@ -433,13 +433,16 @@ class EffectImpl<T extends PlainData = PlainData> implements Observer, RunnableE
   }
 
   suspend(): void {
+    if (this._status !== DANGLING) {
+      this._trigger._unsubscribe(this)
+    }
     this._status = SUSPENDED
   }
 
   resume(): void {
     if (this._status === SUSPENDED) {
       this._schedule()
-      this._status = POSSIBLY_CHANGED
+      this._status = DANGLING
     }
   }
 
