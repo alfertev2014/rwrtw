@@ -13,14 +13,17 @@ export interface ObjectObservable<T extends PlainData = PlainData> {
   observer: ObjectObserver<T> | null
 }
 
-export interface ObjectSource<T extends PlainData = PlainData> extends ObjectObservable<T> {
+export interface ObjectSource<T extends PlainData = PlainData>
+  extends ObjectObservable<T> {
   removeItem: (key: string | number) => void
   insertItem: (key: string | number, element: T) => void
 
   change: (data: { [key: string | number]: T }) => void
 }
 
-export class ObjectSourceImpl<T extends PlainData = PlainData> implements ObjectSource<T> {
+export class ObjectSourceImpl<T extends PlainData = PlainData>
+  implements ObjectSource<T>
+{
   readonly _data: {
     [key: string | number]: Source<T>
   }

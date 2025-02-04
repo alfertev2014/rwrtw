@@ -4,7 +4,7 @@ import {
   createRef,
   dyn,
   el,
-  ev,
+  on,
   ref,
 } from "rwrtw"
 import Counter from "./Counter"
@@ -32,13 +32,7 @@ const WithDslApps = (): PlaceholderComponent => {
         b.current.className = selectedApp === app ? "app-selected" : ""
       }
     })
-    return el(
-      "button",
-      {
-        click: ev(handleClick(app)),
-      },
-      ref(b),
-    )
+    return el("button", null, on("click", handleClick(app)), ref(b))
   }
 
   return el("div", { class: "apps-container" })(

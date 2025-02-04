@@ -4,7 +4,13 @@ import {
   type Lifecycle,
   type PlaceholderContext,
 } from "../index.js"
-import { type DOMPlace, type Place, lastDOMPlaceOf, takeNodesFrom, insertNodeAt } from "./place.js"
+import {
+  type DOMPlace,
+  type Place,
+  lastDOMPlaceOf,
+  takeNodesFrom,
+  insertNodeAt,
+} from "./place.js"
 import { PlaceholderImpl } from "./placeholder.js"
 
 const spawnBefore = (
@@ -83,7 +89,8 @@ export class PlaceholderListImpl implements PlaceholderList, Lifecycle {
     }
 
     const fragment = takeNodesFrom(placeholder._place, placeholder)
-    const toPlace = fromIndex < toIndex ? this._items[toIndex] : this._items[toIndex]._place
+    const toPlace =
+      fromIndex < toIndex ? this._items[toIndex] : this._items[toIndex]._place
     placeholder._place = toPlace
     insertNodeAt(toPlace, fragment)
 

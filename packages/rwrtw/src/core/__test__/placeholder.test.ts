@@ -72,11 +72,14 @@ describe("Placeholder", () => {
       let childPlaceholder: Placeholder | undefined
       let innerNode: Node | undefined
 
-      const parentPlaceholder = createRootPlaceholderAt(PARENT_PLACE, (renderer) => {
-        childPlaceholder = renderer.insertPlaceholder((renderer) => {
-          innerNode = renderer.insertNode(document.createElement("div"))
-        })
-      })
+      const parentPlaceholder = createRootPlaceholderAt(
+        PARENT_PLACE,
+        (renderer) => {
+          childPlaceholder = renderer.insertPlaceholder((renderer) => {
+            innerNode = renderer.insertNode(document.createElement("div"))
+          })
+        },
+      )
 
       expect(childPlaceholder?.lastDOMPlace()).toBe(innerNode)
       expect(parentPlaceholder.lastDOMPlace()).toBe(innerNode)
@@ -90,14 +93,17 @@ describe("Placeholder", () => {
       let innerNode1: Node | undefined
       let innerNode2: Node | undefined
 
-      const parentPlaceholder = createRootPlaceholderAt(PARENT_PLACE, (renderer) => {
-        childPlaceholder1 = renderer.insertPlaceholder((renderer) => {
-          innerNode1 = renderer.insertNode(document.createElement("div"))
-        })
-        childPlaceholder2 = renderer.insertPlaceholder((renderer) => {
-          innerNode2 = renderer.insertNode(document.createElement("div"))
-        })
-      })
+      const parentPlaceholder = createRootPlaceholderAt(
+        PARENT_PLACE,
+        (renderer) => {
+          childPlaceholder1 = renderer.insertPlaceholder((renderer) => {
+            innerNode1 = renderer.insertNode(document.createElement("div"))
+          })
+          childPlaceholder2 = renderer.insertPlaceholder((renderer) => {
+            innerNode2 = renderer.insertNode(document.createElement("div"))
+          })
+        },
+      )
 
       expect(PARENT_NODE.childNodes.length).toBe(2)
       expect(PARENT_NODE.firstChild).toBe(innerNode1)
@@ -114,9 +120,12 @@ describe("Placeholder", () => {
       let childPlaceholder: Placeholder | undefined
       let innerNode: Node | undefined
 
-      const parentPlaceholder = createRootPlaceholderAt(PARENT_PLACE, (renderer) => {
-        childPlaceholder = renderer.insertPlaceholder(null)
-      })
+      const parentPlaceholder = createRootPlaceholderAt(
+        PARENT_PLACE,
+        (renderer) => {
+          childPlaceholder = renderer.insertPlaceholder(null)
+        },
+      )
 
       childPlaceholder?.replaceContent((renderer) => {
         innerNode = renderer.insertNode(document.createElement("div"))
@@ -133,11 +142,14 @@ describe("Placeholder", () => {
       let childPlaceholder: Placeholder | undefined
       let innerNode: Node | undefined
 
-      const parentPlaceholder = createRootPlaceholderAt(PARENT_PLACE, (renderer) => {
-        childPlaceholder = renderer.insertPlaceholder((renderer) => {
-          renderer.insertNode(document.createElement("div"))
-        })
-      })
+      const parentPlaceholder = createRootPlaceholderAt(
+        PARENT_PLACE,
+        (renderer) => {
+          childPlaceholder = renderer.insertPlaceholder((renderer) => {
+            renderer.insertNode(document.createElement("div"))
+          })
+        },
+      )
 
       childPlaceholder?.replaceContent((renderer) => {
         innerNode = renderer.insertNode(document.createElement("div"))
@@ -153,11 +165,14 @@ describe("Placeholder", () => {
     test("empty content instead of nodes - should remove old content and correct lastDOMPlace of parent placeholder", () => {
       let childPlaceholder: Placeholder | undefined
 
-      const parentPlaceholder = createRootPlaceholderAt(PARENT_PLACE, (renderer) => {
-        childPlaceholder = renderer.insertPlaceholder((renderer) => {
-          renderer.insertNode(document.createElement("div"))
-        })
-      })
+      const parentPlaceholder = createRootPlaceholderAt(
+        PARENT_PLACE,
+        (renderer) => {
+          childPlaceholder = renderer.insertPlaceholder((renderer) => {
+            renderer.insertNode(document.createElement("div"))
+          })
+        },
+      )
 
       childPlaceholder?.replaceContent(null)
 
@@ -172,14 +187,17 @@ describe("Placeholder", () => {
       let childPlaceholder2: Placeholder | undefined
       let innerNode1: Node | undefined
 
-      const parentPlaceholder = createRootPlaceholderAt(PARENT_PLACE, (renderer) => {
-        childPlaceholder1 = renderer.insertPlaceholder((renderer) => {
-          innerNode1 = renderer.insertNode(document.createElement("div"))
-        })
-        childPlaceholder2 = renderer.insertPlaceholder((renderer) => {
-          renderer.insertNode(document.createElement("div"))
-        })
-      })
+      const parentPlaceholder = createRootPlaceholderAt(
+        PARENT_PLACE,
+        (renderer) => {
+          childPlaceholder1 = renderer.insertPlaceholder((renderer) => {
+            innerNode1 = renderer.insertNode(document.createElement("div"))
+          })
+          childPlaceholder2 = renderer.insertPlaceholder((renderer) => {
+            renderer.insertNode(document.createElement("div"))
+          })
+        },
+      )
 
       childPlaceholder2?.replaceContent(null)
 
@@ -197,14 +215,17 @@ describe("Placeholder", () => {
       let childPlaceholder2: Placeholder | undefined
       let innerNode2: Node | undefined
 
-      const parentPlaceholder = createRootPlaceholderAt(PARENT_PLACE, (renderer) => {
-        childPlaceholder1 = renderer.insertPlaceholder((renderer) => {
-          renderer.insertNode(document.createElement("div"))
-        })
-        childPlaceholder2 = renderer.insertPlaceholder((renderer) => {
-          innerNode2 = renderer.insertNode(document.createElement("div"))
-        })
-      })
+      const parentPlaceholder = createRootPlaceholderAt(
+        PARENT_PLACE,
+        (renderer) => {
+          childPlaceholder1 = renderer.insertPlaceholder((renderer) => {
+            renderer.insertNode(document.createElement("div"))
+          })
+          childPlaceholder2 = renderer.insertPlaceholder((renderer) => {
+            innerNode2 = renderer.insertNode(document.createElement("div"))
+          })
+        },
+      )
 
       childPlaceholder1?.replaceContent(null)
 
@@ -234,9 +255,12 @@ describe("Placeholder", () => {
 
     describe("Registration of one lifecycle", () => {
       test("should call handlers in order on placeholder's handler", () => {
-        const placeholder = createRootPlaceholderAt(PARENT_PLACE, (renderer) => {
-          renderer.registerLifecycle(LIFECYCLE)
-        })
+        const placeholder = createRootPlaceholderAt(
+          PARENT_PLACE,
+          (renderer) => {
+            renderer.registerLifecycle(LIFECYCLE)
+          },
+        )
 
         expect(LIFECYCLE.mount).toBeCalledTimes(0)
         expect(LIFECYCLE.unmount).toBeCalledTimes(0)
@@ -259,10 +283,13 @@ describe("Placeholder", () => {
       })
 
       test("double registration should call handlers twice in order on placeholder's handler", () => {
-        const placeholder = createRootPlaceholderAt(PARENT_PLACE, (renderer) => {
-          renderer.registerLifecycle(LIFECYCLE)
-          renderer.registerLifecycle(LIFECYCLE)
-        })
+        const placeholder = createRootPlaceholderAt(
+          PARENT_PLACE,
+          (renderer) => {
+            renderer.registerLifecycle(LIFECYCLE)
+            renderer.registerLifecycle(LIFECYCLE)
+          },
+        )
 
         expect(LIFECYCLE.mount).toBeCalledTimes(0)
         expect(LIFECYCLE.unmount).toBeCalledTimes(0)
@@ -287,12 +314,15 @@ describe("Placeholder", () => {
       test("should call handlers in order on parent placeholder's handlers", () => {
         let childPlaceholder: Placeholder | undefined
 
-        const parentPlaceholder = createRootPlaceholderAt(PARENT_PLACE, (renderer) => {
-          childPlaceholder = renderer.insertPlaceholder((renderer) => {
-            renderer.registerLifecycle(LIFECYCLE)
-          })
-          return childPlaceholder
-        })
+        const parentPlaceholder = createRootPlaceholderAt(
+          PARENT_PLACE,
+          (renderer) => {
+            childPlaceholder = renderer.insertPlaceholder((renderer) => {
+              renderer.registerLifecycle(LIFECYCLE)
+            })
+            return childPlaceholder
+          },
+        )
 
         expect(LIFECYCLE.mount).toBeCalledTimes(0)
         expect(LIFECYCLE.unmount).toBeCalledTimes(0)
@@ -317,9 +347,12 @@ describe("Placeholder", () => {
 
     describe("Lifecycle on replacing content", () => {
       test("should call unmount and dispose for old content", () => {
-        const placeholder = createRootPlaceholderAt(PARENT_PLACE, (renderer) => {
-          renderer.registerLifecycle(LIFECYCLE)
-        })
+        const placeholder = createRootPlaceholderAt(
+          PARENT_PLACE,
+          (renderer) => {
+            renderer.registerLifecycle(LIFECYCLE)
+          },
+        )
 
         placeholder.mount?.()
         expect(LIFECYCLE.mount).toBeCalledTimes(1)
@@ -357,9 +390,12 @@ describe("Placeholder", () => {
           dispose: jest.fn(),
         }
 
-        const placeholder = createRootPlaceholderAt(PARENT_PLACE, (renderer) => {
-          renderer.registerLifecycle(oldLifecycle)
-        })
+        const placeholder = createRootPlaceholderAt(
+          PARENT_PLACE,
+          (renderer) => {
+            renderer.registerLifecycle(oldLifecycle)
+          },
+        )
 
         placeholder.mount?.()
 
@@ -389,12 +425,15 @@ describe("Placeholder", () => {
           dispose: jest.fn(),
         }
 
-        const placeholder = createRootPlaceholderAt(PARENT_PLACE, (renderer) => {
-          const placeholder = renderer.insertPlaceholder((renderer) => {
-            renderer.registerLifecycle(oldLifecycle)
-          })
-          return placeholder
-        })
+        const placeholder = createRootPlaceholderAt(
+          PARENT_PLACE,
+          (renderer) => {
+            const placeholder = renderer.insertPlaceholder((renderer) => {
+              renderer.registerLifecycle(oldLifecycle)
+            })
+            return placeholder
+          },
+        )
 
         placeholder.mount?.()
 

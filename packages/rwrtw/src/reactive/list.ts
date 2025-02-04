@@ -12,7 +12,8 @@ export interface ListObservable<T extends PlainData = PlainData> {
   observer: ListObserver<T> | null
 }
 
-export interface ListSource<T extends PlainData = PlainData> extends ListObservable<T> {
+export interface ListSource<T extends PlainData = PlainData>
+  extends ListObservable<T> {
   readonly data: Source<T>[]
   readonly removeItem: (i: number) => void
   readonly moveItem: (from: number, to: number) => void
@@ -22,7 +23,9 @@ export interface ListSource<T extends PlainData = PlainData> extends ListObserva
   readonly change: (data: T[]) => void
 }
 
-export class ListSourceImpl<T extends PlainData = PlainData> implements ListSource<T> {
+export class ListSourceImpl<T extends PlainData = PlainData>
+  implements ListSource<T>
+{
   readonly _data: Source<T>[]
   observer: ListObserver<T> | null
 
@@ -47,7 +50,9 @@ export class ListSourceImpl<T extends PlainData = PlainData> implements ListSour
 
     for (let i = 0; i < newData.length; ++i) {
       const element = newData[i]
-      const elementIndex = this._data.findIndex((el) => el.current() === element)
+      const elementIndex = this._data.findIndex(
+        (el) => el.current() === element,
+      )
       if (elementIndex >= 0) {
         if (elementIndex !== i) {
           this.moveItem(elementIndex, i)
@@ -84,7 +89,9 @@ export class ListSourceImpl<T extends PlainData = PlainData> implements ListSour
   }
 }
 
-export const listSource = <T extends PlainData>(initialData: T[]): ListSource<T> => {
+export const listSource = <T extends PlainData>(
+  initialData: T[],
+): ListSource<T> => {
   return new ListSourceImpl<T>(initialData)
 }
 

@@ -11,26 +11,24 @@ import {
 } from "../core/index.js"
 import { type ScalarData } from "../types.js"
 
-export type TemplateHandler<T> = (element: T, context: PlaceholderContext) => void
-export type TemplateElementAttrHandler<
-  E extends HTMLElement = HTMLElement,
-  A extends string = string,
-> = (element: E, attrName: A, context: PlaceholderContext) => void
-
-export type TemplateElementAttrsConfig<E extends HTMLElement = HTMLElement> = {
-  [key: string]: ScalarData | TemplateElementAttrHandler<E, typeof key>
+export type TemplateHandler<T> = (
+  element: T,
+  context: PlaceholderContext,
+) => void
+export type TemplateElementAttrsConfig = {
+  [key: string]: ScalarData
 }
 
 export const el: {
   <K extends keyof HTMLElementTagNameMap>(
     tag: K,
-    attrs?: TemplateElementAttrsConfig<HTMLElementTagNameMap[K]> | null,
+    attrs?: TemplateElementAttrsConfig | null,
     ...handlers: Array<TemplateHandler<HTMLElementTagNameMap[K]>>
   ): (...children: TemplateContent[]) => PlaceholderComponent
   /** @deprecated */
   <K extends keyof HTMLElementDeprecatedTagNameMap>(
     tag: K,
-    attrs?: TemplateElementAttrsConfig<HTMLElementDeprecatedTagNameMap[K]> | null,
+    attrs?: TemplateElementAttrsConfig | null,
     ...handlers: Array<TemplateHandler<HTMLElementDeprecatedTagNameMap[K]>>
   ): (...children: TemplateContent[]) => PlaceholderComponent
   (
@@ -50,11 +48,7 @@ export const el: {
 
     if (attrs != null) {
       for (const [name, value] of Object.entries(attrs)) {
-        if (typeof value === "function") {
-          value(element, name, renderer.context)
-        } else {
-          setAttr(element, name, value)
-        }
+        setAttr(element, name, value)
       }
     }
 
@@ -62,13 +56,21 @@ export const el: {
       handler(element, renderer.context)
     }
 
-    renderTemplateContent(renderer.createRendererAt(element.lastChild ?? placeAtBeginningOf(element)), children)
+    renderTemplateContent(
+      renderer.createRendererAt(
+        element.lastChild ?? placeAtBeginningOf(element),
+      ),
+      children,
+    )
 
     renderer.insertNode(element)
   }
 
 export const plh =
-  (content: PlaceholderContent, handler?: TemplateHandler<Placeholder>): PlaceholderComponent =>
+  (
+    content: PlaceholderContent,
+    handler?: TemplateHandler<Placeholder>,
+  ): PlaceholderComponent =>
   (renderer) => {
     const res = renderer.insertPlaceholder(content)
     handler?.(res, renderer.context)
@@ -153,23 +155,12 @@ export const attr =
   }
 
 export const prop =
-  <T extends HTMLElement, N extends keyof T>(name: N, value: T[N]): TemplateHandler<T> =>
+  <T extends HTMLElement, N extends keyof T>(
+    name: N,
+    value: T[N],
+  ): TemplateHandler<T> =>
   (element) => {
     element[name] = value
-  }
-
-export const ev =
-  (
-    listener: EventListenerOrEventListenerObject,
-    options?: boolean | AddEventListenerOptions,
-  ): TemplateElementAttrHandler =>
-  (element, eventName, context) => {
-    element.addEventListener(eventName, listener, options)
-    context.registerLifecycle({
-      dispose() {
-        element.removeEventListener(eventName, listener, options)
-      },
-    })
   }
 
 export interface TemplateRefObject<T> {

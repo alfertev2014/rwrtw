@@ -7,7 +7,11 @@ import { ScalarData } from "../types.js"
  * @param name Name of the attribute
  * @param value New value of the attribute. If it is falsy value, the attribute will be removed.
  */
-export const setAttr = (element: Element, name: string, value: ScalarData): void => {
+export const setAttr = (
+  element: Element,
+  name: string,
+  value: ScalarData,
+): void => {
   if (value != null && value !== false) {
     element.setAttribute(name, value === true ? "" : value.toString())
   } else {
@@ -24,11 +28,14 @@ export const setAttr = (element: Element, name: string, value: ScalarData): void
 export const dce: {
   <K extends keyof HTMLElementTagNameMap>(tagName: K): HTMLElementTagNameMap[K]
   /** @deprecated */
-  <K extends keyof HTMLElementDeprecatedTagNameMap>(tagName: K): HTMLElementDeprecatedTagNameMap[K]
+  <K extends keyof HTMLElementDeprecatedTagNameMap>(
+    tagName: K,
+  ): HTMLElementDeprecatedTagNameMap[K]
   (tagName: string): HTMLElement
 } = (tag: string): HTMLElement => document.createElement(tag)
 
-export const toText = (value: ScalarData) => value != null && typeof value !== "boolean" ? value.toString() : ""
+export const toText = (value: ScalarData) =>
+  value != null && typeof value !== "boolean" ? value.toString() : ""
 
 /**
  * Abbreviation for the document.createTextNode.

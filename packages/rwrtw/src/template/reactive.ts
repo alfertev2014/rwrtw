@@ -1,9 +1,17 @@
 import { setAttr, toText, txt } from "../dom/helpers.js"
-import { type PlaceholderContext, type PlaceholderComponent, PlaceholderContent } from "../index.js"
+import {
+  type PlaceholderContext,
+  type PlaceholderComponent,
+  PlaceholderContent,
+} from "../index.js"
 import { ListObservable } from "../reactive/list.js"
-import { type Observable, effect, isObservable } from "../reactive/observable.js"
+import {
+  type Observable,
+  effect,
+  isObservable,
+} from "../reactive/observable.js"
 import { PlainData, ScalarData } from "../types.js"
-import { plhList, plh, type TemplateElementAttrHandler, TemplateHandler } from "./index.js"
+import { plhList, plh, TemplateHandler } from "./index.js"
 
 export type ReactiveValue<T extends PlainData> = Observable<T> | T
 
@@ -76,16 +84,6 @@ export const reStyle =
     })
   }
 
-export const reAt =
-  <H extends HTMLElement, T extends ScalarData>(
-    trigger: ReactiveValue<T>,
-  ): TemplateElementAttrHandler<H> =>
-  (element, attrName, context) => {
-    reCompute(context, trigger, (value) => {
-      setAttr(element, attrName, value)
-    })
-  }
-
 export const reContent = <T extends PlainData>(
   trigger: Observable<T>,
   contentFunc: (value: T) => PlaceholderContent,
@@ -97,7 +95,9 @@ export const reContent = <T extends PlainData>(
   })
 }
 
-export const reText = (value: ReactiveValue<ScalarData>): PlaceholderComponent => {
+export const reText = (
+  value: ReactiveValue<ScalarData>,
+): PlaceholderComponent => {
   if (isObservable(value)) {
     const content = value.current()
     return (renderer) => {

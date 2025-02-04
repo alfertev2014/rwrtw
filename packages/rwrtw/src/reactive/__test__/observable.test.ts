@@ -53,29 +53,32 @@ describe("Observable", () => {
       },
     )
 
-    describe.each([[42], ["blabla"], [null], [{}], [[]]])("Computing value", (returnedValue) => {
-      test("Computed value should return value which computed function returned", () => {
-        const c = computed(() => returnedValue)
-
-        expect(c.current()).toBe(returnedValue)
-      })
-
-      test.each([[1], [2], [10]])(
-        "computed should return the cached value after first computing",
-        (callCount) => {
+    describe.each([[42], ["blabla"], [null], [{}], [[]]])(
+      "Computing value",
+      (returnedValue) => {
+        test("Computed value should return value which computed function returned", () => {
           const c = computed(() => returnedValue)
 
-          const values: unknown[] = []
-          for (let i = 0; i < callCount; ++i) {
-            values.push(c.current())
-          }
+          expect(c.current()).toBe(returnedValue)
+        })
 
-          for (let i = 0; i < callCount; ++i) {
-            expect(values[i]).toBe(returnedValue)
-          }
-        },
-      )
-    })
+        test.each([[1], [2], [10]])(
+          "computed should return the cached value after first computing",
+          (callCount) => {
+            const c = computed(() => returnedValue)
+
+            const values: unknown[] = []
+            for (let i = 0; i < callCount; ++i) {
+              values.push(c.current())
+            }
+
+            for (let i = 0; i < callCount; ++i) {
+              expect(values[i]).toBe(returnedValue)
+            }
+          },
+        )
+      },
+    )
   })
 
   describe("Dependencies", () => {
@@ -312,7 +315,9 @@ describe("Observable", () => {
         const c1 = computed(computedFunc1)
         const computedFunc2 = jest.fn(() => "c2-" + s.current())
         const c2 = computed(computedFunc2)
-        const computedFunc3 = jest.fn(() => `c3 ${c1.current()} ${c2.current()}`)
+        const computedFunc3 = jest.fn(
+          () => `c3 ${c1.current()} ${c2.current()}`,
+        )
         const c3 = computed(computedFunc3)
 
         s.change("sChanged")
@@ -337,7 +342,9 @@ describe("Observable", () => {
           const c1 = computed(computedFunc1)
           const computedFunc2 = jest.fn(() => "c2-" + s.current())
           const c2 = computed(computedFunc2)
-          const computedFunc3 = jest.fn(() => `c3 ${c1.current()} ${c2.current()}`)
+          const computedFunc3 = jest.fn(
+            () => `c3 ${c1.current()} ${c2.current()}`,
+          )
           const c3 = computed(computedFunc3)
 
           s.change("sChanged")
@@ -360,8 +367,12 @@ describe("Observable", () => {
       test("in true case computed should return values returned by its computed functions", () => {
         const s = source<string>("s")
         const c1 = computed(() => "c1-" + s.current())
-        const c2 = computed(() => (s.current() !== "" ? "c2-" + s.current() : ""))
-        const c3 = computed(() => `c3 ${c1.current() !== "" ? c2.current() : "false"}`)
+        const c2 = computed(() =>
+          s.current() !== "" ? "c2-" + s.current() : "",
+        )
+        const c3 = computed(
+          () => `c3 ${c1.current() !== "" ? c2.current() : "false"}`,
+        )
 
         expect(c1.current()).toBe("c1-s")
         expect(c2.current()).toBe("c2-s")
@@ -370,9 +381,13 @@ describe("Observable", () => {
 
       test("in false case computed should return values returned by its computed functions", () => {
         const s = source("")
-        const c1 = computed(() => (s.current() !== "" ? "c1-" + s.current() : ""))
+        const c1 = computed(() =>
+          s.current() !== "" ? "c1-" + s.current() : "",
+        )
         const c2 = computed(() => "c2-" + s.current())
-        const c3 = computed(() => `c3 ${c1.current() !== "" ? c2.current() : "false"}`)
+        const c3 = computed(
+          () => `c3 ${c1.current() !== "" ? c2.current() : "false"}`,
+        )
 
         expect(c1.current()).toBe("")
         expect(c2.current()).toBe("c2-")
@@ -381,9 +396,13 @@ describe("Observable", () => {
 
       test("should recalculate if source changed", () => {
         const s = source<string>("s")
-        const c1 = computed(() => (s.current() !== "" ? "c1-" + s.current() : ""))
+        const c1 = computed(() =>
+          s.current() !== "" ? "c1-" + s.current() : "",
+        )
         const c2 = computed(() => "c2-" + s.current())
-        const c3 = computed(() => `c3 ${c1.current() !== "" ? c2.current() : "false"}`)
+        const c3 = computed(
+          () => `c3 ${c1.current() !== "" ? c2.current() : "false"}`,
+        )
 
         c3.current()
         s.change("")
@@ -395,11 +414,15 @@ describe("Observable", () => {
 
       test("in true case computed function should be called only if computed value called", () => {
         const s = source<string>("s")
-        const computedFunc1 = jest.fn(() => (s.current() !== "" ? "c1-" + s.current() : ""))
+        const computedFunc1 = jest.fn(() =>
+          s.current() !== "" ? "c1-" + s.current() : "",
+        )
         const c1 = computed(computedFunc1)
         const computedFunc2 = jest.fn(() => "c2" + s.current())
         const c2 = computed(computedFunc2)
-        const computedFunc3 = jest.fn(() => `c3 ${c1.current() !== "" ? c2.current() : "false"}`)
+        const computedFunc3 = jest.fn(
+          () => `c3 ${c1.current() !== "" ? c2.current() : "false"}`,
+        )
         const c3 = computed(computedFunc3)
 
         s.change("sChanged")
@@ -418,11 +441,15 @@ describe("Observable", () => {
 
       test("in false case computed function should be called only if computed value called", () => {
         const s = source<string>("s")
-        const computedFunc1 = jest.fn(() => (s.current() !== "" ? "c1-" + s.current() : ""))
+        const computedFunc1 = jest.fn(() =>
+          s.current() !== "" ? "c1-" + s.current() : "",
+        )
         const c1 = computed(computedFunc1)
         const computedFunc2 = jest.fn(() => "c2" + s.current())
         const c2 = computed(computedFunc2)
-        const computedFunc3 = jest.fn(() => `c3 ${c1.current() !== "" ? c2.current() : "false"}`)
+        const computedFunc3 = jest.fn(
+          () => `c3 ${c1.current() !== "" ? c2.current() : "false"}`,
+        )
         const c3 = computed(computedFunc3)
 
         s.change("")
@@ -443,11 +470,15 @@ describe("Observable", () => {
         "in false case after true case computed should unsubscribe from non needed dependency and and its compute function should not be called any more",
         (callCount) => {
           const s = source<string>("s")
-          const computedFunc1 = jest.fn(() => (s.current() !== "" ? "c1-" + s.current() : ""))
+          const computedFunc1 = jest.fn(() =>
+            s.current() !== "" ? "c1-" + s.current() : "",
+          )
           const c1 = computed(computedFunc1)
           const computedFunc2 = jest.fn(() => "c2" + s.current())
           const c2 = computed(computedFunc2)
-          const computedFunc3 = jest.fn(() => `c3 ${c1.current() !== "" ? c2.current() : "false"}`)
+          const computedFunc3 = jest.fn(
+            () => `c3 ${c1.current() !== "" ? c2.current() : "false"}`,
+          )
           const c3 = computed(computedFunc3)
 
           c3.current()

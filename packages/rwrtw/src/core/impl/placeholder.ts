@@ -37,15 +37,19 @@ class RendererImpl implements Renderer {
   }
 
   insertNode<T extends Node>(node: T): T {
-    return this._place = insertNodeAt(this._place, node)
+    return (this._place = insertNodeAt(this._place, node))
   }
 
   insertPlaceholder(content: PlaceholderContent): Placeholder {
-    return this._place = createChildPlaceholderAt(this._place, this._context, content)
+    return (this._place = createChildPlaceholderAt(
+      this._place,
+      this._context,
+      content,
+    ))
   }
 
   insertList(contents: PlaceholderContent[]): PlaceholderList {
-    return this._place = createListAt(this._place, this._context, contents)
+    return (this._place = createListAt(this._place, this._context, contents))
   }
 
   createRendererAt(place: Place): Renderer {
@@ -64,7 +68,9 @@ export class ParentPlaceholderPlace implements PlaceholderNode {
   }
 }
 
-export class PlaceholderImpl implements Placeholder, Lifecycle, PlaceholderContext {
+export class PlaceholderImpl
+  implements Placeholder, Lifecycle, PlaceholderContext
+{
   readonly _lifecycles: Lifecycle[]
   _place: Place
   _lastPlace: Place

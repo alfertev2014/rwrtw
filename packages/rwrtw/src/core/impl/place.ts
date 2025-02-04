@@ -5,7 +5,8 @@ export class ParentNodePlace {
   }
 }
 
-export const placeAtBeginningOf = (node: ParentNode): DOMPlace => new ParentNodePlace(node)
+export const placeAtBeginningOf = (node: ParentNode): DOMPlace =>
+  new ParentNodePlace(node)
 
 export type DOMPlace = Node | ParentNodePlace
 
@@ -50,7 +51,10 @@ export const removeNodesAt = (place: Place, lastPlace: Place): void => {
   }
 }
 
-export const takeNodesFrom = (place: Place, lastPlace: Place): DocumentFragment => {
+export const takeNodesFrom = (
+  place: Place,
+  lastPlace: Place,
+): DocumentFragment => {
   const lastDomPlace: DOMPlace | null = lastDOMPlaceOf(lastPlace)
   const fragment = document.createDocumentFragment()
   if (lastDomPlace != null && lastDomPlace instanceof Node) {

@@ -1,7 +1,6 @@
 import {
   createRef,
   el,
-  ev,
   ifElse,
   IfElse,
   on,
@@ -14,7 +13,7 @@ const Counter = (): PlaceholderComponent => {
   const evenOdd = createRef<IfElse>()
   const hello = createRef<HTMLParagraphElement>()
 
-  function handleClick(this: HTMLButtonElement, e: Event) {
+  function handleClick(this: HTMLButtonElement) {
     if (hello.current) {
       hello.current.textContent = `Hello world ${++counter} times!`
     }

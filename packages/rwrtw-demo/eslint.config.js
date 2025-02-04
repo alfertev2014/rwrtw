@@ -9,7 +9,12 @@ export default tseslint.config(
   ...tseslint.configs.recommendedTypeChecked,
   prettierConfig,
   {
-    ignores: ["**/__test__/**", "**/eslint.config.js"],
+    ignores: [
+      "**/__test__/**",
+      "**/eslint.config.js",
+      "dist",
+      "**/webpack.config.js",
+    ],
   },
   {
     languageOptions: {

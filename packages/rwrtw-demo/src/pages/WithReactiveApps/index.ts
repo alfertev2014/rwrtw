@@ -3,7 +3,6 @@ import {
   el,
   on,
   PlaceholderComponent,
-  reAttr,
   reClass,
   reContent,
   source,
@@ -22,7 +21,10 @@ const WithReactiveApps = (): PlaceholderComponent => {
     el(
       "button",
       null,
-      reClass("app-selected", computed(() => selectedApp.current() === app)),
+      reClass(
+        "app-selected",
+        computed(() => selectedApp.current() === app),
+      ),
       on("click", handleClick(app)),
     )
 

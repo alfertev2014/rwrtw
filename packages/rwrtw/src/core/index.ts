@@ -7,7 +7,10 @@ export {
   type Place,
   insertNodeAt,
 } from "./impl/place.js"
-export { createRootPlaceholderAt, createChildPlaceholderAt } from "./impl/placeholder.js"
+export {
+  createRootPlaceholderAt,
+  createChildPlaceholderAt,
+} from "./impl/placeholder.js"
 export { createListAt } from "./impl/list.js"
 
 export interface Lifecycle {

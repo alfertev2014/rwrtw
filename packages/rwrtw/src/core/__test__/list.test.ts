@@ -21,9 +21,12 @@ describe("Dynamic list", () => {
       "with empty content - should do nothing with DOM",
       (listContent) => {
         let list: PlaceholderList | undefined
-        const placeholder = createRootPlaceholderAt(PARENT_PLACE, (renderer) => {
-          list = renderer.insertList(listContent)
-        })
+        const placeholder = createRootPlaceholderAt(
+          PARENT_PLACE,
+          (renderer) => {
+            list = renderer.insertList(listContent)
+          },
+        )
 
         expect(list?.length).toBe(listContent.length)
         expect(list?.lastDOMPlace()).toBe(PARENT_PLACE)
@@ -37,7 +40,9 @@ describe("Dynamic list", () => {
 
       let list: PlaceholderList | undefined
       const placeholder = createRootPlaceholderAt(PARENT_PLACE, (renderer) => {
-        list = renderer.insertList([(renderer) => renderer.insertNode(innerNode)])
+        list = renderer.insertList([
+          (renderer) => renderer.insertNode(innerNode),
+        ])
       })
 
       expect(list?.length).toBe(1)

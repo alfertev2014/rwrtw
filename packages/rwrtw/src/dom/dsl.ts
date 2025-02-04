@@ -21,7 +21,9 @@ export const hel =
         continue
       }
       element.append(
-        typeof child !== "string" && !(child instanceof Node) ? child.toString() : child,
+        typeof child !== "string" && !(child instanceof Node)
+          ? child.toString()
+          : child,
       )
     }
     return element

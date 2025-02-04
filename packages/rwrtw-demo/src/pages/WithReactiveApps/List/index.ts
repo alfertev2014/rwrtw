@@ -111,7 +111,9 @@ const List = (): PlaceholderComponent => {
   )
 
   const selectedId = source<number | null>(null)
-  const selectedItem = computed(() => items.current().find(i => i.id === selectedId.current()) ?? null)
+  const selectedItem = computed(
+    () => items.current().find((i) => i.id === selectedId.current()) ?? null,
+  )
   const count = computed(() => items.current().length)
   const checkedCount = computed(
     () => items.current().filter((i) => i.checked).length,
@@ -225,10 +227,10 @@ const List = (): PlaceholderComponent => {
       ItemForm({
         initItem: selectedItem,
         onSave: (newItem) => {
-          items.update(items => {
-            const found = items.find(i => i.id === newItem.id)
+          items.update((items) => {
+            const found = items.find((i) => i.id === newItem.id)
             if (found) {
-              return items.map(i => i.id === newItem.id ? newItem : i)
+              return items.map((i) => (i.id === newItem.id ? newItem : i))
             } else {
               return items.concat([newItem])
             }

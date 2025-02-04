@@ -55,7 +55,9 @@ type ChangedStatus =
 /**
  * Reactive observable node to manage subscribers.
  */
-class ObservableImpl<out T extends PlainData = PlainData> implements Observable<T> {
+class ObservableImpl<out T extends PlainData = PlainData>
+  implements Observable<T>
+{
   /**
    * Current stored value or last computed value.
    *
@@ -125,8 +127,11 @@ class ObservableImpl<out T extends PlainData = PlainData> implements Observable<
   }
 }
 
-export const isObservable = (value: PlainData | Observable<PlainData>): value is Observable => value instanceof ObservableImpl
-export const currentOf = <T extends PlainData>(value: T | Observable<T>): T => isObservable(value) ? value.current() : value
+export const isObservable = (
+  value: PlainData | Observable<PlainData>,
+): value is Observable => value instanceof ObservableImpl
+export const currentOf = <T extends PlainData>(value: T | Observable<T>): T =>
+  isObservable(value) ? value.current() : value
 
 interface Observer {
   readonly _markChanged: () => void
@@ -163,7 +168,10 @@ export interface Source<T extends PlainData = PlainData> extends Observable<T> {
 /**
  * @see Source
  */
-class SourceImpl<T extends PlainData = PlainData> extends ObservableImpl<T> implements Source<T> {
+class SourceImpl<T extends PlainData = PlainData>
+  extends ObservableImpl<T>
+  implements Source<T>
+{
   override _current: T
   constructor(initValue: T) {
     super()
@@ -200,7 +208,8 @@ class SourceImpl<T extends PlainData = PlainData> extends ObservableImpl<T> impl
  * Caches its current value if observable dependencies are not changed.
  */
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface Computed<out T extends PlainData = PlainData> extends Observable<T> {}
+export interface Computed<out T extends PlainData = PlainData>
+  extends Observable<T> {}
 
 /**
  * @see Computed
@@ -387,7 +396,9 @@ interface RunnableEffect extends Effect {
   _run(): void
 }
 
-class EffectImpl<T extends PlainData = PlainData> implements Observer, RunnableEffect {
+class EffectImpl<T extends PlainData = PlainData>
+  implements Observer, RunnableEffect
+{
   _status: ChangedStatus
   readonly _trigger: ObservableImpl<T>
   readonly _effectFunc: (value: T) => void

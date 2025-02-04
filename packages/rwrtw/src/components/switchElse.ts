@@ -26,20 +26,25 @@ export const switchElse = <T>(
   defaultBranch: PlaceholderContent,
   handler?: TemplateHandler<Switch<T>>,
 ): PlaceholderComponent =>
-  plh(selectBranch(initValue, branches, defaultBranch), (placeholder, context) => {
-    let _value: T = initValue
-    handler?.(
-      {
-        get value(): T {
-          return _value
+  plh(
+    selectBranch(initValue, branches, defaultBranch),
+    (placeholder, context) => {
+      let _value: T = initValue
+      handler?.(
+        {
+          get value(): T {
+            return _value
+          },
+          set value(value: T) {
+            if (_value !== value) {
+              placeholder.replaceContent(
+                selectBranch(value, branches, defaultBranch),
+              )
+              _value = value
+            }
+          },
         },
-        set value(value: T) {
-          if (_value !== value) {
-            placeholder.replaceContent(selectBranch(value, branches, defaultBranch))
-            _value = value
-          }
-        },
-      },
-      context,
-    )
-  })
+        context,
+      )
+    },
+  )
