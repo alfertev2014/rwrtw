@@ -284,9 +284,8 @@ class ComputedImpl<out T extends PlainData = PlainData>
       // if dependency is not present in list
 
       if (count < this._deps.length) {
-        const d = this._deps[count]
+        this._deps.push(this._deps[count]) // move the old at the end without any array shifting
         this._deps[count] = dependency // place it at current tracking count index
-        this._deps.push(d) // move the old at the end without any array shifting
       } else {
         this._deps.push(dependency) // just push to the end
       }
@@ -299,9 +298,8 @@ class ComputedImpl<out T extends PlainData = PlainData>
       if (index > count) {
         // if it is nod already in right place
 
-        const d = this._deps[count]
+        this._deps[index] = this._deps[count]
         this._deps[count] = dependency // place it at current tracking count index by swapping values
-        this._deps[index] = d
       }
       this._depsCount++
       // we needn't call _subscribe for the dependency because it was already in list
@@ -377,6 +375,7 @@ class ComputedImpl<out T extends PlainData = PlainData>
         dependency._unsubscribe(this)
       }
       this._deps.length = 0
+      this._depsCount = 0
       this._status = DANGLING
     }
   }

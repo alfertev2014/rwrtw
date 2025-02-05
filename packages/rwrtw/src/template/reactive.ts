@@ -21,6 +21,7 @@ export const reCompute = <T extends PlainData>(
   sideEffectFunc: (value: T) => void,
 ): void => {
   if (isObservable(trigger)) {
+    sideEffectFunc(trigger.current())
     const eff = effect(trigger, sideEffectFunc)
     context.registerLifecycle({
       dispose() {
@@ -85,14 +86,18 @@ export const reStyle =
   }
 
 export const reContent = <T extends PlainData>(
-  trigger: Observable<T>,
+  trigger: ReactiveValue<T>,
   contentFunc: (value: T) => PlaceholderContent,
-): PlaceholderComponent => {
-  return plh(contentFunc(trigger.current()), (placeholder, context) => {
-    reCompute(context, trigger, (value) => {
-      placeholder.replaceContent(contentFunc(value))
+): PlaceholderContent => {
+  if (isObservable(trigger)) {
+    return plh(contentFunc(trigger.current()), (placeholder, context) => {
+      reCompute(context, trigger, (value) => {
+        placeholder.replaceContent(contentFunc(value))
+      })
     })
-  })
+  } else {
+    return contentFunc(trigger)
+  }
 }
 
 export const reText = (
@@ -113,10 +118,10 @@ export const reText = (
 }
 
 export const reIf = (
-  condition: Observable<boolean>,
+  condition: ReactiveValue<boolean>,
   trueBranch: PlaceholderContent,
   falseBranch: PlaceholderContent,
-): PlaceholderComponent => {
+): PlaceholderContent => {
   return reContent(condition, (value) => (value ? trueBranch : falseBranch))
 }
 
