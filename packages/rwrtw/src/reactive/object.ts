@@ -1,4 +1,10 @@
-import { assertIsNotInComputing, effect, Observable, Source, source } from "./observable.js"
+import {
+  assertIsNotInComputing,
+  effect,
+  Observable,
+  Source,
+  source,
+} from "./observable.js"
 import { PlainData } from "../types.js"
 
 export interface ObjectObserver<T extends PlainData = PlainData> {

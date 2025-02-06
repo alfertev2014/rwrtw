@@ -60,7 +60,7 @@ class ObservableAssertionError extends Error {}
 /**
  * Assert that condition is true.
  * Throw exception with message otherwise.
- * 
+ *
  * @param condition Condition to check
  * @param message Error message if condition is not true
  */
@@ -72,10 +72,12 @@ export const observableAssert = (condition: boolean, message: string) => {
 
 /**
  * Assert that execution is not in a compute function.
- * 
+ *
  * @param message Error message for exception
  */
-export const assertIsNotInComputing = (message: string = "Doing something in compute function") => {
+export const assertIsNotInComputing = (
+  message: string = "Doing something in compute function",
+) => {
   observableAssert(trackingSubscriber === null, message)
 }
 
@@ -154,9 +156,20 @@ class ObservableImpl<out T extends PlainData = PlainData>
   }
 }
 
+/**
+ * Check that value is Observable node
+ * @param value Plain value or Observable node.
+ * @returns True if value is Observable node.
+ */
 export const isObservable = (
   value: PlainData | Observable<PlainData>,
 ): value is Observable => value instanceof ObservableImpl
+
+/**
+ * Get current() of value if value is Observable. Returns value as is otherwise.
+ * @param value Plain value or Observable node.
+ * @returns Current value of Observable or value as is.
+ */
 export const currentOf = <T extends PlainData>(value: T | Observable<T>): T =>
   isObservable(value) ? value.current() : value
 
@@ -557,7 +570,10 @@ export const effect = <T extends PlainData>(
   trigger: Observable<T>,
   effectFunc: (value: T) => void = noop,
 ): Effect => {
-  observableAssert(trigger instanceof ObservableImpl, "Trigger of effect is not observable")
+  observableAssert(
+    trigger instanceof ObservableImpl,
+    "Trigger of effect is not observable",
+  )
   assertIsNotInComputing("Creating effect in compute function")
 
   const res = new EffectImpl<T>(trigger as ObservableImpl<T>, effectFunc)
@@ -567,6 +583,13 @@ export const effect = <T extends PlainData>(
   return res
 }
 
+/**
+ * Do some actions in batch and defer all effects to the end of batch.
+ * If batch is called inside other batch, the effects will be deferred to the end of the root batch.
+ *
+ * @param func Function with mutations of source values in graph.
+ * @returns The value func will return.
+ */
 export const batch = <T>(func: () => T): T => {
   assertIsNotInComputing("Starting batch in compute function")
 
