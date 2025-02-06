@@ -1,4 +1,4 @@
-import { effect, Observable, Source, source } from "./observable.js"
+import { assertIsNotInComputing, effect, Observable, Source, source } from "./observable.js"
 import { PlainData } from "../types.js"
 
 export interface ListObserver<T extends PlainData = PlainData> {
@@ -39,6 +39,8 @@ export class ListSourceImpl<T extends PlainData = PlainData>
   }
 
   change(newData: T[]): void {
+    assertIsNotInComputing("Changing list in compute function")
+
     for (let i = 0; i < this._data.length; ) {
       const element = this._data[i]
       if (newData.findIndex((el) => el === element.current()) < 0) {
@@ -65,11 +67,15 @@ export class ListSourceImpl<T extends PlainData = PlainData>
   }
 
   removeItem(i: number): void {
+    assertIsNotInComputing("Removing item from list in compute function")
+
     this._data.splice(i, 1)
     this.observer?.onRemove?.(i)
   }
 
   moveItem(from: number, to: number): void {
+    assertIsNotInComputing("Moving item in list in compute function")
+
     if (from !== to) {
       const item = this._data[from]
       this._data.splice(from, 1)
@@ -79,10 +85,14 @@ export class ListSourceImpl<T extends PlainData = PlainData>
   }
 
   replaceItem(i: number, element: T): void {
+    assertIsNotInComputing("Replacing item list in compute function")
+
     this._data[i].change(element)
   }
 
   insertItem(i: number, element: T): void {
+    assertIsNotInComputing("Inserting item into list in compute function")
+
     const item = source(element)
     this._data.splice(i, 0, item)
     this.observer?.onInsert?.(i, item)
@@ -92,6 +102,8 @@ export class ListSourceImpl<T extends PlainData = PlainData>
 export const listSource = <T extends PlainData>(
   initialData: T[],
 ): ListSource<T> => {
+  assertIsNotInComputing("Creating list in compute function")
+
   return new ListSourceImpl<T>(initialData)
 }
 

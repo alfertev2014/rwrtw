@@ -43,7 +43,7 @@ const DANGLING = -1
 const SUSPENDED = -2
 
 /**
- * Statuses of observable node in reactive graph.
+ * Status of observable node in reactive graph.
  */
 type ChangedStatus =
   | typeof NOT_CHANGED
@@ -51,6 +51,33 @@ type ChangedStatus =
   | typeof CHANGED
   | typeof DANGLING
   | typeof SUSPENDED
+
+/**
+ * Internal assertion error in reactive
+ */
+class ObservableAssertionError extends Error {}
+
+/**
+ * Assert that condition is true.
+ * Throw exception with message otherwise.
+ * 
+ * @param condition Condition to check
+ * @param message Error message if condition is not true
+ */
+export const observableAssert = (condition: boolean, message: string) => {
+  if (!condition) {
+    throw new ObservableAssertionError(message)
+  }
+}
+
+/**
+ * Assert that execution is not in a compute function.
+ * 
+ * @param message Error message for exception
+ */
+export const assertIsNotInComputing = (message: string = "Doing something in compute function") => {
+  observableAssert(trackingSubscriber === null, message)
+}
 
 /**
  * Reactive observable node to manage subscribers.
@@ -182,9 +209,7 @@ class SourceImpl<T extends PlainData = PlainData>
    * @see Source.change
    */
   change(value: T): void {
-    if (trackingSubscriber !== null) {
-      throw new Error("Changing source value in compute function")
-    }
+    assertIsNotInComputing("Changing source value in compute function")
 
     if (value !== this._current) {
       this._propagateChanged()
@@ -343,16 +368,16 @@ class ComputedImpl<out T extends PlainData = PlainData>
   }
 
   /**
-   * Call the compute function in tracking context
+   * Call the compute function in compute function
    */
   _callComputeFunc(): void {
     const previousValue = this._current
     const prevTracking = trackingSubscriber
-    trackingSubscriber = this // Establish new tracking context for this
+    trackingSubscriber = this // Establish new compute function for this
     try {
       this._current = this._computeFunc()
     } finally {
-      trackingSubscriber = prevTracking // restore previous tracking context
+      trackingSubscriber = prevTracking // restore previous compute function
 
       // Unsubscribe from not actual dependencies at tail of list
       for (let i = this._depsCount; i < this._deps.length; ++i) {
@@ -443,6 +468,8 @@ class EffectImpl<T extends PlainData = PlainData>
   }
 
   suspend(): void {
+    assertIsNotInComputing("Suspending effect in compute function")
+
     if (this._status !== DANGLING) {
       this._trigger._unsubscribe(this)
     }
@@ -450,6 +477,8 @@ class EffectImpl<T extends PlainData = PlainData>
   }
 
   resume(): void {
+    assertIsNotInComputing("Resuming effect in compute function")
+
     if (this._status === SUSPENDED) {
       this._schedule()
       this._status = DANGLING
@@ -511,16 +540,14 @@ const runQueues = (): void => {
 }
 
 export const source = <T extends PlainData>(initValue: T): Source<T> => {
-  if (trackingSubscriber !== null) {
-    throw new Error("Creating source in tracking context")
-  }
+  assertIsNotInComputing("Creating source in compute function")
+
   return new SourceImpl<T>(initValue)
 }
 
 export const computed = <T extends PlainData>(func: () => T): Observable<T> => {
-  if (trackingSubscriber !== null) {
-    throw new Error("Creating computed in tracking context")
-  }
+  assertIsNotInComputing("Creating computed in compute function")
+
   return new ComputedImpl(func)
 }
 
@@ -528,38 +555,20 @@ const noop = () => {}
 
 export const effect = <T extends PlainData>(
   trigger: Observable<T>,
-  sideEffectFunc: (value: T) => void = noop,
+  effectFunc: (value: T) => void = noop,
 ): Effect => {
-  if (!(trigger instanceof ObservableImpl)) {
-    throw new Error("Trigger of effect is not observable")
-  }
-  if (trackingSubscriber !== null) {
-    throw new Error("Creating effect in tracking context")
-  }
-  const res = new EffectImpl<T>(trigger as ObservableImpl<T>, sideEffectFunc)
+  observableAssert(trigger instanceof ObservableImpl, "Trigger of effect is not observable")
+  assertIsNotInComputing("Creating effect in compute function")
+
+  const res = new EffectImpl<T>(trigger as ObservableImpl<T>, effectFunc)
   if (batchDepth === 0) {
     runQueues()
   }
   return res
 }
 
-export const untrack = <T>(func: () => T): T => {
-  if (trackingSubscriber === null) {
-    return func()
-  }
-  const prevTracking = trackingSubscriber
-  trackingSubscriber = null
-  try {
-    return func()
-  } finally {
-    trackingSubscriber = prevTracking
-  }
-}
-
 export const batch = <T>(func: () => T): T => {
-  if (trackingSubscriber !== null) {
-    throw new Error("Running batch in tracking context")
-  }
+  assertIsNotInComputing("Starting batch in compute function")
 
   batchDepth++
   try {

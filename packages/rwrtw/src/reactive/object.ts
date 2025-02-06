@@ -1,4 +1,4 @@
-import { effect, Observable, Source, source } from "./observable.js"
+import { assertIsNotInComputing, effect, Observable, Source, source } from "./observable.js"
 import { PlainData } from "../types.js"
 
 export interface ObjectObserver<T extends PlainData = PlainData> {
@@ -43,6 +43,8 @@ export class ObjectSourceImpl<T extends PlainData = PlainData>
   }
 
   change(newData: { [key: string | number]: T }): void {
+    assertIsNotInComputing("Changing object in compute function")
+
     for (const [key] of Object.keys(this._data)) {
       if (!(key in newData)) {
         this.removeItem(key)
@@ -59,11 +61,15 @@ export class ObjectSourceImpl<T extends PlainData = PlainData>
   }
 
   removeItem(key: number | string): void {
+    assertIsNotInComputing("Removing key from object in compute function")
+
     delete this._data[key]
     this.observer?.onRemove?.(key)
   }
 
   insertItem(key: number | string, element: T): void {
+    assertIsNotInComputing("Inserting key into object in compute function")
+
     const item = source(element)
     this._data[key] = item
     this.observer?.onInsert?.(key, item)
@@ -73,6 +79,8 @@ export class ObjectSourceImpl<T extends PlainData = PlainData>
 export const objectSource = <T extends PlainData>(initialData: {
   [key: string | number]: T
 }): ObjectSource<T> => {
+  assertIsNotInComputing("Creating object in compute function")
+
   return new ObjectSourceImpl<T>(initialData)
 }
 
