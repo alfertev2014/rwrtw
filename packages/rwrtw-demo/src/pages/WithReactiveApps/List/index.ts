@@ -1,9 +1,7 @@
 import {
   computed,
-  effect,
   el,
   fr,
-  lc,
   listFromArray,
   Observable,
   on,
@@ -11,6 +9,7 @@ import {
   reAttr,
   reClass,
   reContent,
+  reEffect,
   reList,
   reProp,
   reText,
@@ -60,13 +59,24 @@ type ItemFormProps = {
   onCancel: () => void
 }
 
-const ItemForm =
-  ({ initItem, onSave, onCancel }: ItemFormProps): PlaceholderComponent =>
-  (renderer) => {
-    const textValue = source<string>("")
-    const checked = source<boolean>(false)
+const ItemForm = ({
+  initItem,
+  onSave,
+  onCancel,
+}: ItemFormProps): PlaceholderComponent => {
+  const textValue = source<string>("")
+  const checked = source<boolean>(false)
 
-    const eff = effect(initItem, (initValue) => {
+  const handleClick = () => {
+    onSave({
+      id: initItem.current()?.id ?? ++idGenerator,
+      text: textValue.current(),
+      checked: checked.current(),
+    })
+  }
+
+  return fr(
+    reEffect(initItem, (initValue) => {
       if (initValue) {
         textValue.change(initValue.text)
         checked.change(initValue.checked)
@@ -74,32 +84,17 @@ const ItemForm =
         textValue.change("")
         checked.change(false)
       }
-    })
-
-    const handleClick = () => {
-      onSave({
-        id: initItem.current()?.id ?? ++idGenerator,
-        text: textValue.current(),
-        checked: checked.current(),
-      })
-    }
-
-    return fr(
-      lc({
-        dispose() {
-          eff.unsubscribe()
-        },
-      }),
-      reContent(
-        computed(() => initItem.current()?.id),
-        (id) => (id ? el("span")(`[${id}]`) : null),
-      ),
-      Checkbox(checked),
-      TextInput(textValue),
-      el("button", null, on("click", handleClick))("Save"),
-      el("button", null, on("click", onCancel))("Cancel"),
-    )(renderer)
-  }
+    }),
+    reContent(
+      computed(() => initItem.current()?.id),
+      (id) => (id ? el("span")(`[${id}]`) : null),
+    ),
+    Checkbox(checked),
+    TextInput(textValue),
+    el("button", null, on("click", handleClick))("Save"),
+    el("button", null, on("click", onCancel))("Cancel"),
+  )
+}
 
 const List = (): PlaceholderComponent => {
   const items = source<Item[]>(

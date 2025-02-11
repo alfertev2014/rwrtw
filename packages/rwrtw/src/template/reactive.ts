@@ -18,20 +18,29 @@ export type ReactiveValue<T extends PlainData> = Observable<T> | T
 export const reCompute = <T extends PlainData>(
   context: PlaceholderContext,
   trigger: ReactiveValue<T>,
-  sideEffectFunc: (value: T) => void,
+  effectFunc: (value: T) => void,
 ): void => {
   if (isObservable(trigger)) {
-    sideEffectFunc(trigger.current())
-    const eff = effect(trigger, sideEffectFunc)
+    effectFunc(trigger.current())
+    const eff = effect(trigger, effectFunc)
     context.registerLifecycle({
       dispose() {
         eff.unsubscribe()
       },
     })
   } else {
-    sideEffectFunc(trigger)
+    effectFunc(trigger)
   }
 }
+
+export const reEffect =
+  <T extends PlainData>(
+    trigger: ReactiveValue<T>,
+    effectFunc: (value: T) => void,
+  ): PlaceholderContent =>
+  (renderer) => {
+    reCompute(renderer.context, trigger, effectFunc)
+  }
 
 export const reAttr =
   <T extends HTMLElement, V extends ScalarData>(
@@ -127,7 +136,7 @@ export const reIf = (
 
 export const reList = <T extends PlainData>(
   listModel: ListObservable<T>,
-  elementComponentFunc: (value: Observable<T>) => PlaceholderComponent,
+  elementComponentFunc: (value: Observable<T>) => PlaceholderContent,
 ): PlaceholderComponent => {
   return plhList(
     listModel.data.map((item) => elementComponentFunc(item)),
