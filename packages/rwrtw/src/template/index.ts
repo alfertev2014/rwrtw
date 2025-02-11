@@ -116,6 +116,11 @@ const renderTemplateContent = (
   }
 }
 
+export const cmpnt =
+  (component: () => PlaceholderContent): PlaceholderContent =>
+  (renderer) =>
+    component()?.(renderer)
+
 export const fr =
   (...content: TemplateContent[]): PlaceholderComponent =>
   (renderer) => {
