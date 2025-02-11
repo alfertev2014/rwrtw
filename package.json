@@ -11,11 +11,11 @@
     "url": "git@github.com:alfertev2014/rwrtw.git"
   },
   "devDependencies": {
-    "@nx/js": "20.4.0",
+    "@nx/js": "20.4.2",
     "@swc-node/register": "~1.9.1",
     "@swc/core": "~1.5.7",
     "@swc/helpers": "^0.5.15",
-    "nx": "20.4.0",
+    "nx": "20.4.2",
     "tslib": "^2.8.1"
   }
 }
