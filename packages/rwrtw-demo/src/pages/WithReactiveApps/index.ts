@@ -31,7 +31,6 @@ const WithReactiveApps = (): PlaceholderComponent => {
   return el("div", { class: "apps-container" })(
     el("div", { class: "apps-selector" })(
       tabButton("Counter")("Counter"),
-      tabButton("TemperatureConverter")("Temperature converter"),
       tabButton("List")("List"),
     ),
     el("div", { class: "app-container" })(

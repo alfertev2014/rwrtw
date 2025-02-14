@@ -53,20 +53,18 @@ button {
 
 .app-section {
   background-color: white;
-  border-radius: 1rem;
+  border-radius: 0.5rem;
   margin: 0.5rem;
-  padding: 1rem;
+  padding: 0.5rem;
 
   &.app-section-collapsed {
-    padding-block: 0.5rem;
-
-    h2 {
-      margin-block: 0;
-    }
+    background-color: #dee;
   }
 
+  h1,
   h2 {
     text-align: center;
+    margin-block: 0;
   }
 }
 
@@ -81,7 +79,7 @@ button {
     flex-grow: 1;
     padding: 0.4em;
     font-size: 1em;
-    border-radius: 0.4em;
+    border-radius: 0.25rem;
     border-style: none;
     background-color: #dde;
     letter-spacing: 3px;
@@ -94,5 +92,5 @@ button {
 
 .app-container {
   border: 1px solid black;
-  padding: 0.5em;
+  padding: 0 0.25rem;
 }

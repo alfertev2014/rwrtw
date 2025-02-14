@@ -20,13 +20,6 @@ const LowLevelApps = (): PlaceholderComponent => (renderer) => {
         })
         return button
       })(),
-      (() => {
-        const button = hel("button")("Temperature Converter")
-        button.addEventListener("click", () => {
-          switchRef.value = "TemperatureConverter"
-        })
-        return button
-      })(),
     ),
     (appContainer = hel("div", { class: "app-container" })()),
   )

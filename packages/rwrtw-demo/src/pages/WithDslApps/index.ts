@@ -38,7 +38,6 @@ const WithDslApps = (): PlaceholderComponent => {
   return el("div", { class: "apps-container" })(
     el("div", { class: "apps-selector" })(
       tabButton("Counter")("Counter"),
-      tabButton("TemperatureConverter")("Temperature converter"),
     ),
     el("div", { class: "app-container" })(
       dyn(() => {
