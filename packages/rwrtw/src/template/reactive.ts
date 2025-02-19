@@ -9,6 +9,7 @@ import {
   type Observable,
   effect,
   isObservable,
+  source,
 } from "../reactive/observable.js"
 import { PlainData, ScalarData } from "../types.js"
 import { plhList, plh, TemplateHandler } from "./index.js"
@@ -138,19 +139,29 @@ export const reList = <T extends PlainData>(
   listModel: ListObservable<T>,
   elementComponentFunc: (value: Observable<T>) => PlaceholderContent,
 ): PlaceholderComponent => {
+  const sourceList = listModel.current().map((item) => source(item))
   return plhList(
-    listModel.data.map((item) => elementComponentFunc(item)),
+    sourceList.map((item) => elementComponentFunc(item)),
     (plhList, context) => {
+      // TODO: multiple observers
       listModel.observer = {
         onInsert(i, element) {
-          plhList.insert(i, elementComponentFunc(element))
+          const itemSource = source(element)
+          sourceList.splice(i, 0, itemSource)
+          plhList.insert(i, elementComponentFunc(itemSource))
         },
         onMove(from, to) {
           plhList.moveFromTo(from, to)
+          const tmp = sourceList[from]
+          sourceList.splice(to, 0, tmp)
         },
         onRemove(i) {
           plhList.removeAt(i)
+          sourceList.splice(i, 1)
         },
+        onReplace(i, element) {
+          sourceList[i].change(element)
+        }
       }
       context.registerLifecycle({
         dispose() {

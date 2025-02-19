@@ -84,7 +84,7 @@ export const assertIsNotInComputing = (
 /**
  * Reactive observable node to manage subscribers.
  */
-class ObservableImpl<out T extends PlainData = PlainData>
+export class ObservableImpl<out T extends PlainData = PlainData>
   implements Observable<T>
 {
   /**
@@ -166,6 +166,20 @@ export const isObservable = (
 ): value is Observable => value instanceof ObservableImpl
 
 /**
+ * Assert that observable is Observable node
+ * Throw exception with message otherwise.
+ *
+ * @param condition Condition to check
+ * @param message Error message if condition is not true
+ */
+export const assertIsObservable = (
+  observable: Observable<PlainData>,
+  message: string = "Expected that object is Observable node",
+) => {
+  observableAssert(isObservable(observable), message)
+}
+
+/**
  * Get current() of value if value is Observable. Returns value as is otherwise.
  * @param value Plain value or Observable node.
  * @returns Current value of Observable or value as is.
@@ -208,7 +222,7 @@ export interface Source<T extends PlainData = PlainData> extends Observable<T> {
 /**
  * @see Source
  */
-class SourceImpl<T extends PlainData = PlainData>
+export class SourceImpl<T extends PlainData = PlainData>
   extends ObservableImpl<T>
   implements Source<T>
 {
@@ -227,9 +241,6 @@ class SourceImpl<T extends PlainData = PlainData>
     if (value !== this._current) {
       this._propagateChanged()
       this._current = value
-      if (batchDepth === 0) {
-        runQueues()
-      }
     }
   }
 
@@ -519,36 +530,38 @@ let runningEffects: Array<RunnableEffect> = []
 let cleanupQueue: Array<Observer> = []
 let runningCleanup: Array<Observer> = []
 
-const runQueues = (): void => {
-  batchDepth++
-  try {
-    while (cleanupQueue.length > 0 || effectsQueue.length > 0) {
-      if (cleanupQueue.length > 0) {
-        const tmp = runningCleanup
-        runningCleanup = cleanupQueue
-        cleanupQueue = tmp
-        for (const observer of runningCleanup) {
-          observer._cleanup()
-        }
-        runningCleanup.length = 0
-      }
-
-      if (effectsQueue.length > 0) {
-        const tmp = runningEffects
-        runningEffects = effectsQueue
-        effectsQueue = tmp
-        for (const effect of runningEffects) {
-          try {
-            effect._run()
-          } catch (e) {
-            console.error(e)
+export const runEffects = (): void => {
+  if (batchDepth === 0) {
+    batchDepth++
+    try {
+      while (cleanupQueue.length > 0 || effectsQueue.length > 0) {
+        if (cleanupQueue.length > 0) {
+          const tmp = runningCleanup
+          runningCleanup = cleanupQueue
+          cleanupQueue = tmp
+          for (const observer of runningCleanup) {
+            observer._cleanup()
           }
+          runningCleanup.length = 0
         }
-        runningEffects.length = 0
+
+        if (effectsQueue.length > 0) {
+          const tmp = runningEffects
+          runningEffects = effectsQueue
+          effectsQueue = tmp
+          for (const effect of runningEffects) {
+            try {
+              effect._run()
+            } catch (e) {
+              console.error(e)
+            }
+          }
+          runningEffects.length = 0
+        }
       }
+    } finally {
+      batchDepth--
     }
-  } finally {
-    batchDepth--
   }
 }
 
@@ -576,11 +589,7 @@ export const effect = <T extends PlainData>(
   )
   assertIsNotInComputing("Creating effect in compute function")
 
-  const res = new EffectImpl<T>(trigger as ObservableImpl<T>, effectFunc)
-  if (batchDepth === 0) {
-    runQueues()
-  }
-  return res
+  return new EffectImpl<T>(trigger as ObservableImpl<T>, effectFunc)
 }
 
 /**
@@ -598,8 +607,6 @@ export const batch = <T>(func: () => T): T => {
     return func()
   } finally {
     batchDepth--
-    if (batchDepth === 0) {
-      runQueues()
-    }
+    runEffects()
   }
 }

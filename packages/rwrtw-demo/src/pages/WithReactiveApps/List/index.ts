@@ -2,7 +2,7 @@ import {
   computed,
   el,
   fr,
-  listFromArray,
+  listSource,
   Observable,
   on,
   PlaceholderComponent,
@@ -97,7 +97,7 @@ const ItemForm = ({
 }
 
 const List = (): PlaceholderComponent => {
-  const items = source<Item[]>(
+  const items = listSource<Item>(
     ["One", "Two", "Three", "Four", "Five", "Six", "Seven"].map((text) => ({
       id: ++idGenerator,
       text,
@@ -107,17 +107,17 @@ const List = (): PlaceholderComponent => {
 
   const selectedId = source<number | null>(null)
   const selectedItem = computed(
-    () => items.current().find((i) => i.id === selectedId.current()) ?? null,
+    () => items.current().find((item) => item.id === selectedId.current()) ?? null,
   )
   const count = computed(() => items.current().length)
   const checkedCount = computed(
-    () => items.current().filter((i) => i.checked).length,
+    () => items.current().filter((item) => item.checked).length,
   )
 
   return el("div", { class: "list-container" })(
     el("h1")("Dynamic list"),
     el("ol", { class: "list-content" })(
-      reList(listFromArray(items), (item) => {
+      reList(items, (item) => {
         const id = computed(() => item.current().id)
         return el(
           "li",
@@ -151,21 +151,13 @@ const List = (): PlaceholderComponent => {
               "button",
               null,
               on("click", () => {
-                items.update((items) => {
-                  const index = items.findIndex(
-                    (item) => item.id === id.current(),
-                  )
+                const index = items.current().findIndex(
+                  (item) => item.id === id.current(),
+                )
 
-                  if (index >= 0) {
-                    const res = [...items]
-                    const item = items[index]
-                    res.splice(index, 1)
-                    res.splice(0, 0, item)
-                    return res
-                  } else {
-                    return items
-                  }
-                })
+                if (index >= 0) {
+                  items.moveItem(index, 0)
+                }
               }),
               reAttr("data-id", id),
             )("^"),
@@ -174,21 +166,13 @@ const List = (): PlaceholderComponent => {
               "button",
               null,
               on("click", () => {
-                items.update((items) => {
-                  const index = items.findIndex(
-                    (item) => item.id === id.current(),
-                  )
+                const index = items.current().findIndex(
+                  (item) => item.id === id.current(),
+                )
 
-                  if (index >= 0) {
-                    const res = [...items]
-                    const item = items[index]
-                    res.splice(index, 1)
-                    res.push(item)
-                    return res
-                  } else {
-                    return items
-                  }
-                })
+                if (index >= 0) {
+                  items.moveItem(index, items.current().length - 1)
+                }
               }),
               reAttr("data-id", id),
             )("v"),
@@ -196,11 +180,13 @@ const List = (): PlaceholderComponent => {
             el(
               "button",
               null,
-              on("click", () =>
-                items.update((items) =>
-                  items.filter((i) => i.id !== id.current()),
-                ),
-              ),
+              on("click", () => {
+                const index = items.current().findIndex(
+                  (item) => item.id === id.current(),
+                )
+
+                items.removeItem(index)
+              }),
               reAttr("data-id", id),
             )("Remove"),
           ),
@@ -222,14 +208,12 @@ const List = (): PlaceholderComponent => {
       ItemForm({
         initItem: selectedItem,
         onSave: (newItem) => {
-          items.update((items) => {
-            const found = items.find((i) => i.id === newItem.id)
-            if (found) {
-              return items.map((i) => (i.id === newItem.id ? newItem : i))
-            } else {
-              return items.concat([newItem])
-            }
-          })
+          const index = items.current().findIndex((item) => item.id === newItem.id)
+          if (index >= 0) {
+            items.replaceItem(index, newItem)
+          } else {
+            items.insertItem(items.current().length, newItem)
+          }
         },
         onCancel: () => {
           selectedId.change(null)
