@@ -2,7 +2,6 @@ import { dce, setAttr, txt } from "../dom/helpers.js"
 import {
   type PlaceholderList,
   type Placeholder,
-  type PlaceholderContext,
   placeAtBeginningOf,
   type PlaceholderComponent,
   type Lifecycle,
@@ -10,14 +9,9 @@ import {
   Renderer,
 } from "../core/index.js"
 import { type ScalarData } from "../types.js"
+import { TemplateContent, TemplateElementAttrsConfig, TemplateHandler } from "./types.js"
 
-export type TemplateHandler<T> = (
-  element: T,
-  context: PlaceholderContext,
-) => void
-export type TemplateElementAttrsConfig = {
-  [key: string]: ScalarData
-}
+
 
 export const el: {
   <K extends keyof HTMLElementTagNameMap>(
@@ -91,10 +85,6 @@ export const lc =
   (renderer: Renderer) => {
     renderer.registerLifecycle(lifecycle)
   }
-
-export type TemplateItem = ScalarData | PlaceholderComponent
-
-export type TemplateContent = TemplateContent[] | TemplateItem
 
 const renderTemplateContent = (
   renderer: Renderer,

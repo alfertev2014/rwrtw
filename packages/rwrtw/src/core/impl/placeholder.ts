@@ -1,12 +1,5 @@
-import {
-  type PlaceholderContext,
-  type Lifecycle,
-  type Placeholder,
-  type PlaceholderContent,
-  Renderer,
-  createListAt,
-  PlaceholderList,
-} from "../index.js"
+import { Lifecycle, Placeholder, PlaceholderContent, PlaceholderContext, PlaceholderList, Renderer } from "../types.js"
+import { createListAt } from "./list.js"
 import {
   type DOMPlace,
   type Place,

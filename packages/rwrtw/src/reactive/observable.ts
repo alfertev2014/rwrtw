@@ -161,9 +161,9 @@ export class ObservableImpl<out T extends PlainData = PlainData>
  * @param value Plain value or Observable node.
  * @returns True if value is Observable node.
  */
-export const isObservable = (
-  value: PlainData | Observable<PlainData>,
-): value is Observable => value instanceof ObservableImpl
+export const isObservable = <T extends PlainData = PlainData>(
+  value: PlainData | Observable<T>,
+): value is Observable<T> => value instanceof ObservableImpl
 
 /**
  * Assert that observable is Observable node
@@ -178,14 +178,6 @@ export const assertIsObservable = (
 ) => {
   observableAssert(isObservable(observable), message)
 }
-
-/**
- * Get current() of value if value is Observable. Returns value as is otherwise.
- * @param value Plain value or Observable node.
- * @returns Current value of Observable or value as is.
- */
-export const currentOf = <T extends PlainData>(value: T | Observable<T>): T =>
-  isObservable(value) ? value.current() : value
 
 interface Observer {
   readonly _markChanged: () => void

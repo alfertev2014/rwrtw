@@ -107,11 +107,11 @@ const List = (): PlaceholderComponent => {
 
   const selectedId = source<number | null>(null)
   const selectedItem = computed(
-    () => items.current().find((item) => item.id === selectedId.current()) ?? null,
+    () => items.current().find((item) => item.current().id === selectedId.current())?.current() ?? null,
   )
   const count = computed(() => items.current().length)
   const checkedCount = computed(
-    () => items.current().filter((item) => item.checked).length,
+    () => items.current().filter((item) => item.current().checked).length,
   )
 
   return el("div", { class: "list-container" })(
@@ -152,7 +152,7 @@ const List = (): PlaceholderComponent => {
               null,
               on("click", () => {
                 const index = items.current().findIndex(
-                  (item) => item.id === id.current(),
+                  (item) => item.current().id === id.current(),
                 )
 
                 if (index >= 0) {
@@ -167,7 +167,7 @@ const List = (): PlaceholderComponent => {
               null,
               on("click", () => {
                 const index = items.current().findIndex(
-                  (item) => item.id === id.current(),
+                  (item) => item.current().id === id.current(),
                 )
 
                 if (index >= 0) {
@@ -182,7 +182,7 @@ const List = (): PlaceholderComponent => {
               null,
               on("click", () => {
                 const index = items.current().findIndex(
-                  (item) => item.id === id.current(),
+                  (item) => item.current().id === id.current(),
                 )
 
                 items.removeItem(index)
@@ -208,9 +208,9 @@ const List = (): PlaceholderComponent => {
       ItemForm({
         initItem: selectedItem,
         onSave: (newItem) => {
-          const index = items.current().findIndex((item) => item.id === newItem.id)
+          const index = items.current().findIndex((item) => item.current().id === newItem.id)
           if (index >= 0) {
-            items.replaceItem(index, newItem)
+            items.current()[index].change(newItem)
           } else {
             items.insertItem(items.current().length, newItem)
           }

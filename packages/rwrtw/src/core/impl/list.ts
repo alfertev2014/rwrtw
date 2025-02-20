@@ -3,7 +3,7 @@ import {
   type PlaceholderContent,
   type Lifecycle,
   type PlaceholderContext,
-} from "../index.js"
+} from "../types.js"
 import {
   type DOMPlace,
   type Place,

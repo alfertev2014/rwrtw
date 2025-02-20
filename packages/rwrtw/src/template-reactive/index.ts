@@ -12,9 +12,18 @@ import {
   source,
 } from "../reactive/observable.js"
 import { PlainData, ScalarData } from "../types.js"
-import { plhList, plh, TemplateHandler } from "./index.js"
+import { plhList, plh } from "../template/index.js"
+import { TemplateHandler } from "../template/types.js"
 
 export type ReactiveValue<T extends PlainData> = Observable<T> | T
+
+/**
+ * Get current() of value if value is Observable. Returns value as is otherwise.
+ * @param value Plain value or Observable node.
+ * @returns Current value of Observable or value as is.
+ */
+export const currentOf = <T extends PlainData>(value: ReactiveValue<T>): T =>
+  isObservable(value) ? value.current() : value
 
 export const reCompute = <T extends PlainData>(
   context: PlaceholderContext,
@@ -57,7 +66,7 @@ export const reAttr =
 export const reProp =
   <T extends HTMLElement, N extends keyof T>(
     name: N,
-    value: T[N] extends PlainData ? ReactiveValue<T[N]> : never,
+    value: T[N] extends ScalarData ? ReactiveValue<T[N]> : never,
   ): TemplateHandler<T> =>
   (element, context) => {
     reCompute(context, value, (value) => {
@@ -139,29 +148,20 @@ export const reList = <T extends PlainData>(
   listModel: ListObservable<T>,
   elementComponentFunc: (value: Observable<T>) => PlaceholderContent,
 ): PlaceholderComponent => {
-  const sourceList = listModel.current().map((item) => source(item))
   return plhList(
-    sourceList.map((item) => elementComponentFunc(item)),
+    listModel.current().map((item) => elementComponentFunc(item)),
     (plhList, context) => {
       // TODO: multiple observers
       listModel.observer = {
         onInsert(i, element) {
-          const itemSource = source(element)
-          sourceList.splice(i, 0, itemSource)
-          plhList.insert(i, elementComponentFunc(itemSource))
+          plhList.insert(i, elementComponentFunc(element))
         },
         onMove(from, to) {
           plhList.moveFromTo(from, to)
-          const tmp = sourceList[from]
-          sourceList.splice(to, 0, tmp)
         },
         onRemove(i) {
           plhList.removeAt(i)
-          sourceList.splice(i, 1)
         },
-        onReplace(i, element) {
-          sourceList[i].change(element)
-        }
       }
       context.registerLifecycle({
         dispose() {
