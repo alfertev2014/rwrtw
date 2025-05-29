@@ -36,6 +36,7 @@ export interface ListSource<T extends PlainData = PlainData>
   readonly removeItem: (i: number) => void
   readonly moveItem: (from: number, to: number) => void
   readonly insertItem: (i: number, element: T) => void
+  readonly current: () => readonly Source<T>[]
 }
 
 export class ListSourceImpl<T extends PlainData = PlainData>
@@ -43,6 +44,10 @@ export class ListSourceImpl<T extends PlainData = PlainData>
   implements ListSource<T>
 {
   override readonly _current: Source<T>[]
+
+  override current(): readonly Source<T>[] {
+    return this._current
+  }
 
   constructor(initialData: readonly T[]) {
     super()

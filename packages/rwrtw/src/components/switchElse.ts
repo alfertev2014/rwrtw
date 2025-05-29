@@ -1,5 +1,6 @@
 import { PlaceholderContent, type PlaceholderComponent } from "../core/index.js"
-import { plh, type TemplateHandler } from "../template/index.js"
+import { plh } from "../template/index.js"
+import { TemplateHandler } from "../template/types.js"
 
 export interface Switch<T> {
   value: T

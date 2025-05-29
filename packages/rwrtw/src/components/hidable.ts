@@ -1,5 +1,5 @@
 import { PlaceholderContent, type PlaceholderComponent } from "../core/index.js"
-import { type TemplateHandler } from "../template/index.js"
+import { TemplateHandler } from "../template/types.js"
 import { ifElse } from "./ifElse.js"
 
 export interface Hidable {

@@ -9,7 +9,6 @@ import {
   type Observable,
   effect,
   isObservable,
-  source,
 } from "../reactive/observable.js"
 import { PlainData, ScalarData } from "../types.js"
 import { plhList, plh } from "../template/index.js"

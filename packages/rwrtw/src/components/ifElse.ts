@@ -1,5 +1,6 @@
 import { PlaceholderContent, type PlaceholderComponent } from "../core/index.js"
-import { type TemplateHandler, plh } from "../template/index.js"
+import { plh } from "../template/index.js"
+import { TemplateHandler } from "../template/types.js"
 
 export interface IfElse {
   condition: boolean
