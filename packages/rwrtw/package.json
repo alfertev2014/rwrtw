@@ -13,7 +13,7 @@
     "import": "./dist/index.js"
   },
   "scripts": {
-    "test": "jest . --config=jest.config.js",
+    "test": "node --import=tsx --test",
     "lint": "eslint .",
     "prettier": "prettier --write .",
     "build": "tsc --build tsconfig.lib.json",
@@ -34,19 +34,5 @@
     "typescript"
   ],
   "author": "Vasiliy Alfertev <alfertev2012@gmail.com> (https://github.com/alfertev2014)",
-  "license": "ISC",
-  "devDependencies": {
-    "@eslint/js": "^9.9.0",
-    "@jest/globals": "^29.7.0",
-    "@types/eslint__js": "^8.42.3",
-    "@types/eslint-config-prettier": "^6.11.3",
-    "eslint": "^9.27.0",
-    "eslint-config-prettier": "^10.1.5",
-    "jest": "^29.7.0",
-    "jest-environment-jsdom": "^29.7.0",
-    "prettier": "^3.5.3",
-    "ts-jest": "^29.3.4",
-    "typescript": "~5.7.2",
-    "typescript-eslint": "^8.33.0"
-  }
+  "license": "ISC"
 }

@@ -1,6 +1,6 @@
-import { PlaceholderContent, type PlaceholderComponent } from "../index.js"
+import type { PlaceholderContent, PlaceholderComponent } from "../index.js"
 import { plh } from "../template/index.js"
-import { TemplateHandler } from "../template/types.js"
+import type { TemplateHandler } from "../template/types.js"
 
 export interface Dynamic {
   refresh: () => void

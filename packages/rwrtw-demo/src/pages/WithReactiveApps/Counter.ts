@@ -2,7 +2,7 @@ import {
   computed,
   el,
   on,
-  PlaceholderComponent,
+  type PlaceholderComponent,
   reIf,
   reText,
   source,
@@ -11,11 +11,11 @@ import {
 const Counter = (): PlaceholderComponent => {
   const counter = source<number>(0)
 
+  const counterText = computed(() => `Hello world ${counter.current()} times!`)
+
   return el("div")(
     el("h1")("It Works!"),
-    el("p", { class: "paragraph" })(
-      reText(computed(() => `Hello world ${counter.current()} times!`)),
-    ),
+    el("p", { class: "paragraph" })(reText(counterText)),
     el(
       "button",
       null,

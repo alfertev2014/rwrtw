@@ -1,13 +1,13 @@
 import {
-  Dynamic,
-  PlaceholderComponent,
+  type Dynamic,
+  type PlaceholderComponent,
   createRef,
   dyn,
   el,
   on,
   ref,
 } from "rwrtw"
-import Counter from "./Counter"
+import Counter from "./Counter.js"
 
 const WithDslApps = (): PlaceholderComponent => {
   let selectedApp = "Counter"
@@ -22,7 +22,7 @@ const WithDslApps = (): PlaceholderComponent => {
   }
 
   selectedAppChanged.push(() => {
-    switchRef?.current?.refresh()
+    switchRef.current?.refresh()
   })
 
   const tabButton = (app: string) => {
@@ -36,9 +36,7 @@ const WithDslApps = (): PlaceholderComponent => {
   }
 
   return el("div", { class: "apps-container" })(
-    el("div", { class: "apps-selector" })(
-      tabButton("Counter")("Counter"),
-    ),
+    el("div", { class: "apps-selector" })(tabButton("Counter")("Counter")),
     el("div", { class: "app-container" })(
       dyn(() => {
         switch (selectedApp) {

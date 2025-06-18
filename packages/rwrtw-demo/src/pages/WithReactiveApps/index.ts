@@ -2,13 +2,13 @@ import {
   computed,
   el,
   on,
-  PlaceholderComponent,
+  type PlaceholderComponent,
   reClass,
   reContent,
   source,
 } from "rwrtw"
-import Counter from "./Counter"
-import List from "./List"
+import Counter from "./Counter.js"
+import List from "./List/index.js"
 
 const WithReactiveApps = (): PlaceholderComponent => {
   const selectedApp = source<string>("Counter")

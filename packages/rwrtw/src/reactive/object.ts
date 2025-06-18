@@ -1,15 +1,15 @@
 import {
   assertIsNotInComputing,
   effect,
-  Observable,
-  Source,
+  type Observable,
+  type Source,
   source,
 } from "./observable.js"
-import { PlainData } from "../types.js"
+import type { PlainData } from "../types.js"
 
 export interface ObjectObserver<T extends PlainData = PlainData> {
-  onInsert?: (key: string | number, element: Observable<T>) => void
-  onRemove?: (key: string | number) => void
+  onInsert: (key: string | number, element: Observable<T>) => void
+  onRemove: (key: string | number) => void
 }
 
 export interface ObjectObservable<T extends PlainData = PlainData> {
@@ -69,8 +69,9 @@ export class ObjectSourceImpl<T extends PlainData = PlainData>
   removeItem(key: number | string): void {
     assertIsNotInComputing("Removing key from object in compute function")
 
+    // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
     delete this._data[key]
-    this.observer?.onRemove?.(key)
+    this.observer?.onRemove(key)
   }
 
   insertItem(key: number | string, element: T): void {
@@ -78,7 +79,7 @@ export class ObjectSourceImpl<T extends PlainData = PlainData>
 
     const item = source(element)
     this._data[key] = item
-    this.observer?.onInsert?.(key, item)
+    this.observer?.onInsert(key, item)
   }
 }
 

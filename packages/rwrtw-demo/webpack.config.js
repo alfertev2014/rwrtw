@@ -16,7 +16,10 @@ export default {
     rules: [
       {
         test: /\.ts$/,
-        use: "ts-loader",
+        loader: "ts-loader",
+        options: {
+          configFile: "tsconfig.lib.json",
+        },
         include: path.resolve(import.meta.dirname, "src"),
         exclude: /node_modules/,
       },
@@ -29,6 +32,10 @@ export default {
   },
   resolve: {
     extensions: [".ts", ".js"],
+    extensionAlias: {
+      ".js": [".ts", ".js"],
+      ".mjs": [".mts", ".mjs"],
+    },
   },
   output: {
     filename: "bundle.js",

@@ -1,19 +1,20 @@
-import { describe, expect, test } from "@jest/globals"
-import { dce, setAttr, txt } from "../helpers"
+import assert from "node:assert"
+import test, { describe } from "node:test"
+import { dce, setAttr, txt } from "../helpers.js"
 
 describe("DOM helpers", () => {
   test("dce should create HTMLElement instances", () => {
     const div = dce("div")
 
-    expect(div).toBeInstanceOf(HTMLElement)
-    expect(div.tagName).toBe("DIV")
+    assert(div instanceof HTMLElement)
+    assert.strictEqual(div, "DIV")
   })
 
   test("txt should create Text instances", () => {
     const text = txt("some text")
 
-    expect(text).toBeInstanceOf(Text)
-    expect(text.textContent).toBe("some text")
+    assert(text instanceof Text)
+    assert.strictEqual(text.textContent, "some text")
   })
 
   describe("setAttr", () => {
@@ -22,7 +23,7 @@ describe("DOM helpers", () => {
 
       setAttr(element, "attr", "some value")
 
-      expect(element.getAttribute("attr")).toBe("some value")
+      assert.strictEqual(element.getAttribute("attr"), "some value")
     })
 
     test("should add numeric attribute to element as string", () => {
@@ -30,7 +31,7 @@ describe("DOM helpers", () => {
 
       setAttr(element, "attr", 100500)
 
-      expect(element.getAttribute("attr")).toBe("100500")
+      assert.strictEqual(element.getAttribute("attr"), "100500")
     })
 
     test("should add boolean attribute with true value to element as empty string", () => {
@@ -38,7 +39,7 @@ describe("DOM helpers", () => {
 
       setAttr(element, "attr", true)
 
-      expect(element.getAttribute("attr")).toBe("")
+      assert.strictEqual(element.getAttribute("attr"), "")
     })
 
     test("should remove boolean attribute with false value from element", () => {
@@ -47,7 +48,7 @@ describe("DOM helpers", () => {
 
       setAttr(element, "attr", false)
 
-      expect(element.hasAttribute("attr")).toBeFalsy()
+      assert(!element.hasAttribute("attr"))
     })
 
     test("should remove attribute with null value from element", () => {
@@ -56,7 +57,7 @@ describe("DOM helpers", () => {
 
       setAttr(element, "attr", null)
 
-      expect(element.hasAttribute("attr")).toBeFalsy()
+      assert(!element.hasAttribute("attr"))
     })
 
     test("should remove attribute with undefined value from element", () => {
@@ -65,7 +66,7 @@ describe("DOM helpers", () => {
 
       setAttr(element, "attr", undefined)
 
-      expect(element.hasAttribute("attr")).toBeFalsy()
+      assert(!element.hasAttribute("attr"))
     })
   })
 })

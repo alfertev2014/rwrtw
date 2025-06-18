@@ -5,13 +5,15 @@ import {
   placeAtBeginningOf,
   type PlaceholderComponent,
   type Lifecycle,
-  PlaceholderContent,
-  Renderer,
+  type PlaceholderContent,
+  type Renderer,
 } from "../core/index.js"
 import { type ScalarData } from "../types.js"
-import { TemplateContent, TemplateElementAttrsConfig, TemplateHandler } from "./types.js"
-
-
+import type {
+  TemplateContent,
+  TemplateElementAttrsConfig,
+  TemplateHandler,
+} from "./types.js"
 
 export const el: {
   <K extends keyof HTMLElementTagNameMap>(
@@ -114,7 +116,7 @@ export const cmpnt =
 export const fr =
   (...content: TemplateContent[]): PlaceholderComponent =>
   (renderer) => {
-    return renderTemplateContent(renderer, content)
+    renderTemplateContent(renderer, content)
   }
 
 export const on: {

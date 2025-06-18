@@ -1,10 +1,10 @@
-import WithReactiveApps from "./pages/WithReactiveApps"
-import LowLevelApps from "./pages/LowLevelApps"
-import WithDslApps from "./pages/WithDslApps"
+import WithReactiveApps from "./pages/WithReactiveApps/index.js"
+import LowLevelApps from "./pages/LowLevelApps/index.js"
+import WithDslApps from "./pages/WithDslApps/index.js"
 import {
-  PlaceholderComponent,
-  Source,
-  TemplateContent,
+  type PlaceholderComponent,
+  type Source,
+  type TemplateContent,
   computed,
   createRootPlaceholderAt,
   el,

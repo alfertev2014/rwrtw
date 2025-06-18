@@ -3,9 +3,9 @@ import {
   el,
   fr,
   listSource,
-  Observable,
+  type Observable,
   on,
-  PlaceholderComponent,
+  type PlaceholderComponent,
   reAttr,
   reClass,
   reContent,
@@ -13,7 +13,7 @@ import {
   reList,
   reProp,
   reText,
-  Source,
+  type Source,
   source,
 } from "rwrtw"
 
@@ -27,7 +27,7 @@ const TextInput = (value: Source<string>): PlaceholderComponent => {
     },
     reProp("value", value),
     on("change", (e) => {
-      value.change((e.target as HTMLInputElement).value ?? "")
+      value.change((e.target as HTMLInputElement).value)
     }),
   )()
 }
@@ -40,7 +40,7 @@ const Checkbox = (value: Source<boolean>): PlaceholderComponent => {
     },
     reProp("checked", value),
     on("change", (e) => {
-      value.change((e.target as HTMLInputElement).checked ?? false)
+      value.change((e.target as HTMLInputElement).checked)
     }),
   )()
 }
@@ -107,7 +107,11 @@ const List = (): PlaceholderComponent => {
 
   const selectedId = source<number | null>(null)
   const selectedItem = computed(
-    () => items.current().find((item) => item.current().id === selectedId.current())?.current() ?? null,
+    () =>
+      items
+        .current()
+        .find((item) => item.current().id === selectedId.current())
+        ?.current() ?? null,
   )
   const count = computed(() => items.current().length)
   const checkedCount = computed(
@@ -151,9 +155,9 @@ const List = (): PlaceholderComponent => {
               "button",
               null,
               on("click", () => {
-                const index = items.current().findIndex(
-                  (item) => item.current().id === id.current(),
-                )
+                const index = items
+                  .current()
+                  .findIndex((item) => item.current().id === id.current())
 
                 if (index >= 0) {
                   items.moveItem(index, 0)
@@ -166,9 +170,9 @@ const List = (): PlaceholderComponent => {
               "button",
               null,
               on("click", () => {
-                const index = items.current().findIndex(
-                  (item) => item.current().id === id.current(),
-                )
+                const index = items
+                  .current()
+                  .findIndex((item) => item.current().id === id.current())
 
                 if (index >= 0) {
                   items.moveItem(index, items.current().length - 1)
@@ -181,9 +185,9 @@ const List = (): PlaceholderComponent => {
               "button",
               null,
               on("click", () => {
-                const index = items.current().findIndex(
-                  (item) => item.current().id === id.current(),
-                )
+                const index = items
+                  .current()
+                  .findIndex((item) => item.current().id === id.current())
 
                 items.removeItem(index)
               }),
@@ -208,7 +212,9 @@ const List = (): PlaceholderComponent => {
       ItemForm({
         initItem: selectedItem,
         onSave: (newItem) => {
-          const index = items.current().findIndex((item) => item.current().id === newItem.id)
+          const index = items
+            .current()
+            .findIndex((item) => item.current().id === newItem.id)
           if (index >= 0) {
             items.current()[index].change(newItem)
           } else {

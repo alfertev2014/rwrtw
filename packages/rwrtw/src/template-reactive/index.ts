@@ -1,18 +1,18 @@
 import { setAttr, toText, txt } from "../dom/helpers.js"
-import {
-  type PlaceholderContext,
-  type PlaceholderComponent,
+import type {
+  PlaceholderContext,
+  PlaceholderComponent,
   PlaceholderContent,
 } from "../index.js"
-import { ListObservable } from "../reactive/list.js"
+import type { ListObservable } from "../reactive/list.js"
 import {
   type Observable,
   effect,
   isObservable,
 } from "../reactive/observable.js"
-import { PlainData, ScalarData } from "../types.js"
+import type { PlainData, ScalarData } from "../types.js"
 import { plhList, plh } from "../template/index.js"
-import { TemplateHandler } from "../template/types.js"
+import type { TemplateHandler } from "../template/types.js"
 
 export type ReactiveValue<T extends PlainData> = Observable<T> | T
 

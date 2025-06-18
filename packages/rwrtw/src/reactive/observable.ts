@@ -1,4 +1,4 @@
-import { PlainData } from "../types.js"
+import type { PlainData } from "../types.js"
 
 /**
  * Abstract observable node of reactive graph. Notifies its subscribers when stored value is changed.
@@ -76,7 +76,7 @@ export const observableAssert = (condition: boolean, message: string) => {
  * @param message Error message for exception
  */
 export const assertIsNotInComputing = (
-  message: string = "Doing something in compute function",
+  message = "Doing something in compute function",
 ) => {
   observableAssert(trackingSubscriber === null, message)
 }
@@ -118,7 +118,9 @@ export class ObservableImpl<out T extends PlainData = PlainData>
   /**
    * Recompute current value and clear changed sign.
    */
-  _recompute(): void {}
+  _recompute(): void {
+    // do nothing
+  }
 
   /**
    * Add subscriber to this._subscribers set.
@@ -147,7 +149,9 @@ export class ObservableImpl<out T extends PlainData = PlainData>
     }
   }
 
-  _onDangling(): void {}
+  _onDangling(): void {
+    // do nothing
+  }
 
   _propagateChanged(): void {
     for (const subscriber of this._subscribers) {
@@ -173,8 +177,8 @@ export const isObservable = <T extends PlainData = PlainData>(
  * @param message Error message if condition is not true
  */
 export const assertIsObservable = (
-  observable: Observable<PlainData>,
-  message: string = "Expected that object is Observable node",
+  observable: Observable,
+  message = "Expected that object is Observable node",
 ) => {
   observableAssert(isObservable(observable), message)
 }
@@ -248,7 +252,7 @@ export class SourceImpl<T extends PlainData = PlainData>
  * Computed value node in reactive graph.
  * Caches its current value if observable dependencies are not changed.
  */
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type, @typescript-eslint/no-empty-interface
 export interface Computed<out T extends PlainData = PlainData>
   extends Observable<T> {}
 
@@ -389,6 +393,7 @@ class ComputedImpl<out T extends PlainData = PlainData>
   _callComputeFunc(): void {
     const previousValue = this._current
     const prevTracking = trackingSubscriber
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
     trackingSubscriber = this // Establish new compute function for this
     try {
       this._current = this._computeFunc()
@@ -569,7 +574,9 @@ export const computed = <T extends PlainData>(func: () => T): Observable<T> => {
   return new ComputedImpl(func)
 }
 
-const noop = () => {}
+const noop = () => {
+  // do nothing
+}
 
 export const effect = <T extends PlainData>(
   trigger: Observable<T>,

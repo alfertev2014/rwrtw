@@ -1,4 +1,6 @@
-import { describe, expect, test, beforeEach } from "@jest/globals"
+import assert from "node:assert"
+import test, { beforeEach, describe } from "node:test"
+
 import {
   lastDOMPlaceOf,
   placeAtBeginningOf,
@@ -6,11 +8,7 @@ import {
   insertNodeAt,
 } from "../impl/place.js"
 import { createRootPlaceholderAt } from "../impl/placeholder.js"
-import {
-  type PlaceholderList,
-  type Placeholder,
-  type PlaceholderContent,
-} from "../index.js"
+import { type PlaceholderList, type Placeholder } from "../index.js"
 
 describe("Place", () => {
   let PARENT_NODE: HTMLElement
@@ -29,7 +27,7 @@ describe("Place", () => {
 
         const domPlace = lastDOMPlaceOf(node)
 
-        expect(domPlace).toBe(node)
+        assert.strictEqual(domPlace, node)
       })
 
       test("of ParentPlaceNode - should return itself", () => {
@@ -37,7 +35,7 @@ describe("Place", () => {
 
         const domPlace = lastDOMPlaceOf(node)
 
-        expect(domPlace).toBe(node)
+        assert.strictEqual(domPlace, node)
       })
     })
 
@@ -45,14 +43,14 @@ describe("Place", () => {
       test("after DOM Node - should return that node", () => {
         const placeholder = createRootPlaceholderAt(CHILD_NODE, null)
 
-        expect(lastDOMPlaceOf(placeholder)).toBe(CHILD_NODE)
+        assert.strictEqual(lastDOMPlaceOf(placeholder), CHILD_NODE)
       })
 
       test("at beginning of DOM Node - should return beginning of that node", () => {
         const beginning = placeAtBeginningOf(PARENT_NODE)
         const placeholder = createRootPlaceholderAt(beginning, null)
 
-        expect(lastDOMPlaceOf(placeholder)).toBe(beginning)
+        assert.strictEqual(lastDOMPlaceOf(placeholder), beginning)
       })
 
       test("after DOM Node followed by other empty placeholder - should return that node", () => {
@@ -60,7 +58,7 @@ describe("Place", () => {
 
         const placeholder = createRootPlaceholderAt(beforePlaceholder, null)
 
-        expect(lastDOMPlaceOf(placeholder)).toBe(CHILD_NODE)
+        assert.strictEqual(lastDOMPlaceOf(placeholder), CHILD_NODE)
       })
 
       test("after DOM Node followed by other not empty placeholder - should return last DOM Node of content of that placeholder", () => {
@@ -75,7 +73,7 @@ describe("Place", () => {
 
         const placeholder = createRootPlaceholderAt(beforePlaceholder, null)
 
-        expect(lastDOMPlaceOf(placeholder)).toBe(innerNode)
+        assert.strictEqual(lastDOMPlaceOf(placeholder), innerNode)
       })
 
       test("at the beginning of other placeholder which follows a DOM Node - should return that node", () => {
@@ -85,7 +83,7 @@ describe("Place", () => {
         })
 
         if (placeholder != null) {
-          expect(lastDOMPlaceOf(placeholder)).toBe(CHILD_NODE)
+          assert.strictEqual(lastDOMPlaceOf(placeholder), CHILD_NODE)
         } else {
           throw new Error("placeholder is not initialized")
         }
@@ -107,7 +105,7 @@ describe("Place", () => {
         })
 
         if (placeholder != null) {
-          expect(lastDOMPlaceOf(placeholder)).toBe(innerNode)
+          assert.strictEqual(lastDOMPlaceOf(placeholder), innerNode)
         } else {
           throw new Error("placeholder is not initialized")
         }
@@ -122,7 +120,7 @@ describe("Place", () => {
           renderer.insertNode(innerNode)
         })
 
-        expect(lastDOMPlaceOf(placeholder)).toBe(innerNode)
+        assert.strictEqual(lastDOMPlaceOf(placeholder), innerNode)
       })
 
       test("when placeholder contains only empty Placeholder - should return DOM place of itself", () => {
@@ -130,7 +128,7 @@ describe("Place", () => {
           renderer.insertPlaceholder(null)
         })
 
-        expect(lastDOMPlaceOf(placeholder)).toBe(CHILD_NODE)
+        assert.strictEqual(lastDOMPlaceOf(placeholder), CHILD_NODE)
       })
 
       test("when placeholder's content ends with Node and empty Placeholder - should return that Node", () => {
@@ -141,7 +139,7 @@ describe("Place", () => {
           renderer.insertPlaceholder(null)
         })
 
-        expect(lastDOMPlaceOf(placeholder)).toBe(innerNode)
+        assert.strictEqual(lastDOMPlaceOf(placeholder), innerNode)
       })
 
       test("when placeholder content ends with Placeholder with Node inside -  should return that Node", () => {
@@ -153,7 +151,7 @@ describe("Place", () => {
           })
         })
 
-        expect(lastDOMPlaceOf(placeholder)).toBe(innerNode)
+        assert.strictEqual(lastDOMPlaceOf(placeholder), innerNode)
       })
     })
 
@@ -164,76 +162,76 @@ describe("Place", () => {
         INNER_CHILD_NODE = document.createElement("div")
       })
 
-      describe.each([
-        [[]],
-        [[null]],
-        [[null, null]],
-      ] as PlaceholderContent[][][])("when list is empty", (LIST_ITEMS) => {
-        test("when list after Node - should return that Node", () => {
-          let list: PlaceholderList | undefined
+      describe("when list is empty", () => {
+        test((t) => {
+          for (const LIST_ITEMS of [[], [null], [null, null]]) {
+            t.test("when list after Node - should return that Node", () => {
+              let list: PlaceholderList | undefined
 
-          createRootPlaceholderAt(CHILD_NODE, (renderer) => {
-            renderer.insertNode(INNER_CHILD_NODE)
-            list = renderer.insertList(LIST_ITEMS)
-          })
+              createRootPlaceholderAt(CHILD_NODE, (renderer) => {
+                renderer.insertNode(INNER_CHILD_NODE)
+                list = renderer.insertList(LIST_ITEMS)
+              })
 
-          if (list != null) {
-            expect(lastDOMPlaceOf(list)).toBe(INNER_CHILD_NODE)
-          } else {
-            throw new Error("list is not initialized")
-          }
-        })
-
-        test("when list at the beginning of Node - should return the beginning of than Node", () => {
-          let list: PlaceholderList | undefined
-          let listPlace: Place | undefined
-
-          createRootPlaceholderAt(CHILD_NODE, (renderer) => {
-            renderer.insertNode(INNER_CHILD_NODE)
-
-            listPlace = placeAtBeginningOf(INNER_CHILD_NODE)
-            const subrenderer = renderer.createRendererAt(listPlace)
-            list = subrenderer.insertList(LIST_ITEMS)
-          })
-
-          if (list != null && listPlace != null) {
-            expect(lastDOMPlaceOf(list)).toBe(listPlace)
-          } else {
-            throw new Error("list or listPlace are not initialized")
-          }
-        })
-
-        test("when list after Placeholder with Node inside - should return that Node", () => {
-          let list: PlaceholderList | undefined
-
-          createRootPlaceholderAt(CHILD_NODE, (renderer) => {
-            renderer.insertPlaceholder((renderer) => {
-              renderer.insertNode(INNER_CHILD_NODE)
+              if (list != null) {
+                assert.strictEqual(lastDOMPlaceOf(list), INNER_CHILD_NODE)
+              } else {
+                throw new Error("list is not initialized")
+              }
             })
-            list = renderer.insertList(LIST_ITEMS)
-          })
 
-          if (list != null) {
-            expect(lastDOMPlaceOf(list)).toBe(INNER_CHILD_NODE)
-          } else {
-            throw new Error("list is not initialized")
-          }
-        })
+            test("when list at the beginning of Node - should return the beginning of than Node", () => {
+              let list: PlaceholderList | undefined
+              let listPlace: Place | undefined
 
-        test("when list at the beginning of Placeholder", () => {
-          let list: PlaceholderList | undefined
+              createRootPlaceholderAt(CHILD_NODE, (renderer) => {
+                renderer.insertNode(INNER_CHILD_NODE)
 
-          createRootPlaceholderAt(CHILD_NODE, (renderer) => {
-            renderer.insertPlaceholder((renderer) => {
-              renderer.insertNode(INNER_CHILD_NODE)
+                listPlace = placeAtBeginningOf(INNER_CHILD_NODE)
+                const subrenderer = renderer.createRendererAt(listPlace)
+                list = subrenderer.insertList(LIST_ITEMS)
+              })
+
+              if (list != null && listPlace != null) {
+                assert.strictEqual(lastDOMPlaceOf(list), listPlace)
+              } else {
+                throw new Error("list or listPlace are not initialized")
+              }
             })
-            list = renderer.insertList(LIST_ITEMS)
-          })
 
-          if (list != null) {
-            expect(lastDOMPlaceOf(list)).toBe(INNER_CHILD_NODE)
-          } else {
-            throw new Error("list is not initialized")
+            test("when list after Placeholder with Node inside - should return that Node", () => {
+              let list: PlaceholderList | undefined
+
+              createRootPlaceholderAt(CHILD_NODE, (renderer) => {
+                renderer.insertPlaceholder((renderer) => {
+                  renderer.insertNode(INNER_CHILD_NODE)
+                })
+                list = renderer.insertList(LIST_ITEMS)
+              })
+
+              if (list != null) {
+                assert.strictEqual(lastDOMPlaceOf(list), INNER_CHILD_NODE)
+              } else {
+                throw new Error("list is not initialized")
+              }
+            })
+
+            test("when list at the beginning of Placeholder", () => {
+              let list: PlaceholderList | undefined
+
+              createRootPlaceholderAt(CHILD_NODE, (renderer) => {
+                renderer.insertPlaceholder((renderer) => {
+                  renderer.insertNode(INNER_CHILD_NODE)
+                })
+                list = renderer.insertList(LIST_ITEMS)
+              })
+
+              if (list != null) {
+                assert.strictEqual(lastDOMPlaceOf(list), INNER_CHILD_NODE)
+              } else {
+                throw new Error("list is not initialized")
+              }
+            })
           }
         })
       })
@@ -246,19 +244,19 @@ describe("Place", () => {
 
       const insertedNode = insertNodeAt(CHILD_NODE, node)
 
-      expect(CHILD_NODE.nextSibling).toBe(node)
-      expect(node.previousSibling).toBe(CHILD_NODE)
-      expect(node.parentNode).toBe(PARENT_NODE)
-      expect(insertedNode).toBe(node)
+      assert.strictEqual(CHILD_NODE.nextSibling, node)
+      assert.strictEqual(node.previousSibling, CHILD_NODE)
+      assert.strictEqual(node.parentNode, PARENT_NODE)
+      assert.strictEqual(insertedNode, node)
     })
 
     test("should throw error when inserting after Node without parent", () => {
-      expect(() => {
+      assert.throws(() => {
         const beforeNode = document.createElement("div")
         const node = document.createElement("div")
 
         insertNodeAt(beforeNode, node)
-      }).toThrowError()
+      })
     })
 
     test("should insert DOM Node inside parentNode at beginning", () => {
@@ -266,9 +264,9 @@ describe("Place", () => {
 
       const insertedNode = insertNodeAt(placeAtBeginningOf(PARENT_NODE), node)
 
-      expect(node.previousSibling).toBeNull()
-      expect(node.parentNode).toBe(PARENT_NODE)
-      expect(insertedNode).toBe(node)
+      assert.strictEqual(node.previousSibling, null)
+      assert.strictEqual(node.parentNode, PARENT_NODE)
+      assert.strictEqual(insertedNode, node)
     })
 
     test("should insert DOM Node inside parentNode at beginning before other child nodes", () => {
@@ -276,10 +274,10 @@ describe("Place", () => {
 
       const insertedNode = insertNodeAt(placeAtBeginningOf(PARENT_NODE), node)
 
-      expect(CHILD_NODE.previousSibling).toBe(node)
-      expect(node.previousSibling).toBeNull()
-      expect(node.parentNode).toBe(PARENT_NODE)
-      expect(insertedNode).toBe(node)
+      assert.strictEqual(CHILD_NODE.previousSibling, node)
+      assert.strictEqual(node.previousSibling, null)
+      assert.strictEqual(node.parentNode, PARENT_NODE)
+      assert.strictEqual(insertedNode, node)
     })
   })
 
@@ -290,8 +288,8 @@ describe("Place", () => {
 
       insertNodeAt(placeholder, node)
 
-      expect(node.previousSibling).toBe(CHILD_NODE)
-      expect(placeholder.lastDOMPlace()).toBe(CHILD_NODE)
+      assert.strictEqual(node.previousSibling, CHILD_NODE)
+      assert.strictEqual(placeholder.lastDOMPlace(), CHILD_NODE)
     })
 
     test("if placeholder contains nodes it should insert nodes after content of placeholder", () => {
@@ -303,8 +301,8 @@ describe("Place", () => {
 
       insertNodeAt(placeholder, node)
 
-      expect(node.previousSibling).toBe(innerNode)
-      expect(placeholder.lastDOMPlace()).toBe(innerNode)
+      assert.strictEqual(node.previousSibling, innerNode)
+      assert.strictEqual(placeholder.lastDOMPlace(), innerNode)
     })
   })
 
@@ -316,8 +314,8 @@ describe("Place", () => {
         renderer.insertNode(node)
       })
 
-      expect(node.previousSibling).toBe(CHILD_NODE)
-      expect(placeholder.lastDOMPlace()).toBe(node)
+      assert.strictEqual(node.previousSibling, CHILD_NODE)
+      assert.strictEqual(placeholder.lastDOMPlace(), node)
     })
 
     test("if placeholder contains nodes it should insert nodes before content of placeholder", () => {
@@ -328,9 +326,9 @@ describe("Place", () => {
         renderer.insertNode(innerAfterNode)
       })
 
-      expect(innerNode.previousSibling).toBe(CHILD_NODE)
-      expect(innerNode.nextSibling).toBe(innerAfterNode)
-      expect(placeholder.lastDOMPlace()).toBe(innerAfterNode)
+      assert.strictEqual(innerNode.previousSibling, CHILD_NODE)
+      assert.strictEqual(innerNode.nextSibling, innerAfterNode)
+      assert.strictEqual(placeholder.lastDOMPlace(), innerAfterNode)
     })
   })
 })

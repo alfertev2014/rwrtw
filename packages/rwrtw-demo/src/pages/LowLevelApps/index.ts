@@ -1,11 +1,11 @@
 import {
-  PlaceholderComponent,
-  Switch,
+  type PlaceholderComponent,
+  type Switch,
   hel,
   placeAtBeginningOf,
   switchElse,
 } from "rwrtw"
-import Counter from "./Counter"
+import Counter from "./Counter.js"
 
 const LowLevelApps = (): PlaceholderComponent => (renderer) => {
   let switchRef: Switch<string>

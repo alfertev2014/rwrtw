@@ -1,9 +1,9 @@
 import {
   hel,
   ifElse,
-  IfElse,
+  type IfElse,
   placeAtBeginningOf,
-  PlaceholderComponent,
+  type PlaceholderComponent,
   txt,
 } from "rwrtw"
 

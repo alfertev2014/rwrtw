@@ -2,9 +2,9 @@ import {
   createRef,
   el,
   ifElse,
-  IfElse,
+  type IfElse,
   on,
-  PlaceholderComponent,
+  type PlaceholderComponent,
   ref,
 } from "rwrtw"
 
@@ -29,7 +29,9 @@ const Counter = (): PlaceholderComponent => {
       "button",
       null,
       on("click", handleClick),
-      on("focus", () => console.log("focus!")),
+      on("focus", () => {
+        console.log("focus!")
+      }),
     )("Increment"),
     el("div")(ifElse(true, el("p")("Even!"), el("span")("Odd!"), ref(evenOdd))),
   )

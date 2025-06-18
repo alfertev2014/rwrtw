@@ -114,7 +114,11 @@ const content = el("div")(
 createRootPlaceholderAt(placeAtBeginningOf(document.body), content)
 
 aPlaceholder.replaceContent(
-  el("div")("Some ", el("span", { class: "text-emphasize" })("modified"), " content"),
+  el("div")(
+    "Some ",
+    el("span", { class: "text-emphasize" })("modified"),
+    " content",
+  ),
 )
 ```
 

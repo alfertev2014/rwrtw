@@ -5,10 +5,14 @@
     "outDir": "dist",
     "tsBuildInfoFile": "dist/tsconfig.lib.tsbuildinfo",
     "emitDeclarationOnly": false,
-    "removeComments": false
+    "removeComments": true
   },
   "include": ["src/**/*.ts"],
-  "references": [],
+  "references": [
+    {
+      "path": "../rwrtw/tsconfig.lib.json"
+    }
+  ],
   "exclude": [
     "dist",
     "**/*.test.ts",

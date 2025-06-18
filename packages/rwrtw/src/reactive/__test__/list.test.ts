@@ -1,18 +1,19 @@
-import { describe, expect, test, beforeEach, jest } from "@jest/globals"
-import { listSource } from "../list"
+import assert from "node:assert"
+import test, { beforeEach, describe, mock, type Mock } from "node:test"
+import { listSource, type ListObserver } from "../list.js"
 
 describe("List", () => {
   let observer: {
-    onInsert: jest.Mock
-    onMove: jest.Mock
-    onRemove: jest.Mock
+    onInsert: Mock<ListObserver["onInsert"]>
+    onMove: Mock<ListObserver["onMove"]>
+    onRemove: Mock<ListObserver["onRemove"]>
   }
 
   beforeEach(() => {
     observer = {
-      onInsert: jest.fn(),
-      onMove: jest.fn(),
-      onRemove: jest.fn(),
+      onInsert: mock.fn(),
+      onMove: mock.fn(),
+      onRemove: mock.fn(),
     }
   })
 
@@ -22,7 +23,7 @@ describe("List", () => {
 
       l.observer = observer
 
-      expect(l.data.length).toBe(0)
+      assert.strictEqual(l.current().length, 0)
     })
 
     test("Non empty list", () => {
@@ -30,10 +31,10 @@ describe("List", () => {
 
       l.observer = observer
 
-      expect(l.data.length).toBe(3)
-      expect(l.data[0].current()).toBe("1")
-      expect(l.data[1].current()).toBe("2")
-      expect(l.data[2].current()).toBe("3")
+      assert.strictEqual(l.current().length, 3)
+      assert.strictEqual(l.current()[0].current(), "1")
+      assert.strictEqual(l.current()[1].current(), "2")
+      assert.strictEqual(l.current()[2].current(), "3")
     })
   })
 
@@ -43,11 +44,14 @@ describe("List", () => {
       l.observer = observer
       l.insertItem(0, "bla")
 
-      expect(l.data.length).toBe(1)
-      expect(l.data[0].current()).toBe("bla")
-      expect(observer.onInsert).toBeCalledTimes(1)
-      expect(observer.onInsert?.mock.calls[0][0]).toBe(0)
-      expect(observer.onInsert?.mock.calls[0][1]).toBe(l.data[0])
+      assert.strictEqual(l.current().length, 1)
+      assert.strictEqual(l.current()[0].current(), "bla")
+      assert.strictEqual(observer.onInsert.mock.callCount(), 1)
+      assert.strictEqual(observer.onInsert.mock.calls[0].arguments[0], 0)
+      assert.strictEqual(
+        observer.onInsert.mock.calls[0].arguments[1],
+        l.current()[0],
+      )
     })
 
     test("Insert item at index 0", () => {
@@ -56,13 +60,16 @@ describe("List", () => {
 
       l.insertItem(0, "bla")
 
-      expect(l.data.length).toBe(3)
-      expect(l.data[0].current()).toBe("bla")
-      expect(l.data[1].current()).toBe("1")
-      expect(l.data[2].current()).toBe("2")
-      expect(observer.onInsert).toBeCalledTimes(1)
-      expect(observer.onInsert?.mock.calls[0][0]).toBe(0)
-      expect(observer.onInsert?.mock.calls[0][1]).toBe(l.data[0])
+      assert.strictEqual(l.current().length, 3)
+      assert.strictEqual(l.current()[0].current(), "bla")
+      assert.strictEqual(l.current()[1].current(), "1")
+      assert.strictEqual(l.current()[2].current(), "2")
+      assert.strictEqual(observer.onInsert.mock.callCount(), 1)
+      assert.strictEqual(observer.onInsert.mock.calls[0].arguments[0], 0)
+      assert.strictEqual(
+        observer.onInsert.mock.calls[0].arguments[1],
+        l.current()[0],
+      )
     })
 
     test("Insert item into the middle", () => {
@@ -71,13 +78,16 @@ describe("List", () => {
 
       l.insertItem(1, "bla")
 
-      expect(l.data.length).toBe(3)
-      expect(l.data[0].current()).toBe("1")
-      expect(l.data[1].current()).toBe("bla")
-      expect(l.data[2].current()).toBe("2")
-      expect(observer.onInsert).toBeCalledTimes(1)
-      expect(observer.onInsert?.mock.calls[0][0]).toBe(1)
-      expect(observer.onInsert?.mock.calls[0][1]).toBe(l.data[1])
+      assert.strictEqual(l.current().length, 3)
+      assert.strictEqual(l.current()[0].current(), "1")
+      assert.strictEqual(l.current()[1].current(), "bla")
+      assert.strictEqual(l.current()[2].current(), "2")
+      assert.strictEqual(observer.onInsert.mock.callCount(), 1)
+      assert.strictEqual(observer.onInsert.mock.calls[0].arguments[0], 1)
+      assert.strictEqual(
+        observer.onInsert.mock.calls[0].arguments[1],
+        l.current()[1],
+      )
     })
 
     test("Insert item at the end", () => {
@@ -86,13 +96,16 @@ describe("List", () => {
 
       l.insertItem(2, "bla")
 
-      expect(l.data.length).toBe(3)
-      expect(l.data[0].current()).toBe("1")
-      expect(l.data[1].current()).toBe("2")
-      expect(l.data[2].current()).toBe("bla")
-      expect(observer.onInsert).toBeCalledTimes(1)
-      expect(observer.onInsert?.mock.calls[0][0]).toBe(2)
-      expect(observer.onInsert?.mock.calls[0][1]).toBe(l.data[2])
+      assert.strictEqual(l.current().length, 3)
+      assert.strictEqual(l.current()[0].current(), "1")
+      assert.strictEqual(l.current()[1].current(), "2")
+      assert.strictEqual(l.current()[2].current(), "bla")
+      assert.strictEqual(observer.onInsert.mock.callCount(), 1)
+      assert.strictEqual(observer.onInsert.mock.calls[0].arguments[0], 2)
+      assert.strictEqual(
+        observer.onInsert.mock.calls[0].arguments[1],
+        l.current()[2],
+      )
     })
   })
 
@@ -102,9 +115,9 @@ describe("List", () => {
       l.observer = observer
       l.removeItem(0)
 
-      expect(l.data.length).toBe(0)
-      expect(observer.onRemove).toBeCalledTimes(1)
-      expect(observer.onRemove?.mock.calls[0][0]).toBe(0)
+      assert.strictEqual(l.current().length, 0)
+      assert.strictEqual(observer.onRemove.mock.callCount(), 1)
+      assert.strictEqual(observer.onRemove.mock.calls[0].arguments[0], 0)
     })
 
     test("Remove item at index 0", () => {
@@ -113,11 +126,11 @@ describe("List", () => {
 
       l.removeItem(0)
 
-      expect(l.data.length).toBe(2)
-      expect(l.data[0].current()).toBe("2")
-      expect(l.data[1].current()).toBe("3")
-      expect(observer.onRemove).toBeCalledTimes(1)
-      expect(observer.onRemove?.mock.calls[0][0]).toBe(0)
+      assert.strictEqual(l.current().length, 2)
+      assert.strictEqual(l.current()[0].current(), "2")
+      assert.strictEqual(l.current()[1].current(), "3")
+      assert.strictEqual(observer.onRemove.mock.callCount(), 1)
+      assert.strictEqual(observer.onRemove.mock.calls[0].arguments[0], 0)
     })
 
     test("Remove item into the middle", () => {
@@ -126,11 +139,11 @@ describe("List", () => {
 
       l.removeItem(1)
 
-      expect(l.data.length).toBe(2)
-      expect(l.data[0].current()).toBe("1")
-      expect(l.data[1].current()).toBe("3")
-      expect(observer.onRemove).toBeCalledTimes(1)
-      expect(observer.onRemove?.mock.calls[0][0]).toBe(1)
+      assert.strictEqual(l.current().length, 2)
+      assert.strictEqual(l.current()[0].current(), "1")
+      assert.strictEqual(l.current()[1].current(), "3")
+      assert.strictEqual(observer.onRemove.mock.callCount(), 1)
+      assert.strictEqual(observer.onRemove.mock.calls[0].arguments[0], 1)
     })
 
     test("Remove item at the end", () => {
@@ -139,11 +152,11 @@ describe("List", () => {
 
       l.removeItem(2)
 
-      expect(l.data.length).toBe(2)
-      expect(l.data[0].current()).toBe("1")
-      expect(l.data[1].current()).toBe("2")
-      expect(observer.onRemove).toBeCalledTimes(1)
-      expect(observer.onRemove?.mock.calls[0][0]).toBe(2)
+      assert.strictEqual(l.current().length, 2)
+      assert.strictEqual(l.current()[0].current(), "1")
+      assert.strictEqual(l.current()[1].current(), "2")
+      assert.strictEqual(observer.onRemove.mock.callCount(), 1)
+      assert.strictEqual(observer.onRemove.mock.calls[0].arguments[0], 2)
     })
   })
 
@@ -153,9 +166,9 @@ describe("List", () => {
       l.observer = observer
       l.moveItem(0, 0)
 
-      expect(l.data.length).toBe(1)
-      expect(l.data[0].current()).toBe("bla")
-      expect(observer.onMove).toBeCalledTimes(0)
+      assert.strictEqual(l.current().length, 1)
+      assert.strictEqual(l.current()[0].current(), "bla")
+      assert.strictEqual(observer.onMove.mock.callCount(), 0)
     })
 
     test("Move item to one position to the end", () => {
@@ -164,13 +177,13 @@ describe("List", () => {
 
       l.moveItem(0, 1)
 
-      expect(l.data.length).toBe(3)
-      expect(l.data[0].current()).toBe("2")
-      expect(l.data[1].current()).toBe("1")
-      expect(l.data[2].current()).toBe("3")
-      expect(observer.onMove).toBeCalledTimes(1)
-      expect(observer.onMove?.mock.calls[0][0]).toBe(0)
-      expect(observer.onMove?.mock.calls[0][1]).toBe(1)
+      assert.strictEqual(l.current().length, 3)
+      assert.strictEqual(l.current()[0].current(), "2")
+      assert.strictEqual(l.current()[1].current(), "1")
+      assert.strictEqual(l.current()[2].current(), "3")
+      assert.strictEqual(observer.onMove.mock.callCount(), 1)
+      assert.strictEqual(observer.onMove.mock.calls[0].arguments[0], 0)
+      assert.strictEqual(observer.onMove.mock.calls[0].arguments[1], 1)
     })
 
     test("Move item to many positions to the end", () => {
@@ -179,13 +192,13 @@ describe("List", () => {
 
       l.moveItem(0, 2)
 
-      expect(l.data.length).toBe(3)
-      expect(l.data[0].current()).toBe("2")
-      expect(l.data[1].current()).toBe("3")
-      expect(l.data[2].current()).toBe("1")
-      expect(observer.onMove).toBeCalledTimes(1)
-      expect(observer.onMove?.mock.calls[0][0]).toBe(0)
-      expect(observer.onMove?.mock.calls[0][1]).toBe(2)
+      assert.strictEqual(l.current().length, 3)
+      assert.strictEqual(l.current()[0].current(), "2")
+      assert.strictEqual(l.current()[1].current(), "3")
+      assert.strictEqual(l.current()[2].current(), "1")
+      assert.strictEqual(observer.onMove.mock.callCount(), 1)
+      assert.strictEqual(observer.onMove.mock.calls[0].arguments[0], 0)
+      assert.strictEqual(observer.onMove.mock.calls[0].arguments[1], 2)
     })
 
     test("Move item to one position to the beginning", () => {
@@ -194,13 +207,13 @@ describe("List", () => {
 
       l.moveItem(2, 1)
 
-      expect(l.data.length).toBe(3)
-      expect(l.data[0].current()).toBe("1")
-      expect(l.data[1].current()).toBe("3")
-      expect(l.data[2].current()).toBe("2")
-      expect(observer.onMove).toBeCalledTimes(1)
-      expect(observer.onMove?.mock.calls[0][0]).toBe(2)
-      expect(observer.onMove?.mock.calls[0][1]).toBe(1)
+      assert.strictEqual(l.current().length, 3)
+      assert.strictEqual(l.current()[0].current(), "1")
+      assert.strictEqual(l.current()[1].current(), "3")
+      assert.strictEqual(l.current()[2].current(), "2")
+      assert.strictEqual(observer.onMove.mock.callCount(), 1)
+      assert.strictEqual(observer.onMove.mock.calls[0].arguments[0], 2)
+      assert.strictEqual(observer.onMove.mock.calls[0].arguments[1], 1)
     })
 
     test("Move item to many positions to the beginning", () => {
@@ -209,13 +222,13 @@ describe("List", () => {
 
       l.moveItem(2, 0)
 
-      expect(l.data.length).toBe(3)
-      expect(l.data[0].current()).toBe("3")
-      expect(l.data[1].current()).toBe("1")
-      expect(l.data[2].current()).toBe("2")
-      expect(observer.onMove).toBeCalledTimes(1)
-      expect(observer.onMove?.mock.calls[0][0]).toBe(2)
-      expect(observer.onMove?.mock.calls[0][1]).toBe(0)
+      assert.strictEqual(l.current().length, 3)
+      assert.strictEqual(l.current()[0].current(), "3")
+      assert.strictEqual(l.current()[1].current(), "1")
+      assert.strictEqual(l.current()[2].current(), "2")
+      assert.strictEqual(observer.onMove.mock.callCount(), 1)
+      assert.strictEqual(observer.onMove.mock.calls[0].arguments[0], 2)
+      assert.strictEqual(observer.onMove.mock.calls[0].arguments[1], 0)
     })
   })
 
@@ -227,7 +240,7 @@ describe("List", () => {
 
       l.change([])
 
-      expect(l.data.length).toBe(0)
+      assert.strictEqual(l.current().length, 0)
     })
 
     test("Clear with empty list", () => {
@@ -237,9 +250,9 @@ describe("List", () => {
 
       l.change([])
 
-      expect(l.data.length).toBe(0)
-      expect(observer.onRemove).toBeCalledTimes(3)
-      expect(observer.onRemove).toBeCalledWith(0)
+      assert.strictEqual(l.current().length, 0)
+      assert.strictEqual(observer.onRemove.mock.callCount(), 3)
+      assert.strictEqual(observer.onRemove.mock.calls[0].arguments[0], 0)
     })
 
     test("Apply non empty list", () => {
@@ -249,18 +262,27 @@ describe("List", () => {
 
       l.change(["1", "2", "3"])
 
-      expect(l.data.length).toBe(3)
-      expect(l.data[0].current()).toBe("1")
-      expect(l.data[1].current()).toBe("2")
-      expect(l.data[2].current()).toBe("3")
+      assert.strictEqual(l.current().length, 3)
+      assert.strictEqual(l.current()[0].current(), "1")
+      assert.strictEqual(l.current()[1].current(), "2")
+      assert.strictEqual(l.current()[2].current(), "3")
 
-      expect(observer.onInsert).toBeCalledTimes(3)
-      expect(observer.onInsert?.mock.calls[0][0]).toBe(0)
-      expect(observer.onInsert?.mock.calls[0][1]).toBe(l.data[0])
-      expect(observer.onInsert?.mock.calls[1][0]).toBe(1)
-      expect(observer.onInsert?.mock.calls[1][1]).toBe(l.data[1])
-      expect(observer.onInsert?.mock.calls[2][0]).toBe(2)
-      expect(observer.onInsert?.mock.calls[2][1]).toBe(l.data[2])
+      assert.strictEqual(observer.onInsert.mock.callCount(), 3)
+      assert.strictEqual(observer.onInsert.mock.calls[0].arguments[0], 0)
+      assert.strictEqual(
+        observer.onInsert.mock.calls[0].arguments[1],
+        l.current()[0],
+      )
+      assert.strictEqual(observer.onInsert.mock.calls[1].arguments[0], 1)
+      assert.strictEqual(
+        observer.onInsert.mock.calls[1].arguments[1],
+        l.current()[1],
+      )
+      assert.strictEqual(observer.onInsert.mock.calls[2].arguments[0], 2)
+      assert.strictEqual(
+        observer.onInsert.mock.calls[2].arguments[1],
+        l.current()[2],
+      )
     })
 
     test("Apply the same list", () => {
@@ -270,10 +292,10 @@ describe("List", () => {
 
       l.change(["1", "2", "3"])
 
-      expect(l.data.length).toBe(3)
-      expect(l.data[0].current()).toBe("1")
-      expect(l.data[1].current()).toBe("2")
-      expect(l.data[2].current()).toBe("3")
+      assert.strictEqual(l.current().length, 3)
+      assert.strictEqual(l.current()[0].current(), "1")
+      assert.strictEqual(l.current()[1].current(), "2")
+      assert.strictEqual(l.current()[2].current(), "3")
     })
 
     test("Apply list with swapped adjacent items", () => {
@@ -283,14 +305,14 @@ describe("List", () => {
 
       l.change(["2", "1", "3"])
 
-      expect(l.data.length).toBe(3)
-      expect(l.data[0].current()).toBe("2")
-      expect(l.data[1].current()).toBe("1")
-      expect(l.data[2].current()).toBe("3")
+      assert.strictEqual(l.current().length, 3)
+      assert.strictEqual(l.current()[0].current(), "2")
+      assert.strictEqual(l.current()[1].current(), "1")
+      assert.strictEqual(l.current()[2].current(), "3")
 
-      expect(observer.onMove).toBeCalledTimes(1)
-      expect(observer.onMove?.mock.calls[0][0]).toBe(1)
-      expect(observer.onMove?.mock.calls[0][1]).toBe(0)
+      assert.strictEqual(observer.onMove.mock.callCount(), 1)
+      assert.strictEqual(observer.onMove.mock.calls[0].arguments[0], 1)
+      assert.strictEqual(observer.onMove.mock.calls[0].arguments[1], 0)
     })
 
     test("Apply list with moved item with shift", () => {
@@ -300,14 +322,14 @@ describe("List", () => {
 
       l.change(["3", "1", "2"])
 
-      expect(l.data.length).toBe(3)
-      expect(l.data[0].current()).toBe("3")
-      expect(l.data[1].current()).toBe("1")
-      expect(l.data[2].current()).toBe("2")
+      assert.strictEqual(l.current().length, 3)
+      assert.strictEqual(l.current()[0].current(), "3")
+      assert.strictEqual(l.current()[1].current(), "1")
+      assert.strictEqual(l.current()[2].current(), "2")
 
-      expect(observer.onMove).toBeCalledTimes(1)
-      expect(observer.onMove?.mock.calls[0][0]).toBe(2)
-      expect(observer.onMove?.mock.calls[0][1]).toBe(0)
+      assert.strictEqual(observer.onMove.mock.callCount(), 1)
+      assert.strictEqual(observer.onMove.mock.calls[0].arguments[0], 2)
+      assert.strictEqual(observer.onMove.mock.calls[0].arguments[1], 0)
     })
   })
 })

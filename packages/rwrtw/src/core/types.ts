@@ -1,4 +1,4 @@
-import { Place, PlaceholderNode } from "./impl/place.js"
+import type { Place, PlaceholderNode } from "./impl/place.js"
 
 export interface Lifecycle {
   readonly mount?: () => void

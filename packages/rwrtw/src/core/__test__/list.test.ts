@@ -1,11 +1,13 @@
-import { describe, expect, test, beforeEach } from "@jest/globals"
+import assert from "node:assert"
+import test, { describe, beforeEach } from "node:test"
+
 import {
   createRootPlaceholderAt,
-  DOMPlace,
+  type DOMPlace,
   placeAtBeginningOf,
   type PlaceholderContent,
   type PlaceholderList,
-} from ".."
+} from "../index.js"
 
 describe("Dynamic list", () => {
   let PARENT_NODE: HTMLElement
@@ -17,23 +19,24 @@ describe("Dynamic list", () => {
   })
 
   describe("Creating list", () => {
-    test.each([[[]], [[null]], [[null, null]]])(
-      "with empty content - should do nothing with DOM",
-      (listContent) => {
-        let list: PlaceholderList | undefined
-        const placeholder = createRootPlaceholderAt(
-          PARENT_PLACE,
-          (renderer) => {
-            list = renderer.insertList(listContent)
-          },
-        )
+    test("with empty content - should do nothing with DOM", (t) => {
+      for (const listContent of [[], [null], [null, null]]) {
+        t.test(() => {
+          let list: PlaceholderList | undefined
+          const placeholder = createRootPlaceholderAt(
+            PARENT_PLACE,
+            (renderer) => {
+              list = renderer.insertList(listContent)
+            },
+          )
 
-        expect(list?.length).toBe(listContent.length)
-        expect(list?.lastDOMPlace()).toBe(PARENT_PLACE)
-        expect(placeholder.lastDOMPlace()).toBe(PARENT_PLACE)
-        expect(PARENT_NODE.childNodes.length).toBe(0)
-      },
-    )
+          assert.strictEqual(list?.length, listContent.length)
+          assert.strictEqual(list.lastDOMPlace(), PARENT_PLACE)
+          assert.strictEqual(placeholder.lastDOMPlace(), PARENT_PLACE)
+          assert.strictEqual(PARENT_NODE.childNodes.length, 0)
+        })
+      }
+    })
 
     test("with one item with one child Node inside - should insert this node at place", () => {
       const innerNode = document.createElement("div")
@@ -45,11 +48,11 @@ describe("Dynamic list", () => {
         ])
       })
 
-      expect(list?.length).toBe(1)
-      expect(list?.lastDOMPlace()).toBe(innerNode)
-      expect(placeholder.lastDOMPlace()).toBe(innerNode)
-      expect(innerNode.parentNode).toBe(PARENT_NODE)
-      expect(PARENT_NODE.firstChild).toBe(innerNode)
+      assert.strictEqual(list?.length, 1)
+      assert.strictEqual(list.lastDOMPlace(), innerNode)
+      assert.strictEqual(placeholder.lastDOMPlace(), innerNode)
+      assert.strictEqual(innerNode.parentNode, PARENT_NODE)
+      assert.strictEqual(PARENT_NODE.firstChild, innerNode)
     })
 
     test("with several Nodes in content of one item - should insert nodes in DOM", () => {
@@ -69,11 +72,11 @@ describe("Dynamic list", () => {
         ])
       })
 
-      expect(placeholder.lastDOMPlace()).toBe(node)
-      expect(firstNode.parentNode).toBe(PARENT_NODE)
-      expect(node.parentNode).toBe(PARENT_NODE)
-      expect(PARENT_NODE.firstChild).toBe(firstNode)
-      expect(PARENT_NODE.childNodes.length).toBe(NODES_COUNT)
+      assert.strictEqual(placeholder.lastDOMPlace(), node)
+      assert.strictEqual(firstNode.parentNode, PARENT_NODE)
+      assert.strictEqual(node.parentNode, PARENT_NODE)
+      assert.strictEqual(PARENT_NODE.firstChild, firstNode)
+      assert.strictEqual(PARENT_NODE.childNodes.length, NODES_COUNT)
     })
 
     test("with several items every with one Node inside - should insert nodes in DOM", () => {
@@ -100,10 +103,10 @@ describe("Dynamic list", () => {
         return list
       })
 
-      expect(placeholder.lastDOMPlace()).toBe(node)
-      expect(firstNode.parentNode).toBe(PARENT_NODE)
-      expect(PARENT_NODE.firstChild).toBe(firstNode)
-      expect(PARENT_NODE.childNodes.length).toBe(NODES_COUNT)
+      assert.strictEqual(placeholder.lastDOMPlace(), node)
+      assert.strictEqual(firstNode.parentNode, PARENT_NODE)
+      assert.strictEqual(PARENT_NODE.firstChild, firstNode)
+      assert.strictEqual(PARENT_NODE.childNodes.length, NODES_COUNT)
     })
   })
 })

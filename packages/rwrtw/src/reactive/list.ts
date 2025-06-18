@@ -2,13 +2,13 @@ import {
   assertIsNotInComputing,
   assertIsObservable,
   effect,
-  Observable,
+  type Observable,
   observableAssert,
   ObservableImpl,
   source,
-  Source,
+  type Source,
 } from "./observable.js"
-import { PlainData } from "../types.js"
+import type { PlainData } from "../types.js"
 
 export interface ListObserver<T extends PlainData = PlainData> {
   onInsert: (i: number, element: Observable<T>) => void
@@ -28,8 +28,9 @@ export class ListObservableImpl<T extends PlainData = PlainData>
   observer: ListObserver<T> | null = null
 }
 
-export const isListObservable = <T extends PlainData = PlainData>(list: readonly T[] | ListObservable<T>): list is ListObservable<T> =>
-  list instanceof ListObservableImpl
+export const isListObservable = <T extends PlainData = PlainData>(
+  list: readonly T[] | ListObservable<T>,
+): list is ListObservable<T> => list instanceof ListObservableImpl
 
 export interface ListSource<T extends PlainData = PlainData>
   extends ListObservable<T> {
@@ -37,6 +38,7 @@ export interface ListSource<T extends PlainData = PlainData>
   readonly moveItem: (from: number, to: number) => void
   readonly insertItem: (i: number, element: T) => void
   readonly current: () => readonly Source<T>[]
+  readonly change: (newData: readonly T[]) => void
 }
 
 export class ListSourceImpl<T extends PlainData = PlainData>
@@ -51,7 +53,7 @@ export class ListSourceImpl<T extends PlainData = PlainData>
 
   constructor(initialData: readonly T[]) {
     super()
-    this._current = initialData.map(item => source(item))
+    this._current = initialData.map((item) => source(item))
   }
 
   change(newData: readonly T[]): void {
@@ -68,7 +70,9 @@ export class ListSourceImpl<T extends PlainData = PlainData>
 
     for (let i = 0; i < newData.length; ++i) {
       const element = newData[i]
-      const elementIndex = this._current.findIndex((el) => el.current() === element)
+      const elementIndex = this._current.findIndex(
+        (el) => el.current() === element,
+      )
       if (elementIndex >= 0) {
         if (elementIndex !== i) {
           this._moveItem(elementIndex, i)
@@ -87,7 +91,7 @@ export class ListSourceImpl<T extends PlainData = PlainData>
 
   _removeItem(i: number): void {
     this._current.splice(i, 1)
-    this.observer?.onRemove?.(i)
+    this.observer?.onRemove(i)
   }
 
   removeItem(i: number): void {
@@ -101,7 +105,7 @@ export class ListSourceImpl<T extends PlainData = PlainData>
     const item = this._current[from]
     this._current.splice(from, 1)
     this._current.splice(to, 0, item)
-    this.observer?.onMove?.(from, to)
+    this.observer?.onMove(from, to)
   }
 
   moveItem(from: number, to: number): void {
@@ -116,7 +120,7 @@ export class ListSourceImpl<T extends PlainData = PlainData>
   _insertItem(i: number, element: T): void {
     const s = source(element)
     this._current.splice(i, 0, s)
-    this.observer?.onInsert?.(i, s)
+    this.observer?.onInsert(i, s)
   }
 
   insertItem(i: number, element: T): void {
