@@ -407,7 +407,7 @@ class ComputedImpl<out T extends PlainData = PlainData>
       this._deps.length = this._depsCount // Remove the old dependencies from list
     }
     if (this._current !== previousValue) {
-      // Signal for all subscribers that the value was really changed
+      // Signal to all subscribers that the value was really changed
       for (const subscriber of this._subscribers) {
         subscriber._markChanged()
       }
@@ -428,6 +428,146 @@ class ComputedImpl<out T extends PlainData = PlainData>
 
   override _onDangling(): void {
     cleanupQueue.push(this)
+  }
+}
+
+class StaticComputedImpl<out T extends PlainData = PlainData> extends ComputedImpl<T> {
+
+  constructor(dependencies: ObservableImpl[], computeFunc: () => T) {
+    super(computeFunc)
+    this._deps.push(...dependencies)
+    this._depsCount = dependencies.length
+  }
+
+  override _recomputeDeps(): void {
+    for (let i = 0; i < this._depsCount; ++i) {
+      this._deps[i]._recompute()
+      if (this._status === CHANGED) {
+        return
+      }
+    }
+    this._status = NOT_CHANGED
+  }
+
+  override _callComputeFunc(): void {
+    const previousValue = this._current
+    if (trackingSubscriber) {
+      const prevTracking = trackingSubscriber
+      trackingSubscriber = null // Don't track compute function. We are already know all the dependencies
+      try {
+        this._current = this._computeFunc()
+      } finally {
+        trackingSubscriber = prevTracking // restore previous compute function
+      }
+    } else {
+      this._current = this._computeFunc()
+    }
+    if (this._current !== previousValue) {
+      // Signal to all subscribers that the value was really changed
+      for (const subscriber of this._subscribers) {
+        subscriber._markChanged()
+      }
+    }
+    this._status = NOT_CHANGED // The value is now in actual state
+  }
+
+  override _cleanup(): void {
+    if (this._subscribers.length === 0) {
+      for (const dependency of this._deps) {
+        dependency._unsubscribe(this)
+      }
+      this._status = DANGLING
+    }
+  }
+}
+
+const dummyFunc = (): never => {
+  throw new Error("Call dummy function")
+}
+
+class ConditionallyComputedImpl<out T extends PlainData = PlainData, out F extends PlainData = PlainData> extends ComputedImpl<T | F> {
+  _condition: ObservableImpl<boolean>
+  _trueBranch: ObservableImpl<T>
+  _falseBranch: ObservableImpl<F>
+  _conditionValue: boolean | null
+  constructor(condition: ObservableImpl<boolean>, trueBranch: ObservableImpl<T>, falseBranch: ObservableImpl<F>) {
+    super(dummyFunc)
+    this._condition = condition
+    this._trueBranch = trueBranch
+    this._falseBranch = falseBranch
+    this._conditionValue = null
+  }
+
+  override _recomputeDeps(): void {
+    this._condition._recompute()
+    if (this._status === CHANGED) {
+      return
+    }
+    
+    if (this._conditionValue) {
+      this._trueBranch._recompute()
+    } else {
+      this._falseBranch._recompute()
+    }
+    
+    if (this._status as unknown === CHANGED) {
+      return
+    }
+    
+    this._status = NOT_CHANGED
+  }
+  
+  _callCondition(): T | F {
+    const prevCondition = this._conditionValue
+    this._conditionValue = this._condition.current()
+    if (this._conditionValue !== prevCondition) {
+      if (prevCondition === true) {
+        this._trueBranch._unsubscribe(this)
+      } else if (prevCondition === false) {
+        this._falseBranch._unsubscribe(this)
+      }
+      if (this._conditionValue) {
+        this._trueBranch._subscribe(this)
+      } else {
+        this._falseBranch._subscribe(this)
+      }
+    }
+    return this._conditionValue ? this._trueBranch.current() : this._falseBranch.current()
+  }
+
+  override _callComputeFunc(): void {
+    const previousValue = this._current
+    if (trackingSubscriber) {
+      const prevTracking = trackingSubscriber
+      trackingSubscriber = null // Don't track compute function. We are already know all the dependencies
+      try {
+        this._current = this._callCondition()
+      } finally {
+        trackingSubscriber = prevTracking // restore previous compute function
+      }
+    } else {
+      this._current = this._callCondition()
+    }
+    if (this._current !== previousValue) {
+      // Signal to all subscribers that the value was really changed
+      for (const subscriber of this._subscribers) {
+        subscriber._markChanged()
+      }
+    }
+    this._status = NOT_CHANGED // The value is now in actual state
+  }
+
+  override _cleanup(): void {
+    if (this._subscribers.length === 0) {
+      this._condition._unsubscribe(this)
+      if (this._conditionValue) {
+        this._trueBranch._unsubscribe(this)
+      } else {
+        this._falseBranch._unsubscribe(this)
+      }
+      this._conditionValue = null
+      this._status = DANGLING
+    }
   }
 }
 
@@ -572,6 +712,22 @@ export const computed = <T extends PlainData>(func: () => T): Observable<T> => {
   assertIsNotInComputing("Creating computed in compute function")
 
   return new ComputedImpl(func)
+}
+
+export const staticComputed = <T extends PlainData>(dependencies: Observable[], func: () => T): Observable<T> => {
+  assertIsNotInComputing("Creating staticComputed in compute function")
+
+  observableAssert(dependencies.every(d => d instanceof ObservableImpl), "Some of dependencies are not ObservableImpl")
+
+  return new StaticComputedImpl(dependencies as ObservableImpl[], func)
+}
+
+export const condComputed = <T extends PlainData, F extends PlainData>(condition: Observable<boolean>, trueBranch: Observable<T>, falseBranch: Observable<F>): Observable<T | F> => {
+  observableAssert(condition instanceof ObservableImpl, "Condition is not observable")
+  observableAssert(trueBranch instanceof ObservableImpl, "trueBranch is not observable")
+  observableAssert(falseBranch instanceof ObservableImpl, "falseBranch is not observable")
+
+  return new ConditionallyComputedImpl(condition as ObservableImpl<boolean>, trueBranch as unknown as ObservableImpl<T>, falseBranch as unknown as ObservableImpl<F>)
 }
 
 const noop = () => {
