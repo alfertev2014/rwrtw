@@ -13,7 +13,7 @@
     "import": "./dist/index.js"
   },
   "scripts": {
-    "test": "node --import=tsx --test",
+    "test": "node --import=tsx --import global-jsdom/register --test",
     "lint": "eslint .",
     "prettier": "prettier --write .",
     "build": "tsc --build tsconfig.lib.json",
@@ -34,5 +34,9 @@
     "typescript"
   ],
   "author": "Vasiliy Alfertev <alfertev2012@gmail.com> (https://github.com/alfertev2014)",
-  "license": "ISC"
+  "license": "ISC",
+  "devDependencies": {
+    "global-jsdom": "^27.0.0",
+    "jsdom": "^27.2.0"
+  }
 }

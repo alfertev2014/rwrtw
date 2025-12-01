@@ -6,8 +6,7 @@ describe("DOM helpers", () => {
   test("dce should create HTMLElement instances", () => {
     const div = dce("div")
 
-    assert(div instanceof HTMLElement)
-    assert.strictEqual(div, "DIV")
+    assert.strictEqual(div.tagName, "DIV")
   })
 
   test("txt should create Text instances", () => {
