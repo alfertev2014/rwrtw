@@ -1,28 +1,18 @@
 {
   "name": "rwrtw-demo",
-  "version": "1.0.0",
   "private": true,
-  "description": "",
-  "main": "index.js",
+  "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "lint": "eslint .",
-    "prettier": "prettier --write .",
-    "serve": "webpack serve --mode development --open",
-    "build": "webpack"
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
   },
-  "author": "",
-  "license": "ISC",
   "devDependencies": {
-    "css-loader": "^7.1.2",
-    "html-webpack-plugin": "^5.6.4",
-    "style-loader": "^4.0.0",
-    "ts-loader": "^9.5.4",
-    "webpack": "^5.102.0",
-    "webpack-cli": "^5.1.4",
-    "webpack-dev-server": "^5.2.2"
+    "typescript": "~5.9.3",
+    "vite": "^7.2.4"
   },
   "dependencies": {
-    "rwrtw": "^0.0.10"
+    "rwrtw": "0.0.10"
   }
 }
