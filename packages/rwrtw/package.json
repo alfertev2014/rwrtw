@@ -9,8 +9,14 @@
     "dist/**"
   ],
   "exports": {
-    "types": "./dist/index.d.ts",
-    "import": "./dist/index.js"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./jsx-runtime": {
+      "types": "./dist/jsx-runtime.d.ts",
+      "import": "./jsx-runtime.js"
+    }
   },
   "scripts": {
     "test": "node --import=tsx --import global-jsdom/register --test",
