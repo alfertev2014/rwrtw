@@ -560,20 +560,21 @@ describe("Observable", () => {
         }
       })
 
-      test("Effect function should not be called after batch end with source changes", (t) => {
+      test("Effect function should be called after batch end with source changes", (t) => {
         for (const callCount of [1, 2, 10]) {
           t.test(() => {
             const s = source<string>("s")
             const effectFunc = mock.fn()
 
+            const e = effect(s, effectFunc)
+
             batch(() => {
-              const e = effect(s, effectFunc)
               for (let i = 0; i < callCount; ++i) {
                 s.change(`sChanged${i}`)
               }
             })
 
-            assert.strictEqual(effectFunc.mock.callCount(), 0)
+            assert.strictEqual(effectFunc.mock.callCount(), 1)
           })
         }
       })
@@ -616,21 +617,22 @@ describe("Observable", () => {
         }
       })
 
-      test("Effect function should not be called after batch end with source changes", (t) => {
+      test("Effect function should be called after batch end with source changes", (t) => {
         for (const callCount of [1, 2, 10]) {
           t.test(() => {
             const s = source<string>("s")
             const c = computed(() => s.current())
             const effectFunc = mock.fn()
 
+            const e = effect(c, effectFunc)
+
             batch(() => {
-              const e = effect(c, effectFunc)
               for (let i = 0; i < callCount; ++i) {
                 s.change(`sChanged${i}`)
               }
             })
 
-            assert.strictEqual(effectFunc.mock.callCount(), 0)
+            assert.strictEqual(effectFunc.mock.callCount(), 1)
           })
         }
       })
@@ -679,7 +681,7 @@ describe("Observable", () => {
         }
       })
 
-      test("Effect function should not be called once after batch end with source changes", (t) => {
+      test("Effect function should be called once after batch end with source changes", (t) => {
         for (const callCount of [1, 2, 10]) {
           t.test(() => {
             const s = source<string>("s")
@@ -687,17 +689,18 @@ describe("Observable", () => {
             const c2 = computed(() => s.current())
             const effectFunc = mock.fn()
 
+            const e = effect(
+              computed(() => [c1.current(), c2.current()]),
+              effectFunc,
+            )
+
             batch(() => {
-              const e = effect(
-                computed(() => [c1.current(), c2.current()]),
-                effectFunc,
-              )
               for (let i = 0; i < callCount; ++i) {
                 s.change(`sChanged${i}`)
               }
             })
 
-            assert.strictEqual(effectFunc.mock.callCount(), 0)
+            assert.strictEqual(effectFunc.mock.callCount(), 1)
           })
         }
       })

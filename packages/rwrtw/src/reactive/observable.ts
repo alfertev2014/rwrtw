@@ -232,11 +232,13 @@ export class SourceImpl<T extends PlainData = PlainData>
    * @see Source.change
    */
   change(value: T): void {
-    assertIsNotInComputing("Changing source value in compute function")
+    assertIsNotInComputing("Changing source value in a compute function")
 
     if (value !== this._current) {
-      this._propagateChanged()
-      this._current = value
+      batch(() => {
+        this._propagateChanged()
+        this._current = value
+      })
     }
   }
 
@@ -591,7 +593,7 @@ class EffectImpl<T extends PlainData = PlainData>
     this._status = DANGLING
     this._trigger = trigger
     this._effectFunc = effectFunc
-    this._schedule()
+    this._run()
   }
 
   _markChanged(): void {
