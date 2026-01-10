@@ -63,13 +63,13 @@ export const reAttr =
   }
 
 export const reProp =
-  <T extends HTMLElement, N extends keyof T>(
-    name: N,
-    value: T[N] extends ScalarData ? ReactiveValue<T[N]> : never,
+  <T extends HTMLElement>(
+    name: string,
+    value: ReactiveValue<ScalarData>,
   ): TemplateHandler<T> =>
   (element, context) => {
     reCompute(context, value, (value) => {
-      element[name] = value
+      (element as Record<string, unknown>)[name] = value
     })
   }
 

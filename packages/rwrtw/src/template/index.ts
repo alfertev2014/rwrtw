@@ -15,11 +15,16 @@ import type {
   TemplateHandler,
 } from "./types.js"
 
+export type TagToHTMLElement<T extends string> = T extends keyof HTMLElementTagNameMap ? HTMLElementTagNameMap[T] : HTMLElement
+export type PropsOfElement<E extends HTMLElement> = {
+  [K in keyof E as E[K] extends () => unknown ? never : K]: E[K]
+}
+
 export const el: {
-  <K extends keyof HTMLElementTagNameMap>(
+  <K extends string>(
     tag: K,
     attrs?: TemplateElementAttrsConfig | null,
-    ...handlers: Array<TemplateHandler<HTMLElementTagNameMap[K]>>
+    ...handlers: Array<TemplateHandler<TagToHTMLElement<K>>>
   ): (...children: TemplateContent[]) => PlaceholderComponent
   /** @deprecated */
   <K extends keyof HTMLElementDeprecatedTagNameMap>(
