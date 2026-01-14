@@ -1,4 +1,3 @@
-import type { PlaceholderComponent } from "./core/types.js"
 import { reProp, type ReactiveValue } from "./template-reactive/index.js"
 import {
   el,
@@ -26,7 +25,7 @@ export type ElementProps = {
   [key: `p:${string}`]: ReactiveValue<ScalarData>
   [key: string]: unknown
 }
-export type ComponentType<in Props extends UnknownProps> = (
+export type ComponentType<Props extends UnknownProps> = (
   props: Props,
 ) => TemplateContent
 
@@ -46,8 +45,6 @@ export namespace JSX {
   }
 
   export type Element = TemplateContent
-  export type ElementType<Props extends UnknownProps = UnknownProps> =
-    string | ComponentType<Props>
 }
 
 export const jsx: {
