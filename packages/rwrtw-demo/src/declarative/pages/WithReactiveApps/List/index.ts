@@ -56,30 +56,16 @@ const ItemForm = ({
   onSave,
   onCancel,
 }: ItemFormProps): PlaceholderComponent => {
-  let textValue = ""
-  let checked = false
+  const form: Item = initItem ? { ...initItem } : { id: ++idGenerator, text: '', checked: false }
 
   const handleClick = () => {
-    onSave({
-      id: initItem?.id ?? ++idGenerator,
-      text: textValue,
-      checked,
-    })
+    onSave(form)
   }
 
   return fr(
-    reEffect(initItem, (initValue) => {
-      if (initValue) {
-        textValue = initValue.text
-        checked = initValue.checked
-      } else {
-        textValue = ""
-        checked = false
-      }
-    }),
     initItem?.id ? el("span")(`[${initItem.id}]`) : null,
-    Checkbox({ value: checked }),
-    TextInput({ value: textValue }),
+    Checkbox({ value: form.checked }),
+    TextInput({ value: form.text }),
     el("button", null, on("click", handleClick))("Save"),
     el("button", null, on("click", onCancel))("Cancel"),
   )
