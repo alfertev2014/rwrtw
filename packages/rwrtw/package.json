@@ -47,6 +47,6 @@
   "license": "ISC",
   "devDependencies": {
     "global-jsdom": "^27.0.0",
-    "jsdom": "^27.2.0"
+    "jsdom": "^27.4.0"
   }
 }
