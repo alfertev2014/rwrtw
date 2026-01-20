@@ -36,5 +36,12 @@
       "package": "@nx/js",
       "name": "remove-redundant-ts-project-references"
     }
-  ]
+  ],
+  "nx-console": {
+    "initialGitRef": {
+      "ref": "2df1a8284be3c345d81d39fb87f3d3955bb8bbf2",
+      "subject": "Working JSX-runtime!"
+    },
+    "targetVersion": "latest"
+  }
 }
