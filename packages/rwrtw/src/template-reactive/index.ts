@@ -11,8 +11,8 @@ import {
   isObservable,
 } from "../reactive/observable.js"
 import type { PlainData, ScalarData } from "../types.js"
-import { plhList, plh } from "../template/index.js"
-import type { TemplateHandler } from "../template/types.js"
+import { plhList, plh, fr } from "../template/index.js"
+import type { TemplateContent, TemplateHandler } from "../template/types.js"
 
 export type ReactiveValue<T extends PlainData> = Observable<T> | T
 
@@ -69,7 +69,7 @@ export const reProp =
   ): TemplateHandler<T> =>
   (element, context) => {
     reCompute(context, value, (value) => {
-      (element as Record<string, unknown>)[name] = value
+      ;(element as Record<string, unknown>)[name] = value
     })
   }
 
@@ -105,12 +105,12 @@ export const reStyle =
 
 export const reContent = <T extends PlainData>(
   trigger: ReactiveValue<T>,
-  contentFunc: (value: T) => PlaceholderContent,
-): PlaceholderContent => {
+  contentFunc: (value: T) => TemplateContent,
+): TemplateContent => {
   if (isObservable(trigger)) {
-    return plh(contentFunc(trigger.current()), (placeholder, context) => {
+    return plh(fr(contentFunc(trigger.current())), (placeholder, context) => {
       reCompute(context, trigger, (value) => {
-        placeholder.replaceContent(contentFunc(value))
+        placeholder.replaceContent(fr(contentFunc(value)))
       })
     })
   } else {
@@ -137,23 +137,23 @@ export const reText = (
 
 export const reIf = (
   condition: ReactiveValue<boolean>,
-  trueBranch: PlaceholderContent,
-  falseBranch: PlaceholderContent,
-): PlaceholderContent => {
+  trueBranch: TemplateContent,
+  falseBranch: TemplateContent,
+): TemplateContent => {
   return reContent(condition, (value) => (value ? trueBranch : falseBranch))
 }
 
 export const reList = <T extends PlainData>(
   listModel: ListObservable<T>,
-  elementComponentFunc: (value: Observable<T>) => PlaceholderContent,
+  elementComponentFunc: (value: Observable<T>) => TemplateContent,
 ): PlaceholderComponent => {
   return plhList(
-    listModel.current().map((item) => elementComponentFunc(item)),
+    listModel.current().map((item) => fr(elementComponentFunc(item))),
     (plhList, context) => {
       // TODO: multiple observers
       listModel.observer = {
         onInsert(i, element) {
-          plhList.insert(i, elementComponentFunc(element))
+          plhList.insert(i, fr(elementComponentFunc(element)))
         },
         onMove(from, to) {
           plhList.moveFromTo(from, to)

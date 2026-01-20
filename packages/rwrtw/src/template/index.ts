@@ -15,7 +15,8 @@ import type {
   TemplateHandler,
 } from "./types.js"
 
-export type TagToHTMLElement<T extends string> = T extends keyof HTMLElementTagNameMap ? HTMLElementTagNameMap[T] : HTMLElement
+export type TagToHTMLElement<T extends string> =
+  T extends keyof HTMLElementTagNameMap ? HTMLElementTagNameMap[T] : HTMLElement
 export type PropsOfElement<E extends HTMLElement> = {
   [K in keyof E as E[K] extends () => unknown ? never : K]: E[K]
 }

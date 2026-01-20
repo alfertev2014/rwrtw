@@ -1,25 +1,30 @@
-import { reProp, type ReactiveValue } from "./template-reactive/index.js"
+import {
+  reAttr,
+  reProp,
+  type ReactiveValue,
+} from "./template-reactive/index.js"
 import {
   el,
   on,
   type PropsOfElement,
   type TagToHTMLElement,
 } from "./template/index.js"
-import type {
-  TemplateContent,
-  TemplateElementAttrsConfig,
-  TemplateHandler,
-} from "./template/types.js"
+import type { TemplateContent, TemplateHandler } from "./template/types.js"
 import type { ScalarData } from "./types.js"
 
 export type UnknownProps = { [key: string]: unknown }
 
-export type ClassConfig = Record<string, boolean | undefined | null> | string | undefined | null | ClassConfig[]
+export type ClassConfig =
+  | Record<string, boolean | undefined | null>
+  | string
+  | undefined
+  | null
+  | ClassConfig[]
 
 export type ElementProps = {
   children?: TemplateContent
-  style?: CSSStyleDeclaration | string
-  class?: ClassConfig
+  style?: ReactiveValue<string> // TODO: reactive style object
+  class?: ReactiveValue<string> // TODO: reactive class prop
   id?: string
   [key: `on:${string}`]: EventListener
   [key: `p:${string}`]: ReactiveValue<ScalarData>
@@ -66,21 +71,19 @@ export const jsx: {
 ): TemplateContent => {
   if (typeof type === "string") {
     let children: TemplateContent = undefined
-    const attrs: TemplateElementAttrsConfig = {}
-    const properties: TemplateHandler<HTMLElement>[] = []
-    const events: TemplateHandler<HTMLElement>[] = []
+    const handlers: TemplateHandler<HTMLElement>[] = []
     for (const [prop, value] of Object.entries(props)) {
       if (prop === "children") {
         children = value as TemplateContent
       } else if (prop.startsWith("on:")) {
-        events.push(on(prop.slice(3), value as EventListener))
+        handlers.push(on(prop.slice(3), value as EventListener))
       } else if (prop.startsWith("p:")) {
-        properties.push(reProp(prop.slice(2), value as ReactiveValue<ScalarData>))
+        handlers.push(reProp(prop.slice(2), value as ReactiveValue<ScalarData>))
       } else {
-        attrs[prop] = value as ScalarData
+        handlers.push(reAttr(prop, value as ReactiveValue<ScalarData>))
       }
     }
-    return el(type, attrs, ...properties, ...events)(children)
+    return el(type, null, ...handlers)(children)
   }
   if (typeof type === "function") {
     return type(props)
@@ -89,3 +92,6 @@ export const jsx: {
 }
 
 export const jsxs = jsx
+
+export const Fragment = ({ children }: { children: TemplateContent }) =>
+  children

@@ -1,9 +1,4 @@
-import {
-  el,
-  on,
-  type PlaceholderComponent,
-  reClass,
-} from "rwrtw"
+import { el, on, type PlaceholderComponent, reClass } from "rwrtw"
 import Counter from "./Counter.js"
 import List from "./List/index.js"
 
@@ -18,10 +13,7 @@ const WithReactiveApps = (): PlaceholderComponent => {
     el(
       "button",
       null,
-      reClass(
-        "app-selected",
-        selectedApp === app,
-      ),
+      reClass("app-selected", selectedApp === app),
       on("click", handleClick(app)),
     )
 

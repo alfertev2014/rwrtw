@@ -56,7 +56,9 @@ const ItemForm = ({
   onSave,
   onCancel,
 }: ItemFormProps): PlaceholderComponent => {
-  const form: Item = initItem ? { ...initItem } : { id: ++idGenerator, text: '', checked: false }
+  const form: Item = initItem
+    ? { ...initItem }
+    : { id: ++idGenerator, text: "", checked: false }
 
   const handleClick = () => {
     onSave(form)
@@ -72,13 +74,19 @@ const ItemForm = ({
 }
 
 const List = (): PlaceholderComponent => {
-  const items: Item[] = 
-    ["One", "Two", "Three", "Four", "Five", "Six", "Seven"].map((text) => ({
-      id: ++idGenerator,
-      text,
-      checked: false,
-    }))
-  
+  const items: Item[] = [
+    "One",
+    "Two",
+    "Three",
+    "Four",
+    "Five",
+    "Six",
+    "Seven",
+  ].map((text) => ({
+    id: ++idGenerator,
+    text,
+    checked: false,
+  }))
 
   let selectedId: number | null = null
   const selectedItem = items.find((item) => item.id === selectedId) ?? null
@@ -93,14 +101,9 @@ const List = (): PlaceholderComponent => {
         return el(
           "li",
           { class: "list-item" },
-          reClass(
-            "list-item-selected",
-            selectedItem?.id === id,
-          ),
+          reClass("list-item-selected", selectedItem?.id === id),
         )(
-          el("span", { class: "list-item-id" })(
-            `[${id}]`,
-          ),
+          el("span", { class: "list-item-id" })(`[${id}]`),
           el("span", { class: "list-item-value" })(
             `[${item.checked ? "x" : " "}] ${item.text}`,
           ),
@@ -147,18 +150,13 @@ const List = (): PlaceholderComponent => {
         )
       }),
       el("hr")(),
-      el(
-        "div",
-      )(
-        el("span")(`${checkedCount} / ${count}`),
-      ),
+      el("div")(el("span")(`${checkedCount} / ${count}`)),
     ),
     el("div", { class: "list-add-item-form" })(
       ItemForm({
         initItem: selectedItem,
         onSave: (newItem) => {
-          const index = items
-            .findIndex((item) => item.id === newItem.id)
+          const index = items.findIndex((item) => item.id === newItem.id)
           if (index >= 0) {
             items[index] = newItem
           } else {

@@ -84,9 +84,9 @@ export const assertIsNotInComputing = (
 /**
  * Reactive observable node to manage subscribers.
  */
-export class ObservableImpl<out T extends PlainData = PlainData>
-  implements Observable<T>
-{
+export class ObservableImpl<
+  out T extends PlainData = PlainData,
+> implements Observable<T> {
   /**
    * Current stored value or last computed value.
    *
@@ -255,8 +255,9 @@ export class SourceImpl<T extends PlainData = PlainData>
  * Caches its current value if observable dependencies are not changed.
  */
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type, @typescript-eslint/no-empty-interface
-export interface Computed<out T extends PlainData = PlainData>
-  extends Observable<T> {}
+export interface Computed<
+  out T extends PlainData = PlainData,
+> extends Observable<T> {}
 
 /**
  * @see Computed
@@ -433,8 +434,9 @@ class ComputedImpl<out T extends PlainData = PlainData>
   }
 }
 
-class StaticComputedImpl<out T extends PlainData = PlainData> extends ComputedImpl<T> {
-
+class StaticComputedImpl<
+  out T extends PlainData = PlainData,
+> extends ComputedImpl<T> {
   constructor(dependencies: ObservableImpl[], computeFunc: () => T) {
     super(computeFunc)
     this._deps.push(...dependencies)
@@ -487,12 +489,19 @@ const dummyFunc = (): never => {
   throw new Error("Call dummy function")
 }
 
-class ConditionallyComputedImpl<out T extends PlainData = PlainData, out F extends PlainData = PlainData> extends ComputedImpl<T | F> {
+class ConditionallyComputedImpl<
+  out T extends PlainData = PlainData,
+  out F extends PlainData = PlainData,
+> extends ComputedImpl<T | F> {
   _condition: ObservableImpl<boolean>
   _trueBranch: ObservableImpl<T>
   _falseBranch: ObservableImpl<F>
   _conditionValue: boolean | null
-  constructor(condition: ObservableImpl<boolean>, trueBranch: ObservableImpl<T>, falseBranch: ObservableImpl<F>) {
+  constructor(
+    condition: ObservableImpl<boolean>,
+    trueBranch: ObservableImpl<T>,
+    falseBranch: ObservableImpl<F>,
+  ) {
     super(dummyFunc)
     this._condition = condition
     this._trueBranch = trueBranch
@@ -505,20 +514,20 @@ class ConditionallyComputedImpl<out T extends PlainData = PlainData, out F exten
     if (this._status === CHANGED) {
       return
     }
-    
+
     if (this._conditionValue) {
       this._trueBranch._recompute()
     } else {
       this._falseBranch._recompute()
     }
-    
-    if (this._status as unknown === CHANGED) {
+
+    if ((this._status as unknown) === CHANGED) {
       return
     }
-    
+
     this._status = NOT_CHANGED
   }
-  
+
   _callCondition(): T | F {
     const prevCondition = this._conditionValue
     this._conditionValue = this._condition.current()
@@ -534,7 +543,9 @@ class ConditionallyComputedImpl<out T extends PlainData = PlainData, out F exten
         this._falseBranch._subscribe(this)
       }
     }
-    return this._conditionValue ? this._trueBranch.current() : this._falseBranch.current()
+    return this._conditionValue
+      ? this._trueBranch.current()
+      : this._falseBranch.current()
   }
 
   override _callComputeFunc(): void {
@@ -716,20 +727,43 @@ export const computed = <T extends PlainData>(func: () => T): Observable<T> => {
   return new ComputedImpl(func)
 }
 
-export const staticComputed = <T extends PlainData>(dependencies: Observable[], func: () => T): Observable<T> => {
+export const staticComputed = <T extends PlainData>(
+  dependencies: Observable[],
+  func: () => T,
+): Observable<T> => {
   assertIsNotInComputing("Creating staticComputed in compute function")
 
-  observableAssert(dependencies.every(d => d instanceof ObservableImpl), "Some of dependencies are not ObservableImpl")
+  observableAssert(
+    dependencies.every((d) => d instanceof ObservableImpl),
+    "Some of dependencies are not ObservableImpl",
+  )
 
   return new StaticComputedImpl(dependencies as ObservableImpl[], func)
 }
 
-export const condComputed = <T extends PlainData, F extends PlainData>(condition: Observable<boolean>, trueBranch: Observable<T>, falseBranch: Observable<F>): Observable<T | F> => {
-  observableAssert(condition instanceof ObservableImpl, "Condition is not observable")
-  observableAssert(trueBranch instanceof ObservableImpl, "trueBranch is not observable")
-  observableAssert(falseBranch instanceof ObservableImpl, "falseBranch is not observable")
+export const condComputed = <T extends PlainData, F extends PlainData>(
+  condition: Observable<boolean>,
+  trueBranch: Observable<T>,
+  falseBranch: Observable<F>,
+): Observable<T | F> => {
+  observableAssert(
+    condition instanceof ObservableImpl,
+    "Condition is not observable",
+  )
+  observableAssert(
+    trueBranch instanceof ObservableImpl,
+    "trueBranch is not observable",
+  )
+  observableAssert(
+    falseBranch instanceof ObservableImpl,
+    "falseBranch is not observable",
+  )
 
-  return new ConditionallyComputedImpl(condition as ObservableImpl<boolean>, trueBranch as unknown as ObservableImpl<T>, falseBranch as unknown as ObservableImpl<F>)
+  return new ConditionallyComputedImpl(
+    condition as ObservableImpl<boolean>,
+    trueBranch as unknown as ObservableImpl<T>,
+    falseBranch as unknown as ObservableImpl<F>,
+  )
 }
 
 const noop = () => {

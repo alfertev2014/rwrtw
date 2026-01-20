@@ -17,8 +17,9 @@ import {
 } from "rwrtw"
 
 import "./style.css"
+import WithJSX from "./pages/WithJSX/index.js"
 
-type AppSectionType = "LowLevel" | "DSL" | "Reactive"
+type AppSectionType = "LowLevel" | "DSL" | "Reactive" | "JSX"
 
 type AppSectionProps = {
   type: AppSectionType
@@ -67,6 +68,11 @@ const App = (): PlaceholderComponent => {
         header: "Apps with reactive",
         activeSection,
       })(WithReactiveApps()),
+      AppSection({
+        type: "JSX",
+        header: "Apps implemented with JSX",
+        activeSection,
+      })(WithJSX()),
     ),
   )
 }

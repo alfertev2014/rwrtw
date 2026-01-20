@@ -16,8 +16,9 @@ export interface ListObserver<T extends PlainData = PlainData> {
   onRemove: (i: number) => void
 }
 
-export interface ListObservable<T extends PlainData = PlainData>
-  extends Observable<readonly Observable<T>[]> {
+export interface ListObservable<
+  T extends PlainData = PlainData,
+> extends Observable<readonly Observable<T>[]> {
   observer: ListObserver<T> | null
 }
 
@@ -32,8 +33,9 @@ export const isListObservable = <T extends PlainData = PlainData>(
   list: readonly T[] | ListObservable<T>,
 ): list is ListObservable<T> => list instanceof ListObservableImpl
 
-export interface ListSource<T extends PlainData = PlainData>
-  extends ListObservable<T> {
+export interface ListSource<
+  T extends PlainData = PlainData,
+> extends ListObservable<T> {
   readonly removeItem: (i: number) => void
   readonly moveItem: (from: number, to: number) => void
   readonly insertItem: (i: number, element: T) => void
