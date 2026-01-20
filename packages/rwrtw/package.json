@@ -1,12 +1,14 @@
 {
   "name": "rwrtw",
   "version": "0.0.10",
-  "description": "Tiny UI library for browser applications, thin DOM helpers and component building blocks with transparent and convenient DSL",
+  "description": "Tiny UI library for frontend applications: low-level DOM helpers, reactive primitives and convenient template DSL with neat typings.",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "files": [
-    "dist/**"
+    "dist/**/*.js",
+    "dist/**/*.d.ts",
+    "README.md"
   ],
   "exports": {
     ".": {
@@ -37,7 +39,9 @@
     "tiny",
     "small",
     "DOM",
-    "helpers",
+    "reactive",
+    "jsx",
+    "signals",
     "UI",
     "library",
     "components",
