@@ -33,7 +33,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git@github.com:alfertev2014/rwrtw.git"
+    "url": "git+ssh://git@github.com/alfertev2014/rwrtw.git"
   },
   "keywords": [
     "tiny",
