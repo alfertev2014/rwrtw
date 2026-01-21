@@ -1,6 +1,4 @@
 import WithReactiveApps from "./pages/WithReactiveApps/index.js"
-import LowLevelApps from "./pages/LowLevelApps/index.js"
-import WithDslApps from "./pages/WithDslApps/index.js"
 import {
   type PlaceholderComponent,
   type Source,
@@ -19,7 +17,7 @@ import {
 import "./style.css"
 import WithJSX from "./pages/WithJSX/index.js"
 
-type AppSectionType = "LowLevel" | "DSL" | "Reactive" | "JSX"
+type AppSectionType = "Reactive" | "JSX"
 
 type AppSectionProps = {
   type: AppSectionType
@@ -55,14 +53,6 @@ const App = (): PlaceholderComponent => {
   return fr(
     el("h1")("RWRTW Demo"),
     el("div", { class: "main-layout" })(
-      AppSection({ type: "LowLevel", header: "Low level apps", activeSection })(
-        LowLevelApps(),
-      ),
-      AppSection({
-        type: "DSL",
-        header: "Apps with template DSL",
-        activeSection,
-      })(WithDslApps()),
       AppSection({
         type: "Reactive",
         header: "Apps with reactive",
