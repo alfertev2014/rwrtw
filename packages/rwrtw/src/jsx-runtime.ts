@@ -6,8 +6,10 @@ import {
 import {
   el,
   on,
+  ref,
   type PropsOfElement,
   type TagToHTMLElement,
+  type TemplateRef,
 } from "./template/index.js"
 import type { TemplateContent, TemplateHandler } from "./template/types.js"
 import type { ScalarData } from "./types.js"
@@ -26,6 +28,8 @@ export type ElementProps = {
   style?: ReactiveValue<string> // TODO: reactive style object
   class?: ReactiveValue<string> // TODO: reactive class prop
   id?: string
+  with?: TemplateHandler<HTMLElement>[] | TemplateHandler<HTMLElement>
+  ref?: TemplateRef<HTMLElement>
   [key: `on:${string}`]: EventListener
   [key: `p:${string}`]: ReactiveValue<ScalarData>
   [key: string]: unknown
@@ -75,6 +79,14 @@ export const jsx: {
     for (const [prop, value] of Object.entries(props)) {
       if (prop === "children") {
         children = value as TemplateContent
+      } else if (prop === "with") {
+        if (Array.isArray(prop)) {
+          handlers.push(...(value as TemplateHandler<HTMLElement>[]));
+        } else {
+          handlers.push(value as TemplateHandler<HTMLElement>)
+        }
+      } else if (prop === "ref") {
+        handlers.push(ref(value as TemplateRef<HTMLElement>))
       } else if (prop.startsWith("on:")) {
         handlers.push(on(prop.slice(3), value as EventListener))
       } else if (prop.startsWith("p:")) {
