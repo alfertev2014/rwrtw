@@ -80,7 +80,7 @@ export const jsx: {
       if (prop === "children") {
         children = value as TemplateContent
       } else if (prop === "with") {
-        if (Array.isArray(prop)) {
+        if (Array.isArray(value)) {
           handlers.push(...(value as TemplateHandler<HTMLElement>[]));
         } else {
           handlers.push(value as TemplateHandler<HTMLElement>)
