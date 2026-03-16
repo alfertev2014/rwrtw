@@ -1,4 +1,4 @@
-export class ParentNodePlace {
+class ParentNodePlace {
   readonly parent: ParentNode
   constructor(parent: ParentNode) {
     this.parent = parent
@@ -10,7 +10,7 @@ export const placeAtBeginningOf = (node: ParentNode): DOMPlace =>
 
 export type DOMPlace = Node | ParentNodePlace
 
-export interface PlaceholderNode {
+export type PlaceholderNode = {
   readonly lastDOMPlace: () => DOMPlace
 }
 

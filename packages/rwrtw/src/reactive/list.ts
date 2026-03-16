@@ -3,38 +3,39 @@ import {
   assertIsObservable,
   effect,
   type Observable,
-  observableAssert,
   ObservableImpl,
   source,
   type Source,
 } from "./observable.js"
-import type { PlainData } from "../types.js"
+import type { MutableReactivePlainData, ReactivePlainData } from "./types.js"
 
-export interface ListObserver<T extends PlainData = PlainData> {
+export interface ListObserver<T extends ReactivePlainData = ReactivePlainData> {
   onInsert: (i: number, element: Observable<T>) => void
   onMove: (from: number, to: number) => void
   onRemove: (i: number) => void
 }
 
 export interface ListObservable<
-  T extends PlainData = PlainData,
+  T extends ReactivePlainData = ReactivePlainData,
 > extends Observable<readonly Observable<T>[]> {
   observer: ListObserver<T> | null
 }
 
-export class ListObservableImpl<T extends PlainData = PlainData>
+export class ListObservableImpl<T extends ReactivePlainData = ReactivePlainData>
   extends ObservableImpl<readonly Observable<T>[]>
   implements ListObservable<T>
 {
   observer: ListObserver<T> | null = null
 }
 
-export const isListObservable = <T extends PlainData = PlainData>(
+export const isListObservable = <
+  T extends ReactivePlainData = ReactivePlainData,
+>(
   list: readonly T[] | ListObservable<T>,
 ): list is ListObservable<T> => list instanceof ListObservableImpl
 
 export interface ListSource<
-  T extends PlainData = PlainData,
+  T extends MutableReactivePlainData = MutableReactivePlainData,
 > extends ListObservable<T> {
   readonly removeItem: (i: number) => void
   readonly moveItem: (from: number, to: number) => void
@@ -43,7 +44,9 @@ export interface ListSource<
   readonly change: (newData: readonly T[]) => void
 }
 
-export class ListSourceImpl<T extends PlainData = PlainData>
+export class ListSourceImpl<
+  T extends MutableReactivePlainData = MutableReactivePlainData,
+>
   extends ListObservableImpl<T>
   implements ListSource<T>
 {
@@ -133,7 +136,7 @@ export class ListSourceImpl<T extends PlainData = PlainData>
   }
 }
 
-export const listSource = <T extends PlainData>(
+export const listSource = <T extends MutableReactivePlainData>(
   initialData: readonly T[],
 ): ListSource<T> => {
   assertIsNotInComputing("Creating list in compute function")
@@ -141,33 +144,7 @@ export const listSource = <T extends PlainData>(
   return new ListSourceImpl<T>(initialData)
 }
 
-export const listTransform = <T extends PlainData, R extends PlainData>(
-  list: ListObservable<T>,
-  transformer: (item: Observable<T>) => R,
-): ListObservable<R> => {
-  assertIsNotInComputing("Creating listTransform in compute function")
-  observableAssert(
-    list instanceof ListObservableImpl,
-    "Expected observable list",
-  )
-
-  const _list = new ListSourceImpl<R>(list.current().map(transformer))
-  const observer: ListObserver<T> = {
-    onInsert(i, element) {
-      _list.insertItem(i, transformer(element))
-    },
-    onMove(from, to) {
-      _list.moveItem(from, to)
-    },
-    onRemove(i) {
-      _list.removeItem(i)
-    },
-  }
-  list.observer = observer
-  return _list
-}
-
-export const listFromArray = <T extends PlainData>(
+export const listFromArray = <T extends MutableReactivePlainData>(
   observable: Observable<readonly T[]>,
 ): ListObservable<T> => {
   assertIsObservable(observable)

@@ -1,5 +1,5 @@
 import type { PlaceholderComponent, PlaceholderContext } from "../core/index.js"
-import type { ScalarData } from "../types.js"
+import type { ScalarData } from "../dom/types.js"
 
 export type TemplateHandler<T> = (
   element: T,

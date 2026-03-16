@@ -1,7 +1,7 @@
 import assert from "node:assert"
 import test, { describe, mock } from "node:test"
 import { computed, effect, source, batch } from "../observable.js"
-import type { PlainData } from "../../types.js"
+import type { PlainData } from "../types.js"
 
 describe("Observable", () => {
   describe("Source", () => {

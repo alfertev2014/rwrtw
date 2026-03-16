@@ -38,9 +38,9 @@ const Checkbox = ({ value }: { value: Source<boolean> }): TemplateContent => {
 }
 
 type Item = {
-  id: number
-  checked: boolean
-  text: string
+  readonly id: number
+  readonly checked: Source<boolean>
+  readonly text: Source<string>
 }
 
 let idGenerator = 0
@@ -51,19 +51,23 @@ type ItemFormProps = {
   onCancel: () => void
 }
 
+const createItemForm = (initItem: Observable<Item | null>) => ({
+  text: source<string>(initItem.current()?.text.current() ?? ""),
+  checked: source<boolean>(initItem.current()?.checked.current() ?? false)
+})
+
 const ItemForm = ({
   initItem,
   onSave,
   onCancel,
 }: ItemFormProps): TemplateContent => {
-  const textValue = source<string>("")
-  const checked = source<boolean>(false)
+  const itemForm = createItemForm(initItem);
 
   const handleClick = () => {
     onSave({
       id: initItem.current()?.id ?? ++idGenerator,
-      text: textValue.current(),
-      checked: checked.current(),
+      text: source<string>(itemForm.text.current()),
+      checked: source<boolean>(itemForm.checked.current()),
     })
   }
 
@@ -71,19 +75,19 @@ const ItemForm = ({
     <>
       {reEffect(initItem, (initValue) => {
         if (initValue) {
-          textValue.change(initValue.text)
-          checked.change(initValue.checked)
+          itemForm.text.change(initValue.text.current())
+          itemForm.checked.change(initValue.checked.current())
         } else {
-          textValue.change("")
-          checked.change(false)
+          itemForm.text.change("")
+          itemForm.checked.change(false)
         }
       })}
       {reContent(
         computed(() => initItem.current()?.id),
         (id) => (id ? <span>[{id}]</span> : null),
       )}
-      <Checkbox value={checked} />
-      <TextInput value={textValue} />
+      <Checkbox value={itemForm.checked} />
+      <TextInput value={itemForm.text} />
       <button on:click={handleClick}>Save</button>
       <button on:click={onCancel}>Cancel</button>
     </>
@@ -94,8 +98,8 @@ const List = (): TemplateContent => {
   const items = listSource<Item>(
     ["One", "Two", "Three", "Four", "Five", "Six", "Seven"].map((text) => ({
       id: ++idGenerator,
-      text,
-      checked: false,
+      text: source<string>(text),
+      checked: source<boolean>(false),
     })),
   )
 
@@ -109,7 +113,7 @@ const List = (): TemplateContent => {
   )
   const count = computed(() => items.current().length)
   const checkedCount = computed(
-    () => items.current().filter((item) => item.current().checked).length,
+    () => items.current().filter((item) => item.current().checked.current()).length,
   )
 
   return (
@@ -132,7 +136,7 @@ const List = (): TemplateContent => {
                 {reText(
                   computed(
                     () =>
-                      `[${item.current().checked ? "x" : " "}] ${item.current().text}`,
+                      `[${item.current().checked.current() ? "x" : " "}] ${item.current().text.current()}`,
                   ),
                 )}
               </span>

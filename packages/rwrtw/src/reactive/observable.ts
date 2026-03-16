@@ -1,9 +1,9 @@
-import type { PlainData } from "../types.js"
+import type { MutableReactivePlainData, ReactivePlainData } from "./types.js"
 
 /**
  * Abstract observable node of reactive graph. Notifies its subscribers when stored value is changed.
  */
-export interface Observable<out T extends PlainData = PlainData> {
+export interface Observable<out T extends ReactivePlainData = ReactivePlainData> {
   /**
    * Accessor for current value.
    *
@@ -85,7 +85,7 @@ export const assertIsNotInComputing = (
  * Reactive observable node to manage subscribers.
  */
 export class ObservableImpl<
-  out T extends PlainData = PlainData,
+  out T extends ReactivePlainData = ReactivePlainData,
 > implements Observable<T> {
   /**
    * Current stored value or last computed value.
@@ -165,8 +165,8 @@ export class ObservableImpl<
  * @param value Plain value or Observable node.
  * @returns True if value is Observable node.
  */
-export const isObservable = <T extends PlainData = PlainData>(
-  value: PlainData | Observable<T>,
+export const isObservable = <T extends ReactivePlainData = ReactivePlainData>(
+  value: ReactivePlainData | Observable<T>,
 ): value is Observable<T> => value instanceof ObservableImpl
 
 /**
@@ -192,7 +192,7 @@ interface Observer {
 /**
  * Reactive mutable source node for scalar value types
  */
-export interface Source<T extends PlainData = PlainData> extends Observable<T> {
+export interface Source<T extends MutableReactivePlainData = MutableReactivePlainData> extends Observable<T> {
   /**
    * Modifier of the value.
    *
@@ -218,7 +218,7 @@ export interface Source<T extends PlainData = PlainData> extends Observable<T> {
 /**
  * @see Source
  */
-export class SourceImpl<T extends PlainData = PlainData>
+export class SourceImpl<T extends MutableReactivePlainData = MutableReactivePlainData>
   extends ObservableImpl<T>
   implements Source<T>
 {
@@ -256,13 +256,13 @@ export class SourceImpl<T extends PlainData = PlainData>
  */
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type, @typescript-eslint/no-empty-interface
 export interface Computed<
-  out T extends PlainData = PlainData,
+  out T extends ReactivePlainData = ReactivePlainData,
 > extends Observable<T> {}
 
 /**
  * @see Computed
  */
-class ComputedImpl<out T extends PlainData = PlainData>
+class ComputedImpl<out T extends ReactivePlainData = ReactivePlainData>
   extends ObservableImpl<T>
   implements Computed<T>, Observer
 {
@@ -435,7 +435,7 @@ class ComputedImpl<out T extends PlainData = PlainData>
 }
 
 class StaticComputedImpl<
-  out T extends PlainData = PlainData,
+  out T extends ReactivePlainData = ReactivePlainData,
 > extends ComputedImpl<T> {
   constructor(dependencies: ObservableImpl[], computeFunc: () => T) {
     super(computeFunc)
@@ -490,8 +490,8 @@ const dummyFunc = (): never => {
 }
 
 class ConditionallyComputedImpl<
-  out T extends PlainData = PlainData,
-  out F extends PlainData = PlainData,
+  out T extends ReactivePlainData = ReactivePlainData,
+  out F extends ReactivePlainData = ReactivePlainData,
 > extends ComputedImpl<T | F> {
   _condition: ObservableImpl<boolean>
   _trueBranch: ObservableImpl<T>
@@ -594,7 +594,7 @@ interface RunnableEffect extends Effect {
   _run(): void
 }
 
-class EffectImpl<T extends PlainData = PlainData>
+class EffectImpl<T extends ReactivePlainData = ReactivePlainData>
   implements Observer, RunnableEffect
 {
   _status: ChangedStatus
@@ -715,19 +715,19 @@ export const runEffects = (): void => {
   }
 }
 
-export const source = <T extends PlainData>(initValue: T): Source<T> => {
+export const source = <T extends MutableReactivePlainData>(initValue: T): Source<T> => {
   assertIsNotInComputing("Creating source in compute function")
 
   return new SourceImpl<T>(initValue)
 }
 
-export const computed = <T extends PlainData>(func: () => T): Observable<T> => {
+export const computed = <T extends ReactivePlainData>(func: () => T): Observable<T> => {
   assertIsNotInComputing("Creating computed in compute function")
 
   return new ComputedImpl(func)
 }
 
-export const staticComputed = <T extends PlainData>(
+export const staticComputed = <T extends ReactivePlainData>(
   dependencies: Observable[],
   func: () => T,
 ): Observable<T> => {
@@ -741,7 +741,7 @@ export const staticComputed = <T extends PlainData>(
   return new StaticComputedImpl(dependencies as ObservableImpl[], func)
 }
 
-export const condComputed = <T extends PlainData, F extends PlainData>(
+export const condComputed = <T extends ReactivePlainData, F extends ReactivePlainData>(
   condition: Observable<boolean>,
   trueBranch: Observable<T>,
   falseBranch: Observable<F>,
@@ -770,7 +770,7 @@ const noop = () => {
   // do nothing
 }
 
-export const effect = <T extends PlainData>(
+export const effect = <T extends ReactivePlainData>(
   trigger: Observable<T>,
   effectFunc: (value: T) => void = noop,
 ): Effect => {

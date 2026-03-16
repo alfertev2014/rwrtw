@@ -1,7 +1,7 @@
+import type { ScalarData } from "./dom/types.js"
 import {
   reAttr,
   reProp,
-  type ReactiveValue,
 } from "./template-reactive/index.js"
 import {
   el,
@@ -12,7 +12,7 @@ import {
   type TemplateRef,
 } from "./template/index.js"
 import type { TemplateContent, TemplateHandler } from "./template/types.js"
-import type { ScalarData } from "./types.js"
+import type { ReactiveValue } from "./reactive/types.js"
 
 export type UnknownProps = { [key: string]: unknown }
 

@@ -8,12 +8,12 @@ import {
   type PlaceholderContent,
   type Renderer,
 } from "../core/index.js"
-import { type ScalarData } from "../types.js"
 import type {
   TemplateContent,
   TemplateElementAttrsConfig,
   TemplateHandler,
 } from "./types.js"
+import type { ScalarData } from "../dom/types.js"
 
 export type TagToHTMLElement<T extends string> =
   T extends keyof HTMLElementTagNameMap ? HTMLElementTagNameMap[T] : HTMLElement
