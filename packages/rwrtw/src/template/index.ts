@@ -13,13 +13,7 @@ import type {
   TemplateElementAttrsConfig,
   TemplateHandler,
 } from "./types.js"
-import type { ScalarData } from "../dom/types.js"
-
-export type TagToHTMLElement<T extends string> =
-  T extends keyof HTMLElementTagNameMap ? HTMLElementTagNameMap[T] : HTMLElement
-export type PropsOfElement<E extends HTMLElement> = {
-  [K in keyof E as E[K] extends () => unknown ? never : K]: E[K]
-}
+import type { ScalarData, TagToHTMLElement } from "../dom/types.js"
 
 export const el: {
   <K extends string>(

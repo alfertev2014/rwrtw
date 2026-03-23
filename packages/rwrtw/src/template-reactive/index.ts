@@ -10,20 +10,12 @@ import {
   effect,
   isObservable,
 } from "../reactive/observable.js"
-import type { ReactivePlainData, ReactiveValue } from "../reactive/types.js"
+import type { ReactiveData, ReactiveValue } from "../reactive/types.js"
 import { plhList, plh, fr } from "../template/index.js"
 import type { TemplateContent, TemplateHandler } from "../template/types.js"
 import type { ScalarData } from "../dom/types.js"
 
-/**
- * Get current() of value if value is Observable. Returns value as is otherwise.
- * @param value Plain value or Observable node.
- * @returns Current value of Observable or value as is.
- */
-export const currentOf = <T extends ReactivePlainData>(value: ReactiveValue<T>): T =>
-  isObservable(value) ? value.current() : value
-
-export const reCompute = <T extends ReactivePlainData>(
+export const reCompute = <T extends ReactiveData>(
   context: PlaceholderContext,
   trigger: ReactiveValue<T>,
   effectFunc: (value: T) => void,
@@ -42,7 +34,7 @@ export const reCompute = <T extends ReactivePlainData>(
 }
 
 export const reEffect =
-  <T extends ReactivePlainData>(
+  <T extends ReactiveData>(
     trigger: ReactiveValue<T>,
     effectFunc: (value: T) => void,
   ): PlaceholderContent =>
@@ -102,7 +94,7 @@ export const reStyle =
     })
   }
 
-export const reContent = <T extends ReactivePlainData>(
+export const reContent = <T extends ReactiveData>(
   trigger: ReactiveValue<T>,
   contentFunc: (value: T) => TemplateContent,
 ): TemplateContent => {
@@ -142,7 +134,7 @@ export const reIf = (
   return reContent(condition, (value) => (value ? trueBranch : falseBranch))
 }
 
-export const reList = <T extends ReactivePlainData>(
+export const reList = <T extends ReactiveData>(
   listModel: ListObservable<T>,
   elementComponentFunc: (value: Observable<T>) => TemplateContent,
 ): PlaceholderComponent => {

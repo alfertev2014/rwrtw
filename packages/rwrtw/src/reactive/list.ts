@@ -7,21 +7,21 @@ import {
   source,
   type Source,
 } from "./observable.js"
-import type { MutableReactivePlainData, ReactivePlainData } from "./types.js"
+import type { MutableReactiveData, ReactiveData } from "./types.js"
 
-export interface ListObserver<T extends ReactivePlainData = ReactivePlainData> {
+export interface ListObserver<T extends ReactiveData = ReactiveData> {
   onInsert: (i: number, element: Observable<T>) => void
   onMove: (from: number, to: number) => void
   onRemove: (i: number) => void
 }
 
 export interface ListObservable<
-  T extends ReactivePlainData = ReactivePlainData,
+  T extends ReactiveData = ReactiveData,
 > extends Observable<readonly Observable<T>[]> {
   observer: ListObserver<T> | null
 }
 
-export class ListObservableImpl<T extends ReactivePlainData = ReactivePlainData>
+export class ListObservableImpl<T extends ReactiveData = ReactiveData>
   extends ObservableImpl<readonly Observable<T>[]>
   implements ListObservable<T>
 {
@@ -29,13 +29,13 @@ export class ListObservableImpl<T extends ReactivePlainData = ReactivePlainData>
 }
 
 export const isListObservable = <
-  T extends ReactivePlainData = ReactivePlainData,
+  T extends ReactiveData = ReactiveData,
 >(
   list: readonly T[] | ListObservable<T>,
 ): list is ListObservable<T> => list instanceof ListObservableImpl
 
 export interface ListSource<
-  T extends MutableReactivePlainData = MutableReactivePlainData,
+  T extends MutableReactiveData = MutableReactiveData,
 > extends ListObservable<T> {
   readonly removeItem: (i: number) => void
   readonly moveItem: (from: number, to: number) => void
@@ -45,7 +45,7 @@ export interface ListSource<
 }
 
 export class ListSourceImpl<
-  T extends MutableReactivePlainData = MutableReactivePlainData,
+  T extends MutableReactiveData = MutableReactiveData,
 >
   extends ListObservableImpl<T>
   implements ListSource<T>
@@ -136,7 +136,7 @@ export class ListSourceImpl<
   }
 }
 
-export const listSource = <T extends MutableReactivePlainData>(
+export const listSource = <T extends MutableReactiveData>(
   initialData: readonly T[],
 ): ListSource<T> => {
   assertIsNotInComputing("Creating list in compute function")
@@ -144,7 +144,7 @@ export const listSource = <T extends MutableReactivePlainData>(
   return new ListSourceImpl<T>(initialData)
 }
 
-export const listFromArray = <T extends MutableReactivePlainData>(
+export const listFromArray = <T extends MutableReactiveData>(
   observable: Observable<readonly T[]>,
 ): ListObservable<T> => {
   assertIsObservable(observable)

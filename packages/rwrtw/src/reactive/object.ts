@@ -5,17 +5,17 @@ import {
   type Source,
   source,
 } from "./observable.js"
-import type { MutableReactivePlainData, ReactivePlainData } from "./types.js"
+import type { MutableReactiveData, ReactiveData } from "./types.js"
 
 export interface ObjectObserver<
-  T extends ReactivePlainData = ReactivePlainData,
+  T extends ReactiveData = ReactiveData,
 > {
   onInsert: (key: string | number, element: Observable<T>) => void
   onRemove: (key: string | number) => void
 }
 
 export interface ObjectObservable<
-  T extends ReactivePlainData = ReactivePlainData,
+  T extends ReactiveData = ReactiveData,
 > {
   readonly data: {
     [key: string | number]: Observable<T>
@@ -24,7 +24,7 @@ export interface ObjectObservable<
 }
 
 export interface ObjectSource<
-  T extends MutableReactivePlainData = MutableReactivePlainData,
+  T extends MutableReactiveData = MutableReactiveData,
 > extends ObjectObservable<T> {
   removeItem: (key: string | number) => void
   insertItem: (key: string | number, element: T) => void
@@ -33,7 +33,7 @@ export interface ObjectSource<
 }
 
 export class ObjectSourceImpl<
-  T extends MutableReactivePlainData = MutableReactivePlainData,
+  T extends MutableReactiveData = MutableReactiveData,
 > implements ObjectSource<T> {
   readonly _data: {
     [key: string | number]: Source<T>
@@ -88,7 +88,7 @@ export class ObjectSourceImpl<
   }
 }
 
-export const objectSource = <T extends MutableReactivePlainData>(initialData: {
+export const objectSource = <T extends MutableReactiveData>(initialData: {
   [key: string | number]: T
 }): ObjectSource<T> => {
   assertIsNotInComputing("Creating object in compute function")
@@ -96,7 +96,7 @@ export const objectSource = <T extends MutableReactivePlainData>(initialData: {
   return new ObjectSourceImpl<T>(initialData)
 }
 
-export const objectFromSource = <T extends MutableReactivePlainData>(
+export const objectFromSource = <T extends MutableReactiveData>(
   observable: Observable<{
     [key: string | number]: T
   }>,

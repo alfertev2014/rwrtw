@@ -46,22 +46,20 @@ type Item = {
 let idGenerator = 0
 
 type ItemFormProps = {
-  initItem: Observable<Item | null>
-  onSave: (item: Item) => void
-  onCancel: () => void
+  readonly initItem: Observable<Item | null>
+  readonly onSave: (item: Item) => void
+  readonly onCancel: () => void
 }
-
-const createItemForm = (initItem: Observable<Item | null>) => ({
-  text: source<string>(initItem.current()?.text.current() ?? ""),
-  checked: source<boolean>(initItem.current()?.checked.current() ?? false)
-})
 
 const ItemForm = ({
   initItem,
   onSave,
   onCancel,
 }: ItemFormProps): TemplateContent => {
-  const itemForm = createItemForm(initItem);
+  const itemForm = {
+    text: source<string>(initItem.current()?.text.current() ?? ""),
+    checked: source<boolean>(initItem.current()?.checked.current() ?? false)
+  };
 
   const handleClick = () => {
     onSave({
