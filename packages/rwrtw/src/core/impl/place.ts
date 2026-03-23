@@ -38,10 +38,10 @@ export const insertNodeAt = <T extends Node>(place: Place, node: T): T => {
 }
 
 export const removeNodesAt = (place: Place, lastPlace: Place): void => {
-  const lastDomPlace: DOMPlace | null = lastDOMPlaceOf(lastPlace)
-  if (lastDomPlace != null && lastDomPlace instanceof Node) {
+  const lastDomPlace: DOMPlace = lastDOMPlaceOf(lastPlace)
+  if (lastDomPlace instanceof Node) {
     let lastDomNode: Node | null = lastDomPlace
-    const firstDomPlace = place != null ? lastDOMPlaceOf(place) : null
+    const firstDomPlace = lastDOMPlaceOf(place)
     const firstDomNode = firstDomPlace instanceof Node ? firstDomPlace : null
     while (lastDomNode != null && lastDomNode !== firstDomNode) {
       const toRemove = lastDomNode
@@ -55,11 +55,11 @@ export const takeNodesFrom = (
   place: Place,
   lastPlace: Place,
 ): DocumentFragment => {
-  const lastDomPlace: DOMPlace | null = lastDOMPlaceOf(lastPlace)
+  const lastDomPlace: DOMPlace = lastDOMPlaceOf(lastPlace)
   const fragment = document.createDocumentFragment()
-  if (lastDomPlace != null && lastDomPlace instanceof Node) {
+  if (lastDomPlace instanceof Node) {
     let lastDomNode: Node | null = lastDomPlace
-    const firstDomPlace = place != null ? lastDOMPlaceOf(place) : null
+    const firstDomPlace = lastDOMPlaceOf(place)
     const firstDomNode = firstDomPlace instanceof Node ? firstDomPlace : null
     while (lastDomNode != null && lastDomNode !== firstDomNode) {
       const toRemove = lastDomNode
