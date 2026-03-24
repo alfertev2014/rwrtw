@@ -23,6 +23,13 @@ export type MutableReactiveNode<Data extends MutableReactiveData = MutableReacti
   | Source<Data>
   | ListSource<Data>
 
+export type ReadonlyReactive<Data extends MutableReactiveData = MutableReactiveData> =
+  Data extends ScalarData ? Data :
+  Data extends Source<infer Content> ? Observable<ReadonlyReactive<Content>> :
+  Data extends ListSource<infer Content> ? ListObservable<ReadonlyReactive<Content>> :
+  Data extends PlainData<infer Content extends MutableReactiveData> ? PlainData<ReadonlyReactive<Content>> :
+  never
+
 export type DeepReadonly<T> = {
 	readonly [P in keyof T]: DeepReadonly<T[P]>;
 };
