@@ -1,4 +1,4 @@
-import WithReactiveApps from "./pages/WithReactiveApps/index.js"
+import WithReactiveApps from "./pages/WithJSX/index.js"
 import {
   type PlaceholderComponent,
   type TemplateContent,
