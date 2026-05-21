@@ -8,6 +8,9 @@
     },
     {
       "path": "./packages/rwrtw-demo"
+    },
+    {
+      "path": "./packages/rwrtw-decl"
     }
   ]
 }
