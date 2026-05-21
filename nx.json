@@ -30,5 +30,6 @@
         "targetName": "lint"
       }
     }
-  ]
+  ],
+  "analytics": false
 }
