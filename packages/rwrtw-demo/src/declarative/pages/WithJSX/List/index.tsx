@@ -33,6 +33,7 @@ type Item = {
   readonly id: number
   checked: boolean
   text: string
+  children: Item[]
 }
 
 let idGenerator = 0

@@ -1,10 +1,8 @@
-import nx from "@nx/eslint-plugin"
+import eslint from "@eslint/js"
 import tseslint from "typescript-eslint"
 
-export default tseslint.config([
-  ...nx.configs["flat/base"],
-  ...nx.configs["flat/javascript"],
-  ...nx.configs["flat/typescript"],
+export default tseslint.config(
+  eslint.configs.recommended,
   {
     ignores: ["**/dist"],
   },
@@ -24,37 +22,4 @@ export default tseslint.config([
       "@typescript-eslint/no-floating-promises": "off",
     },
   },
-  {
-    files: ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx"],
-    rules: {
-      "@nx/enforce-module-boundaries": [
-        "error",
-        {
-          enforceBuildableLibDependency: true,
-          allow: ["^.*/eslint(\\.base)?\\.config\\.[cm]?js$"],
-          banTransitiveDependencies: true,
-          depConstraints: [
-            {
-              sourceTag: "*",
-              onlyDependOnLibsWithTags: ["*"],
-            },
-          ],
-        },
-      ],
-    },
-  },
-  {
-    files: [
-      "**/*.ts",
-      "**/*.tsx",
-      "**/*.cts",
-      "**/*.mts",
-      "**/*.js",
-      "**/*.jsx",
-      "**/*.cjs",
-      "**/*.mjs",
-    ],
-    // Override or add rules here
-    rules: {},
-  },
-])
+)

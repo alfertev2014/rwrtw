@@ -142,9 +142,4 @@ dist
 # End of https://www.toptal.com/developers/gitignore/api/node,visualstudiocode
 
 
-
-.nx/cache
-.nx/workspace-data
 .claude/worktrees
-.nx/polygraph
-.nx/self-healing

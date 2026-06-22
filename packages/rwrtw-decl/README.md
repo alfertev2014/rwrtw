@@ -1,7 +1,7 @@
 # rwrtw-decl
 
-This library was generated with [Nx](https://nx.dev).
+TypeScript declaration and compiler utilities for RWRTW.
 
 ## Building
 
-Run `nx build rwrtw-decl` to build the library.
+Run `npm run build -w rwrtw-decl` to build the library.
