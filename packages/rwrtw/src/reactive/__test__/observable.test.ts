@@ -1,7 +1,7 @@
 import assert from "node:assert"
 import test, { describe, mock } from "node:test"
 import { computed, effect, source, batch } from "../observable.js"
-import type { PlainData } from "../types.js"
+import type { ReactiveData } from "../types.js"
 
 describe("Observable", () => {
   describe("Source", () => {
@@ -25,7 +25,7 @@ describe("Observable", () => {
 
   describe("Computed", () => {
     test("Creating computed value should not call compute function immediately", () => {
-      const computeFunc = mock.fn<() => PlainData>()
+      const computeFunc = mock.fn<() => ReactiveData>()
       const c = computed(computeFunc)
 
       assert.strictEqual(computeFunc.mock.callCount(), 0)

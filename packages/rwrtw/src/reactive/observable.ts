@@ -1,4 +1,4 @@
-import type { MutableReactiveData, ReactiveData, ReactiveValue } from "./types.js"
+import type { ReactiveData, ReactiveValue } from "./types.js"
 
 /**
  * Abstract observable node of reactive graph. Notifies its subscribers when stored value is changed.
@@ -192,7 +192,7 @@ interface Observer {
 /**
  * Reactive mutable source node for scalar value types
  */
-export interface Source<T extends MutableReactiveData = MutableReactiveData> extends Observable<T> {
+export interface Source<T extends ReactiveData = ReactiveData> extends Observable<T> {
   /**
    * Modifier of the value.
    *
@@ -218,7 +218,7 @@ export interface Source<T extends MutableReactiveData = MutableReactiveData> ext
 /**
  * @see Source
  */
-export class SourceImpl<T extends MutableReactiveData = MutableReactiveData>
+export class SourceImpl<T extends ReactiveData = ReactiveData>
   extends ObservableImpl<T>
   implements Source<T>
 {
@@ -254,7 +254,7 @@ export class SourceImpl<T extends MutableReactiveData = MutableReactiveData>
  * Computed value node in reactive graph.
  * Caches its current value if observable dependencies are not changed.
  */
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type, @typescript-eslint/no-empty-interface
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type, @typescript-eslint/no-empty-object-type
 export interface Computed<
   out T extends ReactiveData = ReactiveData,
 > extends Observable<T> {}
@@ -715,7 +715,7 @@ export const runEffects = (): void => {
   }
 }
 
-export const source = <T extends MutableReactiveData>(initValue: T): Source<T> => {
+export const source = <T extends ReactiveData>(initValue: T): Source<T> => {
   assertIsNotInComputing("Creating source in compute function")
 
   return new SourceImpl<T>(initValue)

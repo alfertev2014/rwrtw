@@ -7,7 +7,7 @@ import {
   source,
   type Source,
 } from "./observable.js"
-import type { MutableReactiveData, ReactiveData } from "./types.js"
+import type { ReactiveData } from "./types.js"
 
 export interface ListObserver<T extends ReactiveData = ReactiveData> {
   onInsert: (i: number, element: Observable<T>) => void
@@ -35,7 +35,7 @@ export const isListObservable = <
 ): list is ListObservable<T> => list instanceof ListObservableImpl
 
 export interface ListSource<
-  T extends MutableReactiveData = MutableReactiveData,
+  T extends ReactiveData = ReactiveData,
 > extends ListObservable<T> {
   readonly removeItem: (i: number) => void
   readonly moveItem: (from: number, to: number) => void
@@ -45,7 +45,7 @@ export interface ListSource<
 }
 
 export class ListSourceImpl<
-  T extends MutableReactiveData = MutableReactiveData,
+  T extends ReactiveData = ReactiveData,
 >
   extends ListObservableImpl<T>
   implements ListSource<T>
@@ -136,7 +136,7 @@ export class ListSourceImpl<
   }
 }
 
-export const listSource = <T extends MutableReactiveData>(
+export const listSource = <T extends ReactiveData>(
   initialData: readonly T[],
 ): ListSource<T> => {
   assertIsNotInComputing("Creating list in compute function")
@@ -144,7 +144,7 @@ export const listSource = <T extends MutableReactiveData>(
   return new ListSourceImpl<T>(initialData)
 }
 
-export const listFromArray = <T extends MutableReactiveData>(
+export const listFromArray = <T extends ReactiveData>(
   observable: Observable<readonly T[]>,
 ): ListObservable<T> => {
   assertIsObservable(observable)

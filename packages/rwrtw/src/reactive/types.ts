@@ -2,26 +2,36 @@ import type { ScalarData } from "../dom/types.js"
 import type { ListObservable, ListSource } from "./list.js"
 import type { Observable, Source } from "./observable.js"
 
-export type PlainData<Data> =
+export type ReactiveObservable = Observable | ListObservable
+
+export type ReactiveData =
   | ScalarData
+  | ReactiveObservable
   | {
-      readonly [key: string | number]: Data | PlainData<Data>
+      readonly [key: string | number]: ReactiveData
     }
-  | readonly (Data | PlainData<Data>)[]
+  | readonly ReactiveData[]
 
-export type ReactiveData = PlainData<Observable | ListObservable>
-
-export type MutableReactiveData = PlainData<Source | ListSource>
-
-export type ReadonlyReactive<Data extends MutableReactiveData = MutableReactiveData> =
-  Data extends ScalarData ? Data :
-  Data extends Source<infer Content> ? Observable<ReadonlyReactive<Content>> :
-  Data extends ListSource<infer Content> ? ListObservable<ReadonlyReactive<Content>> :
-  Data extends PlainData<infer Content extends MutableReactiveData> ? PlainData<ReadonlyReactive<Content>> :
-  never
+export type ReadonlyReactiveOf<Data extends ReactiveData> =
+  Data extends ScalarData
+    ? Data
+    : Data extends Source<infer Content extends ReactiveData>
+      ? Observable<ReadonlyReactiveOf<Content>>
+      : Data extends ListSource<infer Content extends ReactiveData>
+        ? ListObservable<ReadonlyReactiveOf<Content>>
+        : Data extends {
+              readonly [key: string | number]: infer Content extends
+                ReactiveData
+            }
+          ? {
+              readonly [key: string | number]: ReadonlyReactiveOf<Content>
+            }
+          : Data extends readonly (infer Content extends ReactiveData)[]
+            ? ReadonlyReactiveOf<Content>[]
+            : never
 
 export type ReactiveValue<T extends ReactiveData> = Observable<T> | T
 
 export type DeepReadonly<T> = {
-	readonly [P in keyof T]: DeepReadonly<T[P]>;
-};
+  readonly [P in keyof T]: DeepReadonly<T[P]>
+}

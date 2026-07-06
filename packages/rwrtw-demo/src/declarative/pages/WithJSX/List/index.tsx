@@ -59,6 +59,7 @@ const ItemForm = ({
       id: initItem?.id ?? ++idGenerator,
       text: itemForm.text,
       checked: itemForm.checked,
+      children: []
     })
   }
 
@@ -90,6 +91,7 @@ const List = (): TemplateContent => {
       id: ++idGenerator,
       text,
       checked: false,
+      children: []
     }))
 
   let selectedId: number | null = null
