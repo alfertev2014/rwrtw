@@ -1,7 +1,5 @@
 import {
   assertIsNotInComputing,
-  assertIsObservable,
-  effect,
   type Observable,
   ObservableImpl,
   source,
@@ -18,14 +16,14 @@ export interface ListObserver<T extends ReactiveData = ReactiveData> {
 export interface ListObservable<
   T extends ReactiveData = ReactiveData,
 > extends Observable<readonly Observable<T>[]> {
-  observer: ListObserver<T> | null
+  observers: ListObserver<T>[]
 }
 
 export class ListObservableImpl<T extends ReactiveData = ReactiveData>
   extends ObservableImpl<readonly Observable<T>[]>
   implements ListObservable<T>
 {
-  observer: ListObserver<T> | null = null
+  observers: ListObserver<T>[] = []
 }
 
 export const isListObservable = <
@@ -96,7 +94,9 @@ export class ListSourceImpl<
 
   _removeItem(i: number): void {
     this._current.splice(i, 1)
-    this.observer?.onRemove(i)
+    this.observers.forEach(o => {
+      o.onRemove(i)
+    })
   }
 
   removeItem(i: number): void {
@@ -110,7 +110,9 @@ export class ListSourceImpl<
     const item = this._current[from]
     this._current.splice(from, 1)
     this._current.splice(to, 0, item)
-    this.observer?.onMove(from, to)
+    this.observers.forEach(o => {
+      o.onMove(from, to)
+    })
   }
 
   moveItem(from: number, to: number): void {
@@ -125,7 +127,9 @@ export class ListSourceImpl<
   _insertItem(i: number, element: T): void {
     const s = source(element)
     this._current.splice(i, 0, s)
-    this.observer?.onInsert(i, s)
+    this.observers.forEach(o => {
+      o.onInsert(i, s)
+    })
   }
 
   insertItem(i: number, element: T): void {
@@ -142,34 +146,4 @@ export const listSource = <T extends ReactiveData>(
   assertIsNotInComputing("Creating list in compute function")
 
   return new ListSourceImpl<T>(initialData)
-}
-
-export const listFromArray = <T extends ReactiveData>(
-  observable: Observable<readonly T[]>,
-): ListObservable<T> => {
-  assertIsObservable(observable)
-
-  const list = new ListSourceImpl<T>(observable.current())
-  const e = effect(observable, (value) => {
-    list.change(value)
-  })
-  e.suspend()
-  return {
-    get observer() {
-      return list.observer
-    },
-
-    current() {
-      return list.current()
-    },
-
-    set observer(observer) {
-      list.observer = observer
-      if (observer) {
-        e.resume()
-      } else {
-        e.suspend()
-      }
-    },
-  }
 }

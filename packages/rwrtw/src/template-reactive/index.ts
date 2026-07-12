@@ -4,7 +4,7 @@ import type {
   PlaceholderComponent,
   PlaceholderContent,
 } from "../index.js"
-import type { ListObservable } from "../reactive/list.js"
+import type { ListObservable, ListObserver } from "../reactive/list.js"
 import {
   type Observable,
   effect,
@@ -141,8 +141,7 @@ export const reList = <T extends ReactiveData>(
   return plhList(
     listModel.current().map((item) => fr(elementComponentFunc(item))),
     (plhList, context) => {
-      // TODO: multiple observers
-      listModel.observer = {
+      const observer: ListObserver<T> = {
         onInsert(i, element) {
           plhList.insert(i, fr(elementComponentFunc(element)))
         },
@@ -153,9 +152,10 @@ export const reList = <T extends ReactiveData>(
           plhList.removeAt(i)
         },
       }
+      listModel.observers.push(observer) 
       context.registerLifecycle({
         dispose() {
-          listModel.observer = null
+          listModel.observers.splice(listModel.observers.indexOf(observer), 1)
         },
       })
     },
