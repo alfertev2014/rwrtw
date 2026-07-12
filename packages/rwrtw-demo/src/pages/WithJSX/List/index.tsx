@@ -67,8 +67,8 @@ const ItemForm = ({
 }: ItemFormProps): TemplateContent => {
   const itemForm = {
     text: source<string>(initItem.current()?.text.current() ?? ""),
-    checked: source<boolean>(initItem.current()?.checked.current() ?? false)
-  };
+    checked: source<boolean>(initItem.current()?.checked.current() ?? false),
+  }
 
   const handleClick = () => {
     onSave({
@@ -100,16 +100,11 @@ const ItemForm = ({
   )
 }
 
-const List = (): TemplateContent => {
-  const items = listSource<Item>(
-    ["One", "Two", "Three", "Four", "Five", "Six", "Seven"].map((text) => ({
-      id: ++idGenerator,
-      text: source<string>(text),
-      checked: source<boolean>(false),
-      children: listSource<Item>([])
-    })),
-  )
-
+const ListContent = ({
+  items,
+}: {
+  items: ListSource<Item>
+}): TemplateContent => {
   const selectedId = source<number | null>(null)
   const selectedItem = computed(
     () =>
@@ -120,12 +115,12 @@ const List = (): TemplateContent => {
   )
   const count = computed(() => items.current().length)
   const checkedCount = computed(
-    () => items.current().filter((item) => item.current().checked.current()).length,
+    () =>
+      items.current().filter((item) => item.current().checked.current()).length,
   )
 
   return (
-    <div class="list-container">
-      <h1>Dynamic list</h1>
+    <>
       <ol class="list-content">
         {reList(items, (item) => {
           const id = computed(() => item.current().id)
@@ -136,68 +131,73 @@ const List = (): TemplateContent => {
                   `list-item ${selectedItem.current()?.id === id.current() ? "list-item-selected" : ""}`,
               )}
             >
-              <span class="list-item-id">
-                {reText(computed(() => `[${id.current()}]`))}
-              </span>
-              <span class="list-item-value">
-                {reText(
-                  computed(
-                    () =>
-                      `[${item.current().checked.current() ? "x" : " "}] ${item.current().text.current()}`,
-                  ),
-                )}
-              </span>
-              <span class="list-item-actions">
-                <button
-                  on:click={() => {
-                    selectedId.change(id.current())
-                  }}
-                  data-id={id}
-                >
-                  Edit
-                </button>
-                <button
-                  on:click={() => {
-                    const index = items
-                      .current()
-                      .findIndex((item) => item.current().id === id.current())
+              <div class="list-item-header">
+                <span class="list-item-id">
+                  {reText(computed(() => `[${id.current()}]`))}
+                </span>
+                <span class="list-item-value">
+                  {reText(
+                    computed(
+                      () =>
+                        `[${item.current().checked.current() ? "x" : " "}] ${item.current().text.current()}`,
+                    ),
+                  )}
+                </span>
+                <span class="list-item-actions">
+                  <button
+                    on:click={() => {
+                      selectedId.change(id.current())
+                    }}
+                    data-id={id}
+                  >
+                    Edit
+                  </button>
+                  <button
+                    on:click={() => {
+                      const index = items
+                        .current()
+                        .findIndex((item) => item.current().id === id.current())
 
-                    if (index >= 0) {
-                      items.moveItem(index, 0)
-                    }
-                  }}
-                  data-id={id}
-                >
-                  ^
-                </button>
-                <button
-                  on:click={() => {
-                    const index = items
-                      .current()
-                      .findIndex((item) => item.current().id === id.current())
+                      if (index >= 0) {
+                        items.moveItem(index, 0)
+                      }
+                    }}
+                    data-id={id}
+                  >
+                    ^
+                  </button>
+                  <button
+                    on:click={() => {
+                      const index = items
+                        .current()
+                        .findIndex((item) => item.current().id === id.current())
 
-                    if (index >= 0) {
-                      items.moveItem(index, items.current().length - 1)
-                    }
-                  }}
-                  data-id={id}
-                >
-                  v
-                </button>
+                      if (index >= 0) {
+                        items.moveItem(index, items.current().length - 1)
+                      }
+                    }}
+                    data-id={id}
+                  >
+                    v
+                  </button>
 
-                <button
-                  on:click={() => {
-                    const index = items
-                      .current()
-                      .findIndex((item) => item.current().id === id.current())
+                  <button
+                    on:click={() => {
+                      const index = items
+                        .current()
+                        .findIndex((item) => item.current().id === id.current())
 
-                    items.removeItem(index)
-                  }}
-                  data-id={id}
-                >
-                  Remove
-                </button>
-              </span>
+                      items.removeItem(index)
+                    }}
+                    data-id={id}
+                  >
+                    Remove
+                  </button>
+                </span>
+              </div>
+              <div>
+                <ListContent items={item.current().children} />
+              </div>
             </li>
           )
         })}
@@ -227,7 +227,7 @@ const List = (): TemplateContent => {
                 id: selectedId.current() ?? idGenerator++,
                 checked: newItem.checked,
                 text: newItem.text,
-                children: listSource<Item>([])
+                children: listSource<Item>([]),
               })
             }
           }}
@@ -236,6 +236,24 @@ const List = (): TemplateContent => {
           }}
         />
       </div>
+    </>
+  )
+}
+
+const List = (): TemplateContent => {
+  const items = listSource<Item>(
+    ["One", "Two", "Three", "Four", "Five", "Six", "Seven"].map((text) => ({
+      id: ++idGenerator,
+      text: source<string>(text),
+      checked: source<boolean>(false),
+      children: listSource<Item>([]),
+    })),
+  )
+
+  return (
+    <div class="list-container">
+      <h1>Dynamic list</h1>
+      <ListContent items={items} />
     </div>
   )
 }
