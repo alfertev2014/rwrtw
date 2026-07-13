@@ -6,13 +6,12 @@ export type ReactiveObservable = Observable | ListObservable
 
 export type ReactiveData =
   | ScalarData
-  | ReactiveObservable
   | {
-      readonly [key: string | number]: ReactiveData
+      readonly [key: string | number]: ReactiveData | ReactiveObservable
     }
-  | readonly ReactiveData[]
+  | readonly (ReactiveData | ReactiveObservable)[]
 
-export type ReadonlyReactiveOf<Data extends ReactiveData> =
+export type ReadonlyReactiveOf<Data extends ReactiveData | ReactiveObservable> =
   Data extends ScalarData
     ? Data
     : Data extends Source<infer Content extends ReactiveData>
