@@ -53,14 +53,12 @@ type ItemFormValues = {
 let idGenerator = 0
 
 type ItemFormProps = {
-  readonly id: Observable<number | null>
-  readonly initItem: Observable<ItemFormValues | null>
+  readonly initItem: Observable<Item | null>
   readonly onSave: (item: ItemFormValues) => void
   readonly onCancel: () => void
 }
 
 const ItemForm = ({
-  id,
   initItem,
   onSave,
   onCancel,
@@ -89,7 +87,7 @@ const ItemForm = ({
         }
       })}
       {reContent(
-        computed(() => id.current()),
+        computed(() => initItem.current()?.id),
         (id) => (id ? <span>[{id}]</span> : null),
       )}
       <Checkbox value={itemForm.checked} />
@@ -105,14 +103,7 @@ const ListContent = ({
 }: {
   items: ListSource<Item>
 }): TemplateContent => {
-  const selectedId = source<number | null>(null)
-  const selectedItem = computed(
-    () =>
-      items
-        .current()
-        .find((item) => item.current().id === selectedId.current())
-        ?.current() ?? null,
-  )
+  const selectedItem = source<Item | null>(null)
   const count = computed(() => items.current().length)
   const checkedCount = computed(
     () =>
@@ -146,7 +137,7 @@ const ListContent = ({
                 <span class="list-item-actions">
                   <button
                     on:click={() => {
-                      selectedId.change(id.current())
+                      selectedItem.change(item.current())
                     }}
                     data-id={id}
                   >
@@ -212,19 +203,14 @@ const ListContent = ({
       </ol>
       <div class="list-add-item-form">
         <ItemForm
-          id={selectedId}
           initItem={selectedItem}
           onSave={(newItem) => {
-            const index = items
-              .current()
-              .findIndex((item) => selectedId.current() === item.current().id)
-            if (index >= 0) {
-              const itemRef = items.current()[index].current()
-              itemRef.checked.change(newItem.checked.current())
-              itemRef.text.change(newItem.text.current())
+            if (selectedItem.current() !== null) {
+              selectedItem.current()?.checked.change(newItem.checked.current())
+              selectedItem.current()?.text.change(newItem.text.current())
             } else {
               items.insertItem(items.current().length, {
-                id: selectedId.current() ?? idGenerator++,
+                id: selectedItem.current()?.id ?? idGenerator++,
                 checked: newItem.checked,
                 text: newItem.text,
                 children: listSource<Item>([]),
@@ -232,7 +218,7 @@ const ListContent = ({
             }
           }}
           onCancel={() => {
-            selectedId.change(null)
+            selectedItem.change(null)
           }}
         />
       </div>
