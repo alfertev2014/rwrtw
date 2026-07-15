@@ -152,10 +152,10 @@ export const reList = <T extends ReactiveData>(
           plhList.removeAt(i)
         },
       }
-      listModel.observers.push(observer) 
+      listModel.registerObserver(observer) 
       context.registerLifecycle({
         dispose() {
-          listModel.observers.splice(listModel.observers.indexOf(observer), 1)
+          listModel.unregisterObserver(observer)
         },
       })
     },

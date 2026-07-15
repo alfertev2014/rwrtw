@@ -16,14 +16,28 @@ export interface ListObserver<T extends ReactiveData = ReactiveData> {
 export interface ListObservable<
   T extends ReactiveData = ReactiveData,
 > extends Observable<readonly Observable<T>[]> {
-  observers: ListObserver<T>[]
+  registerObserver: (observer: ListObserver<T>) => void
+  unregisterObserver: (observer: ListObserver<T>) => void
 }
 
 export class ListObservableImpl<T extends ReactiveData = ReactiveData>
   extends ObservableImpl<readonly Observable<T>[]>
   implements ListObservable<T>
 {
-  observers: ListObserver<T>[] = []
+  _observers: ListObserver<T>[] = []
+
+  registerObserver(observer: ListObserver<T>): void {
+    if (!this._observers.includes(observer)) {
+      this._observers.push(observer)
+    }
+  }
+
+  unregisterObserver(observer: ListObserver<T>): void  {
+    const index = this._observers.indexOf(observer)
+    if (index >= 0) {
+      this._observers.splice(index, 1)
+    }
+  }
 }
 
 export const isListObservable = <
@@ -94,7 +108,7 @@ export class ListSourceImpl<
 
   _removeItem(i: number): void {
     this._current.splice(i, 1)
-    this.observers.forEach(o => {
+    this._observers.forEach(o => {
       o.onRemove(i)
     })
   }
@@ -110,7 +124,7 @@ export class ListSourceImpl<
     const item = this._current[from]
     this._current.splice(from, 1)
     this._current.splice(to, 0, item)
-    this.observers.forEach(o => {
+    this._observers.forEach(o => {
       o.onMove(from, to)
     })
   }
@@ -127,7 +141,7 @@ export class ListSourceImpl<
   _insertItem(i: number, element: T): void {
     const s = source(element)
     this._current.splice(i, 0, s)
-    this.observers.forEach(o => {
+    this._observers.forEach(o => {
       o.onInsert(i, s)
     })
   }
