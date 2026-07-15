@@ -1,5 +1,6 @@
 import {
   assertIsNotInComputing,
+  batch,
   type Observable,
   ObservableImpl,
   source,
@@ -65,7 +66,7 @@ export class ListSourceImpl<
   override readonly _current: Source<T>[]
 
   override current(): readonly Source<T>[] {
-    return this._current
+    return super.current() as readonly Source<T>[]
   }
 
   constructor(initialData: readonly T[]) {
@@ -73,9 +74,7 @@ export class ListSourceImpl<
     this._current = initialData.map((item) => source(item))
   }
 
-  change(newData: readonly T[]): void {
-    assertIsNotInComputing("Changing list in compute function")
-
+  _change(newData: readonly T[]): void {
     for (let i = 0; i < this._current.length; ) {
       const element = this._current[i]
       if (newData.findIndex((el) => el === element.current()) < 0) {
@@ -99,7 +98,15 @@ export class ListSourceImpl<
         this._insertItem(i, element)
       }
     }
-    this._propagateChanged()
+  }
+
+  change(newData: readonly T[]): void {
+    assertIsNotInComputing("Changing list in compute function")
+
+    batch(() => {
+      this._change(newData)
+      this._markChanged()
+    })
   }
 
   update(updater: (prev: readonly Observable<T>[]) => readonly T[]): void {
@@ -116,8 +123,10 @@ export class ListSourceImpl<
   removeItem(i: number): void {
     assertIsNotInComputing("Removing item from list in compute function")
 
-    this._removeItem(i)
-    this._propagateChanged()
+    batch(() => {
+      this._removeItem(i)
+      this._markChanged()
+    })
   }
 
   _moveItem(from: number, to: number): void {
@@ -133,8 +142,10 @@ export class ListSourceImpl<
     assertIsNotInComputing("Moving item in list in compute function")
 
     if (from !== to) {
-      this._moveItem(from, to)
-      this._propagateChanged()
+      batch(() => {
+        this._moveItem(from, to)
+        this._markChanged()
+      })
     }
   }
 
@@ -149,8 +160,10 @@ export class ListSourceImpl<
   insertItem(i: number, element: T): void {
     assertIsNotInComputing("Inserting item into list in compute function")
 
-    this._insertItem(i, element)
-    this._propagateChanged()
+    batch(() => {
+      this._insertItem(i, element)
+      this._markChanged()
+    })
   }
 }
 

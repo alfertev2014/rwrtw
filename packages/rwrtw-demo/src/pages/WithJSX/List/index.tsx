@@ -1,4 +1,5 @@
 import {
+  batch,
   computed,
   type ListSource,
   listSource,
@@ -69,9 +70,11 @@ const ItemForm = ({
   }
 
   const handleClick = () => {
-    onSave({
-      text: source<string>(itemForm.text.current()),
-      checked: source<boolean>(itemForm.checked.current()),
+    batch(() => {
+      onSave({
+        text: source<string>(itemForm.text.current()),
+        checked: source<boolean>(itemForm.checked.current()),
+      })
     })
   }
 
@@ -210,7 +213,7 @@ const ListContent = ({
               selectedItem.current()?.text.change(newItem.text.current())
             } else {
               items.insertItem(items.current().length, {
-                id: selectedItem.current()?.id ?? idGenerator++,
+                id: selectedItem.current()?.id ?? ++idGenerator,
                 checked: newItem.checked,
                 text: newItem.text,
                 children: listSource<Item>([]),

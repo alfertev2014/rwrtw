@@ -88,6 +88,11 @@ export class ObservableImpl<
   out T extends ReactiveData = ReactiveData,
 > implements Observable<T> {
   /**
+   * Status of current value actuality
+   */
+  _status: ChangedStatus
+
+  /**
    * Current stored value or last computed value.
    *
    * Not actual if this._status !== NOT_CHANGED.
@@ -100,6 +105,7 @@ export class ObservableImpl<
   readonly _subscribers: Observer[] // TODO: Use Set?
 
   constructor() {
+    this._status = DANGLING
     this._current = undefined
     this._subscribers = []
   }
@@ -115,11 +121,41 @@ export class ObservableImpl<
     return this._current as T
   }
 
+
+  /**
+   * Set CHANGED state and propagate POSSIBLY_CHANGED recursively to subscribers.
+   */
+  _markChanged(): void {
+    if (this._status !== CHANGED) {
+      if (this._status !== POSSIBLY_CHANGED) {
+        for (const subscriber of this._subscribers) {
+          subscriber._markPossiblyChanged()
+        }
+      }
+      this._status = CHANGED
+    }
+  }
+
+  /**
+   * Set POSSIBLY_CHANGED state and propagate it recursively to subscribers.
+   */
+  _markPossiblyChanged(): void {
+    if (this._status === NOT_CHANGED) {
+      this._status = POSSIBLY_CHANGED
+      for (const subscriber of this._subscribers) {
+        subscriber._markPossiblyChanged()
+      }
+    }
+  }
+
   /**
    * Recompute current value and clear changed sign.
    */
   _recompute(): void {
-    // do nothing
+    if (this._status !== NOT_CHANGED) {
+      this._status = NOT_CHANGED
+      this._propagateChanged()
+    }
   }
 
   /**
@@ -267,11 +303,6 @@ class ComputedImpl<out T extends ReactiveData = ReactiveData>
   implements Computed<T>, Observer
 {
   /**
-   * Status of current value actuality
-   */
-  _status: ChangedStatus
-
-  /**
    * Compute function to recompute current value. Required to be pure!
    */
   readonly _computeFunc: () => T
@@ -284,36 +315,9 @@ class ComputedImpl<out T extends ReactiveData = ReactiveData>
 
   constructor(computeFunc: () => T) {
     super()
-    this._status = DANGLING
     this._computeFunc = computeFunc
     this._deps = []
     this._depsCount = 0
-  }
-
-  /**
-   * Set CHANGED state and propagate POSSIBLY_CHANGED recursively to subscribers.
-   */
-  _markChanged(): void {
-    if (this._status !== CHANGED) {
-      if (this._status !== POSSIBLY_CHANGED) {
-        for (const subscriber of this._subscribers) {
-          subscriber._markPossiblyChanged()
-        }
-      }
-      this._status = CHANGED
-    }
-  }
-
-  /**
-   * Set POSSIBLY_CHANGED state and propagate it recursively to subscribers.
-   */
-  _markPossiblyChanged(): void {
-    if (this._status === NOT_CHANGED) {
-      this._status = POSSIBLY_CHANGED
-      for (const subscriber of this._subscribers) {
-        subscriber._markPossiblyChanged()
-      }
-    }
   }
 
   /**
