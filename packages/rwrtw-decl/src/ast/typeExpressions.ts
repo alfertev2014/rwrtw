@@ -2,7 +2,6 @@ import type { DeclPrimitiveValue } from "./literalValues.js"
 import type { PROP_DEFINITION } from "./sourceExpressions.js"
 import {
   ARRAY_DESTRUCT,
-  type DeclIdentifier,
   OBJECT_DESTRUCT,
   VAR_DEFINITION,
 } from "./sourceExpressions.js"

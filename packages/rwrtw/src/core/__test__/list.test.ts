@@ -85,7 +85,6 @@ describe("Dynamic list", () => {
 
       const NODES_COUNT = 10
 
-      let list: PlaceholderList | undefined
       const placeholder = createRootPlaceholderAt(PARENT_PLACE, (renderer) => {
         const listContent: PlaceholderContent[] = [
           (renderer) => {
@@ -100,7 +99,6 @@ describe("Dynamic list", () => {
         }
 
         renderer.insertList(listContent)
-        return list
       })
 
       assert.strictEqual(placeholder.lastDOMPlace(), node)
