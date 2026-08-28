@@ -1,6 +1,6 @@
 import { type TemplateContent } from "rwrtw"
-import Counter from "./Counter.js"
-import List from "./List/index.js"
+import Counter from "./Counter.decl.js"
+import List from "./List/index.decl.js"
 
 const WithJSX = (): TemplateContent => {
   let selectedApp = "Counter"

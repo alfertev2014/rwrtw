@@ -1,5 +1,5 @@
 import {
-  type PlaceholderComponent,
+  type TemplateContent,
   createRootPlaceholderAt,
   fr,
   placeAtBeginningOf,
@@ -8,8 +8,10 @@ import {
 import "./style.css"
 import WithJSX from "./pages/WithJSX/index.js"
 
-const App = (): PlaceholderComponent => {
-  return fr(
+const f: CallableFunction
+
+const App = (): TemplateContent => {
+  return (
     <div class="main-layout">
       <div class="app-section">
         <WithJSX />
@@ -18,5 +20,5 @@ const App = (): PlaceholderComponent => {
   )
 }
 
-const root = createRootPlaceholderAt(placeAtBeginningOf(document.body), App())
+const root = createRootPlaceholderAt(placeAtBeginningOf(document.body), fr(<App/>))
 root.mount?.()

@@ -1,0 +1,4 @@
+{
+  "extends": "rwrtw-decl/decl.tsconfig.json",
+  "include": ["src/**/*.decl.ts", "src/**/*.decl.tsx", "../rwrtw-decl/types/decl.lib.d.ts", "vite-env.d.ts"]
+}

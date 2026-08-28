@@ -17,6 +17,8 @@
   ],
   "exclude": [
     "dist",
+    "**/*.decl.ts",
+    "**/*.decl.tsx",
     "**/*.test.ts",
     "**/*.spec.ts",
     "**/*.test.tsx",
