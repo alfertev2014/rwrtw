@@ -170,7 +170,7 @@ export const reList = <T extends ReactiveData>(
     }
     listModel.registerObserver(observer)
     renderer.registerLifecycle({
-      dispose() {
+      unmount() {
         listModel.unregisterObserver(observer)
       },
     })

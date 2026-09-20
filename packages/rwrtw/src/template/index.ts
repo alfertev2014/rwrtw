@@ -139,7 +139,7 @@ export const on: {
   (element, context) => {
     element.addEventListener(event, listener, options)
     context.registerLifecycle({
-      dispose() {
+      unmount() {
         element.removeEventListener(event, listener, options)
       },
     })

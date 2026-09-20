@@ -243,14 +243,12 @@ describe("Placeholder", () => {
     let LIFECYCLE: {
       mount: Mock<VoidFunction>
       unmount: Mock<VoidFunction>
-      dispose: Mock<VoidFunction>
     }
 
     beforeEach(() => {
       LIFECYCLE = {
         mount: mock.fn<VoidFunction>(),
         unmount: mock.fn<VoidFunction>(),
-        dispose: mock.fn<VoidFunction>(),
       }
     })
 
@@ -265,22 +263,14 @@ describe("Placeholder", () => {
 
         assert.strictEqual(LIFECYCLE.mount.mock.callCount(), 0)
         assert.strictEqual(LIFECYCLE.unmount.mock.callCount(), 0)
-        assert.strictEqual(LIFECYCLE.dispose.mock.callCount(), 0)
 
         placeholder.mount?.()
         assert.strictEqual(LIFECYCLE.mount.mock.callCount(), 1)
         assert.strictEqual(LIFECYCLE.unmount.mock.callCount(), 0)
-        assert.strictEqual(LIFECYCLE.dispose.mock.callCount(), 0)
 
         placeholder.unmount?.()
         assert.strictEqual(LIFECYCLE.mount.mock.callCount(), 1)
         assert.strictEqual(LIFECYCLE.unmount.mock.callCount(), 1)
-        assert.strictEqual(LIFECYCLE.dispose.mock.callCount(), 0)
-
-        placeholder.dispose?.()
-        assert.strictEqual(LIFECYCLE.mount.mock.callCount(), 1)
-        assert.strictEqual(LIFECYCLE.unmount.mock.callCount(), 1)
-        assert.strictEqual(LIFECYCLE.dispose.mock.callCount(), 1)
       })
 
       test("double registration should call handlers twice in order on placeholder's handler", () => {
@@ -294,22 +284,14 @@ describe("Placeholder", () => {
 
         assert.strictEqual(LIFECYCLE.mount.mock.callCount(), 0)
         assert.strictEqual(LIFECYCLE.unmount.mock.callCount(), 0)
-        assert.strictEqual(LIFECYCLE.dispose.mock.callCount(), 0)
 
         placeholder.mount?.()
         assert.strictEqual(LIFECYCLE.mount.mock.callCount(), 2)
         assert.strictEqual(LIFECYCLE.unmount.mock.callCount(), 0)
-        assert.strictEqual(LIFECYCLE.dispose.mock.callCount(), 0)
 
         placeholder.unmount?.()
         assert.strictEqual(LIFECYCLE.mount.mock.callCount(), 2)
         assert.strictEqual(LIFECYCLE.unmount.mock.callCount(), 2)
-        assert.strictEqual(LIFECYCLE.dispose.mock.callCount(), 0)
-
-        placeholder.dispose?.()
-        assert.strictEqual(LIFECYCLE.mount.mock.callCount(), 2)
-        assert.strictEqual(LIFECYCLE.unmount.mock.callCount(), 2)
-        assert.strictEqual(LIFECYCLE.dispose.mock.callCount(), 2)
       })
 
       test("should call handlers in order on parent placeholder's handlers", () => {
@@ -327,27 +309,19 @@ describe("Placeholder", () => {
 
         assert.strictEqual(LIFECYCLE.mount.mock.callCount(), 0)
         assert.strictEqual(LIFECYCLE.unmount.mock.callCount(), 0)
-        assert.strictEqual(LIFECYCLE.dispose.mock.callCount(), 0)
 
         parentPlaceholder.mount?.()
         assert.strictEqual(LIFECYCLE.mount.mock.callCount(), 1)
         assert.strictEqual(LIFECYCLE.unmount.mock.callCount(), 0)
-        assert.strictEqual(LIFECYCLE.dispose.mock.callCount(), 0)
 
         parentPlaceholder.unmount?.()
         assert.strictEqual(LIFECYCLE.mount.mock.callCount(), 1)
         assert.strictEqual(LIFECYCLE.unmount.mock.callCount(), 1)
-        assert.strictEqual(LIFECYCLE.dispose.mock.callCount(), 0)
-
-        parentPlaceholder.dispose?.()
-        assert.strictEqual(LIFECYCLE.mount.mock.callCount(), 1)
-        assert.strictEqual(LIFECYCLE.unmount.mock.callCount(), 1)
-        assert.strictEqual(LIFECYCLE.dispose.mock.callCount(), 1)
       })
     })
 
     describe("Lifecycle on replacing content", () => {
-      test("should call unmount and dispose for old content", () => {
+      test("should call unmount for old content", () => {
         const placeholder = createRootPlaceholderAt(
           PARENT_PLACE,
           (renderer) => {
@@ -361,12 +335,6 @@ describe("Placeholder", () => {
         placeholder.replaceContent(null)
 
         assert.strictEqual(LIFECYCLE.unmount.mock.callCount(), 1)
-        assert.strictEqual(LIFECYCLE.dispose.mock.callCount(), 1)
-
-        // TODO: Check for invocationCallOrder
-        // assert(LIFECYCLE.dispose.mock.invocationCallOrder[0]).toBeGreaterThan(
-        //   LIFECYCLE.unmount.mock.invocationCallOrder[0],
-        // )
       })
 
       test("should call mount for new content", () => {
@@ -380,16 +348,14 @@ describe("Placeholder", () => {
 
         assert.strictEqual(LIFECYCLE.mount.mock.callCount(), 1)
         assert.strictEqual(LIFECYCLE.unmount.mock.callCount(), 0)
-        assert.strictEqual(LIFECYCLE.dispose.mock.callCount(), 0)
       })
 
-      test("should call unmount and dispose for old content and mount for new content", () => {
+      test("should call unmount for old content and mount for new content", () => {
         const oldLifecycle = LIFECYCLE
 
         const newLifecycle = {
           mount: mock.fn(),
           unmount: mock.fn(),
-          dispose: mock.fn(),
         }
 
         const placeholder = createRootPlaceholderAt(
@@ -406,7 +372,6 @@ describe("Placeholder", () => {
         })
 
         assert.strictEqual(oldLifecycle.unmount.mock.callCount(), 1)
-        assert.strictEqual(oldLifecycle.dispose.mock.callCount(), 1)
 
         assert.strictEqual(newLifecycle.mount.mock.callCount(), 1)
 
@@ -415,19 +380,14 @@ describe("Placeholder", () => {
         //   newLifecycle.mount.mock.invocationCallOrder >
         //     oldLifecycle.unmount.mock.invocationCallOrder,
         // )
-        // assert(
-        //   newLifecycle.mount.mock.invocationCallOrder >
-        //     oldLifecycle.dispose.mock.invocationCallOrder,
-        // )
       })
 
-      test("for child placeholder should call unmount and dispose for old content and mount for new content", () => {
+      test("for child placeholder should call unmount for old content and mount for new content", () => {
         const oldLifecycle = LIFECYCLE
 
         const newLifecycle = {
           mount: mock.fn(),
           unmount: mock.fn(),
-          dispose: mock.fn(),
         }
 
         const placeholder = createRootPlaceholderAt(
@@ -447,7 +407,6 @@ describe("Placeholder", () => {
         })
 
         assert.strictEqual(oldLifecycle.unmount.mock.callCount(), 1)
-        assert.strictEqual(oldLifecycle.dispose.mock.callCount(), 1)
 
         assert.strictEqual(newLifecycle.mount.mock.callCount(), 1)
 
@@ -455,10 +414,6 @@ describe("Placeholder", () => {
         // assert(
         //   newLifecycle.mount.mock.invocationCallOrder >
         //     oldLifecycle.unmount.mock.invocationCallOrder,
-        // )
-        // assert(
-        //   newLifecycle.mount.mock.invocationCallOrder >
-        //     oldLifecycle.dispose.mock.invocationCallOrder,
         // )
       })
     })

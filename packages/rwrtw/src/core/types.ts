@@ -3,7 +3,6 @@ import type { Place, PlaceholderNode } from "./impl/place.js"
 export interface Lifecycle {
   readonly mount?: () => void
   readonly unmount?: () => void
-  readonly dispose?: () => void
 }
 
 export interface PlaceholderContext {

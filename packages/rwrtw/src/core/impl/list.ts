@@ -121,13 +121,6 @@ export class PlaceholderListImpl implements PlaceholderList, Lifecycle {
       element.unmount()
     }
   }
-
-  dispose(): void {
-    for (const element of this._items) {
-      element.dispose()
-    }
-    this._items.length = 0
-  }
 }
 
 export const createListAt = (
