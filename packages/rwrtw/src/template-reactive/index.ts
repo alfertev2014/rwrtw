@@ -154,21 +154,34 @@ export const reList = <T extends ReactiveData>(
         .current()
         .map((item) => contentInScope(() => elementComponentFunc(item))),
     )
+    const mutations: (() => void)[] = []
     const observer: ListObserver<T> = {
       onInsert(i, item) {
-        list.insert(
-          i,
-          contentInScope(() => elementComponentFunc(item)),
-        )
+        mutations.push(() => {
+          list.insert(
+            i,
+            contentInScope(() => elementComponentFunc(item)),
+          )
+        })
       },
       onMove(from, to) {
-        list.moveFromTo(from, to)
+        mutations.push(() => {
+          list.moveFromTo(from, to)
+        })
       },
       onRemove(i) {
-        list.removeAt(i)
+        mutations.push(() => {
+          list.removeAt(i)
+        })
       },
     }
     listModel.registerObserver(observer)
+    effect(listModel, () => {
+      for (const mutation of mutations) {
+        mutation()
+      }
+      mutations.length = 0
+    })
     renderer.registerLifecycle({
       unmount() {
         listModel.unregisterObserver(observer)
