@@ -24,7 +24,7 @@ export type PlaceholderComponent = (renderer: Renderer) => void
 
 export type PlaceholderContent = PlaceholderComponent | null
 
-export interface Placeholder extends PlaceholderNode {
+export interface Placeholder extends PlaceholderNode, PlaceholderContext {
   readonly replaceContent: (content: PlaceholderContent) => void
 }
 

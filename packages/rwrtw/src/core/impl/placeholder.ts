@@ -68,9 +68,7 @@ export class ParentPlaceholderPlace implements PlaceholderNode {
   }
 }
 
-export class PlaceholderImpl
-  implements Placeholder, Lifecycle, PlaceholderContext
-{
+export class PlaceholderImpl implements Placeholder, Lifecycle {
   readonly _lifecycles: Lifecycle[]
   _place: Place
   _lastPlace: Place
@@ -97,13 +95,6 @@ export class PlaceholderImpl
     }
   }
 
-  dispose(): void {
-    for (const c of this._lifecycles) {
-      c.dispose?.()
-    }
-    this._lifecycles.length = 0
-  }
-
   _renderContent(content: PlaceholderContent): void {
     if (content != null) {
       const renderer = new RendererImpl(new ParentPlaceholderPlace(this), this)
@@ -115,7 +106,6 @@ export class PlaceholderImpl
 
   erase(): void {
     this.unmount()
-    this.dispose()
     removeNodesAt(this._place, this._lastPlace)
     this._lastPlace = this._place
   }

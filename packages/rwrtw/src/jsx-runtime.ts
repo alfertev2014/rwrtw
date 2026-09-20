@@ -1,14 +1,10 @@
-import type { PropsOfElement, ScalarData, TagToHTMLElement } from "./dom/types.js"
-import {
-  reAttr,
-  reProp,
-} from "./template-reactive/index.js"
-import {
-  el,
-  on,
-  ref,
-  type TemplateRef,
-} from "./template/index.js"
+import type {
+  PropsOfElement,
+  ScalarData,
+  TagToHTMLElement,
+} from "./dom/types.js"
+import { reAttr, reProp } from "./template-reactive/index.js"
+import { cmpnt, el, fr, on, ref, type TemplateRef } from "./template/index.js"
 import type { TemplateContent, TemplateHandler } from "./template/types.js"
 import type { ReactiveValue } from "./reactive/types.js"
 
@@ -79,7 +75,7 @@ export const jsx: {
         children = value as TemplateContent
       } else if (prop === "with") {
         if (Array.isArray(value)) {
-          handlers.push(...(value as TemplateHandler<HTMLElement>[]));
+          handlers.push(...(value as TemplateHandler<HTMLElement>[]))
         } else {
           handlers.push(value as TemplateHandler<HTMLElement>)
         }
@@ -96,7 +92,7 @@ export const jsx: {
     return el(type, null, ...handlers)(children)
   }
   if (typeof type === "function") {
-    return type(props)
+    return cmpnt(() => fr(type(props)))
   }
   throw new Error("Unsupported jsx element type")
 }

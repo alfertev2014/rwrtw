@@ -1,35 +1,28 @@
 import { setAttr, toText, txt } from "../dom/helpers.js"
-import type {
-  PlaceholderContext,
-  PlaceholderComponent,
-  PlaceholderContent,
-} from "../index.js"
+import type { PlaceholderComponent, PlaceholderContent } from "../index.js"
 import type { ListObservable, ListObserver } from "../reactive/list.js"
 import {
   type Observable,
+  ObservableScope,
+  createScope,
   effect,
   isObservable,
 } from "../reactive/observable.js"
 import type { ReactiveData, ReactiveValue } from "../reactive/types.js"
-import { plhList, plh, fr } from "../template/index.js"
+import { fr } from "../template/index.js"
 import type { TemplateContent, TemplateHandler } from "../template/types.js"
 import type { ScalarData } from "../dom/types.js"
 
 export const reCompute = <T extends ReactiveData>(
-  context: PlaceholderContext,
   trigger: ReactiveValue<T>,
   effectFunc: (value: T) => void,
+  initFunc = effectFunc,
 ): void => {
   if (isObservable(trigger)) {
-    effectFunc(trigger.current())
-    const eff = effect(trigger, effectFunc)
-    context.registerLifecycle({
-      dispose() {
-        eff.unsubscribe()
-      },
-    })
+    initFunc(trigger.current())
+    effect(trigger, effectFunc)
   } else {
-    effectFunc(trigger)
+    initFunc(trigger)
   }
 }
 
@@ -38,8 +31,8 @@ export const reEffect =
     trigger: ReactiveValue<T>,
     effectFunc: (value: T) => void,
   ): PlaceholderContent =>
-  (renderer) => {
-    reCompute(renderer.context, trigger, effectFunc)
+  () => {
+    reCompute(trigger, effectFunc)
   }
 
 export const reAttr =
@@ -47,8 +40,8 @@ export const reAttr =
     name: string,
     value: ReactiveValue<V>,
   ): TemplateHandler<T> =>
-  (element, context) => {
-    reCompute(context, value, (value) => {
+  (element) => {
+    reCompute(value, (value) => {
       setAttr(element, name, value)
     })
   }
@@ -58,8 +51,8 @@ export const reProp =
     name: string,
     value: ReactiveValue<ScalarData>,
   ): TemplateHandler<T> =>
-  (element, context) => {
-    reCompute(context, value, (value) => {
+  (element) => {
+    reCompute(value, (value) => {
       ;(element as Record<string, unknown>)[name] = value
     })
   }
@@ -69,8 +62,8 @@ export const reClass =
     className: string,
     toggle: ReactiveValue<string | null | undefined | boolean>,
   ): TemplateHandler<T> =>
-  (element, context) => {
-    reCompute(context, toggle, (toggle) => {
+  (element) => {
+    reCompute(toggle, (toggle) => {
       if (toggle) {
         element.classList.add(className)
       } else {
@@ -84,8 +77,8 @@ export const reStyle =
     styleName: string,
     value: ReactiveValue<string | null | undefined>,
   ): TemplateHandler<T> =>
-  (element, context) => {
-    reCompute(context, value, (value) => {
+  (element) => {
+    reCompute(value, (value) => {
       if (value != null) {
         element.style.setProperty(styleName, value)
       } else {
@@ -94,16 +87,33 @@ export const reStyle =
     })
   }
 
+const contentInScope =
+  (contentFunc: () => TemplateContent): PlaceholderComponent =>
+  (renderer) => {
+    const scope: ObservableScope = createScope()
+    scope.runInScope(() => {
+      fr(contentFunc())(renderer)
+    })
+    renderer.registerLifecycle({
+      unmount() {
+        scope.cleanup()
+      },
+    })
+  }
+
 export const reContent = <T extends ReactiveData>(
   trigger: ReactiveValue<T>,
   contentFunc: (value: T) => TemplateContent,
 ): TemplateContent => {
   if (isObservable(trigger)) {
-    return plh(fr(contentFunc(trigger.current())), (placeholder, context) => {
-      reCompute(context, trigger, (value) => {
-        placeholder.replaceContent(fr(contentFunc(value)))
+    return (renderer) => {
+      const placeholder = renderer.insertPlaceholder(
+        contentInScope(() => contentFunc(trigger.current())),
+      )
+      effect(trigger, (value) => {
+        placeholder.replaceContent(contentInScope(() => contentFunc(value)))
       })
-    })
+    }
   } else {
     return contentFunc(trigger)
   }
@@ -113,16 +123,16 @@ export const reText = (
   value: ReactiveValue<ScalarData>,
 ): PlaceholderComponent => {
   if (isObservable(value)) {
-    const content = value.current()
     return (renderer) => {
-      const t = txt(content)
-      reCompute(renderer.context, value, (value) => {
+      const t = renderer.insertNode(txt(value.current()))
+      effect(value, (value) => {
         t.textContent = toText(value)
       })
-      renderer.insertNode(t)
     }
   } else {
-    return (renderer) => renderer.insertNode(txt(value))
+    return (renderer) => {
+      renderer.insertNode(txt(value))
+    }
   }
 }
 
@@ -138,26 +148,31 @@ export const reList = <T extends ReactiveData>(
   listModel: ListObservable<T>,
   elementComponentFunc: (value: Observable<T>) => TemplateContent,
 ): PlaceholderComponent => {
-  return plhList(
-    listModel.current().map((item) => fr(elementComponentFunc(item))),
-    (plhList, context) => {
-      const observer: ListObserver<T> = {
-        onInsert(i, element) {
-          plhList.insert(i, fr(elementComponentFunc(element)))
-        },
-        onMove(from, to) {
-          plhList.moveFromTo(from, to)
-        },
-        onRemove(i) {
-          plhList.removeAt(i)
-        },
-      }
-      listModel.registerObserver(observer) 
-      context.registerLifecycle({
-        dispose() {
-          listModel.unregisterObserver(observer)
-        },
-      })
-    },
-  )
+  return (renderer) => {
+    const list = renderer.insertList(
+      listModel
+        .current()
+        .map((item) => contentInScope(() => elementComponentFunc(item))),
+    )
+    const observer: ListObserver<T> = {
+      onInsert(i, item) {
+        list.insert(
+          i,
+          contentInScope(() => elementComponentFunc(item)),
+        )
+      },
+      onMove(from, to) {
+        list.moveFromTo(from, to)
+      },
+      onRemove(i) {
+        list.removeAt(i)
+      },
+    }
+    listModel.registerObserver(observer)
+    renderer.registerLifecycle({
+      dispose() {
+        listModel.unregisterObserver(observer)
+      },
+    })
+  }
 }

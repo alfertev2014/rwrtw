@@ -15,7 +15,11 @@
     },
     "./decl.tsconfig.json": "./configs/decl.tsconfig.json"
   },
-  "files": ["dist", "types", "configs/decl.tsconfig.json"],
+  "files": [
+    "dist",
+    "types",
+    "configs/decl.tsconfig.json"
+  ],
   "scripts": {
     "build": "tsc --build tsconfig.lib.json",
     "lint": "eslint .",

@@ -9,7 +9,7 @@ import {
 import type { ReactiveData } from "./types.js"
 
 export interface ListObserver<T extends ReactiveData = ReactiveData> {
-  onInsert: (i: number, element: Observable<T>) => void
+  onInsert: (i: number, item: Observable<T>) => void
   onMove: (from: number, to: number) => void
   onRemove: (i: number) => void
 }
@@ -33,7 +33,7 @@ export class ListObservableImpl<T extends ReactiveData = ReactiveData>
     }
   }
 
-  unregisterObserver(observer: ListObserver<T>): void  {
+  unregisterObserver(observer: ListObserver<T>): void {
     const index = this._observers.indexOf(observer)
     if (index >= 0) {
       this._observers.splice(index, 1)
@@ -41,9 +41,7 @@ export class ListObservableImpl<T extends ReactiveData = ReactiveData>
   }
 }
 
-export const isListObservable = <
-  T extends ReactiveData = ReactiveData,
->(
+export const isListObservable = <T extends ReactiveData = ReactiveData>(
   list: readonly T[] | ListObservable<T>,
 ): list is ListObservable<T> => list instanceof ListObservableImpl
 
@@ -52,14 +50,12 @@ export interface ListSource<
 > extends ListObservable<T> {
   readonly removeItem: (i: number) => void
   readonly moveItem: (from: number, to: number) => void
-  readonly insertItem: (i: number, element: T) => void
+  readonly insertItem: (i: number, item: T) => void
   readonly current: () => readonly Source<T>[]
   readonly change: (newData: readonly T[]) => void
 }
 
-export class ListSourceImpl<
-  T extends ReactiveData = ReactiveData,
->
+export class ListSourceImpl<T extends ReactiveData = ReactiveData>
   extends ListObservableImpl<T>
   implements ListSource<T>
 {
@@ -75,7 +71,7 @@ export class ListSourceImpl<
   }
 
   _change(newData: readonly T[]): void {
-    for (let i = 0; i < this._current.length; ) {
+    for (let i = 0; i < this._current.length;) {
       const element = this._current[i]
       if (newData.findIndex((el) => el === element.current()) < 0) {
         this._removeItem(i)
@@ -115,7 +111,7 @@ export class ListSourceImpl<
 
   _removeItem(i: number): void {
     this._current.splice(i, 1)
-    this._observers.forEach(o => {
+    this._observers.forEach((o) => {
       o.onRemove(i)
     })
   }
@@ -133,7 +129,7 @@ export class ListSourceImpl<
     const item = this._current[from]
     this._current.splice(from, 1)
     this._current.splice(to, 0, item)
-    this._observers.forEach(o => {
+    this._observers.forEach((o) => {
       o.onMove(from, to)
     })
   }
@@ -149,19 +145,19 @@ export class ListSourceImpl<
     }
   }
 
-  _insertItem(i: number, element: T): void {
-    const s = source(element)
+  _insertItem(i: number, item: T): void {
+    const s = source(item)
     this._current.splice(i, 0, s)
-    this._observers.forEach(o => {
+    this._observers.forEach((o) => {
       o.onInsert(i, s)
     })
   }
 
-  insertItem(i: number, element: T): void {
+  insertItem(i: number, item: T): void {
     assertIsNotInComputing("Inserting item into list in compute function")
 
     batch(() => {
-      this._insertItem(i, element)
+      this._insertItem(i, item)
       this._markChanged()
     })
   }

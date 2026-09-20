@@ -31,10 +31,11 @@ const WithJSX = (): TemplateContent => {
         <TabButton app="List">List</TabButton>
       </div>
       <div class="app-container">
-        {selectedApp ===  "Counter" ? <Counter />
-          : selectedApp === "List" ? <List />
-          : null
-        }
+        {selectedApp === "Counter" ? (
+          <Counter />
+        ) : selectedApp === "List" ? (
+          <List />
+        ) : null}
       </div>
     </div>
   )

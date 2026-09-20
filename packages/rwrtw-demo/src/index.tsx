@@ -8,8 +8,6 @@ import {
 import "./style.css"
 import WithJSX from "./pages/WithJSX/index.js"
 
-const f: CallableFunction
-
 const App = (): TemplateContent => {
   return (
     <div class="main-layout">
@@ -20,5 +18,8 @@ const App = (): TemplateContent => {
   )
 }
 
-const root = createRootPlaceholderAt(placeAtBeginningOf(document.body), fr(<App/>))
+const root = createRootPlaceholderAt(
+  placeAtBeginningOf(document.body),
+  fr(<App />),
+)
 root.mount?.()

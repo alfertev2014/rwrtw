@@ -1,10 +1,5 @@
 export type DeclPrimitiveValue =
-  | string
-  | number
-  | boolean
-  | bigint
-  | null
-  | undefined
+  string | number | boolean | bigint | null | undefined
 
 export type DeclAnyValue = DeclPrimitiveValue | object
 
@@ -13,6 +8,4 @@ export type DeclStructValue = {
 }
 
 export type DeclValue =
-  | DeclPrimitiveValue
-  | readonly DeclAnyValue[]
-  | DeclStructValue
+  DeclPrimitiveValue | readonly DeclAnyValue[] | DeclStructValue

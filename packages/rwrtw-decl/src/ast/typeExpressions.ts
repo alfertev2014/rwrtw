@@ -164,9 +164,7 @@ export const argArr = (
 })
 
 export type DeclArgDestruct =
-  | DeclArgVarDefinition
-  | DeclArgObjectDestruct
-  | DeclArgArrayDestruct
+  DeclArgVarDefinition | DeclArgObjectDestruct | DeclArgArrayDestruct
 
 export type DeclArgDefinition = {
   readonly pattern: DeclArgDestruct
@@ -192,7 +190,7 @@ export const funcType = (
   result,
   args,
   rest,
-  description
+  description,
 })
 
 export type DeclUnionType = {

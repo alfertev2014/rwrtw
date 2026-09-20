@@ -2,19 +2,19 @@
 /// <reference no-default-lib="true"/>
 
 interface Object {
-  constructor: Function;
-  toString(): string;
+  constructor: Function
+  toString(): string
 }
 
 interface Array<T> {
-  length: number;
-  push(...items: T[]): number;
-  [index: number]: T;
+  length: number
+  push(...items: T[]): number
+  [index: number]: T
 }
 
 interface String {
-  length: number;
-  toUpperCase(): string;
+  length: number
+  toUpperCase(): string
 }
 
 interface Boolean {}

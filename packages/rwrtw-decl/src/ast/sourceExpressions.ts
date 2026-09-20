@@ -24,7 +24,6 @@ export const IMPORT = "import"
 export const EXPORT = "export"
 export const MODULE = "module"
 
-
 export type DeclUnaryOperator = "+" | "-" | "!" | "~" | "typeof"
 
 export type DeclUnaryExpression = {
@@ -172,9 +171,7 @@ export const indexValue = (
 })
 
 export type DeclObjectItem =
-  | DeclKeyValue
-  | DeclIndexValue
-  | DeclEllipsisExpression
+  DeclKeyValue | DeclIndexValue | DeclEllipsisExpression
 
 export type DeclObject = {
   readonly tag: typeof OBJECT_TEMPLATE
@@ -243,9 +240,7 @@ export const defArr = (
 })
 
 export type DeclDestruct =
-  | DeclVarDefinition
-  | DeclObjectDestruct
-  | DeclArrayDestruct
+  DeclVarDefinition | DeclObjectDestruct | DeclArrayDestruct
 
 export type DeclDeclarator = {
   readonly pattern: DeclDestruct
@@ -314,7 +309,9 @@ export const typeDefinition = (
   description?: string,
 ): DeclTypeDefinition => ({
   tag: TYPE_DEFINITION,
-  name, type, description
+  name,
+  type,
+  description,
 })
 
 export type DeclIdentifier = {
@@ -395,14 +392,18 @@ export type DeclExpression =
   | DeclLambdaExpression
   | DeclTypeAnnotation
 
-export type DeclTopLevel = DeclExpression | DeclDefinition | DeclTypeDefinition | DeclImport | DeclExport
+export type DeclTopLevel =
+  DeclExpression | DeclDefinition | DeclTypeDefinition | DeclImport | DeclExport
 
 export type DeclModule = {
   readonly tag: typeof MODULE
   readonly topLevel: DeclTopLevel[]
   readonly description?: string
 }
-export const moduleTopLevel = (topLevel: DeclTopLevel[], description?: string): DeclModule => ({
+export const moduleTopLevel = (
+  topLevel: DeclTopLevel[],
+  description?: string,
+): DeclModule => ({
   tag: MODULE,
   topLevel,
   description,

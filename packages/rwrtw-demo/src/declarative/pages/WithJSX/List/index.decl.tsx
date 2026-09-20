@@ -1,7 +1,4 @@
-import {
-  reEffect,
-  type TemplateContent,
-} from "rwrtw"
+import { reEffect, type TemplateContent } from "rwrtw"
 
 import "./style.css"
 
@@ -51,15 +48,15 @@ const ItemForm = ({
 }: ItemFormProps): TemplateContent => {
   const itemForm: { text: string; checked: boolean } = {
     text: initItem?.text ?? "",
-    checked: initItem?.checked ?? false
-  };
+    checked: initItem?.checked ?? false,
+  }
 
   const handleClick = () => {
     onSave({
       id: initItem?.id ?? ++idGenerator,
       text: itemForm.text,
       checked: itemForm.checked,
-      children: []
+      children: [],
     })
   }
 
@@ -86,19 +83,26 @@ const ItemForm = ({
 }
 
 const List = (): TemplateContent => {
-  const items: Item[] = 
-    ["One", "Two", "Three", "Four", "Five", "Six", "Seven"].map((text) => ({
-      id: ++idGenerator,
-      text,
-      checked: false,
-      children: []
-    }))
+  const items: Item[] = [
+    "One",
+    "Two",
+    "Three",
+    "Four",
+    "Five",
+    "Six",
+    "Seven",
+  ].map((text) => ({
+    id: ++idGenerator,
+    text,
+    checked: false,
+    children: [],
+  }))
 
   let selectedId: number | null = null
   const selectedItem = items.find((item) => item.id === selectedId) ?? null
-  
+
   const count = items.length
-  const checkedCount = items.filter((item) => item.checked).length;
+  const checkedCount = items.filter((item) => item.checked).length
 
   return (
     <div class="list-container">
@@ -110,9 +114,7 @@ const List = (): TemplateContent => {
             <li
               class={`list-item ${selectedItem?.id === id ? "list-item-selected" : ""}`}
             >
-              <span class="list-item-id">
-                [{id}]
-              </span>
+              <span class="list-item-id">[{id}]</span>
               <span class="list-item-value">
                 [{item.checked ? "x" : " "}] {item.text}
               </span>
@@ -165,8 +167,9 @@ const List = (): TemplateContent => {
         <ItemForm
           initItem={selectedItem}
           onSave={(newItem) => {
-            const index = items
-              .findIndex((item) => item.id === selectedItem?.id)
+            const index = items.findIndex(
+              (item) => item.id === selectedItem?.id,
+            )
             if (index >= 0) {
               items[index] = newItem
             } else {

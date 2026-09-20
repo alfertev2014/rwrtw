@@ -16,7 +16,11 @@ const Counter = (): TemplateContent => {
         Increment
       </button>
       <div>
-        {counter % 2 === 0 ? <p class="even">Even!</p> : <p class="odd">Odd!</p>}
+        {counter % 2 === 0 ? (
+          <p class="even">Even!</p>
+        ) : (
+          <p class="odd">Odd!</p>
+        )}
       </div>
     </div>
   )

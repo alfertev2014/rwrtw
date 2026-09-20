@@ -38,11 +38,6 @@ const CHANGED = 2
 const DANGLING = -1
 
 /**
- * Observable node is dangling and should not be connected to reactive graph.
- */
-const SUSPENDED = -2
-
-/**
  * Status of observable node in reactive graph.
  */
 type ChangedStatus =
@@ -50,7 +45,6 @@ type ChangedStatus =
   | typeof POSSIBLY_CHANGED
   | typeof CHANGED
   | typeof DANGLING
-  | typeof SUSPENDED
 
 /**
  * Internal assertion error in reactive
@@ -81,12 +75,81 @@ export const assertIsNotInComputing = (
   observableAssert(trackingSubscriber === null, message)
 }
 
+export class ObservableScope {
+  parent: ObservableScope | null
+  depth: number
+  effectsQueue: Observer[] = []
+  effects: Effect[] = []
+  children: Set<ObservableScope> = new Set<ObservableScope>()
+
+  constructor(parent: ObservableScope | null) {
+    this.parent = parent
+    this.depth = parent === null ? 0 : parent.depth + 1
+    parent?.children.add(this)
+  }
+
+  _schedule(): void {
+    if (this.effectsQueue.length === 0) {
+      scopeQueue.push(this)
+    }
+  }
+
+  scheduleEffect(effect: Observer): void {
+    this._schedule()
+    this.effectsQueue.push(effect)
+  }
+
+  runEffects(): void {
+    while (this.effectsQueue.length > 0) {
+      const tmp = runningEffects
+      runningEffects = this.effectsQueue
+      this.effectsQueue = tmp
+      for (const effect of runningEffects) {
+        effect._run()
+      }
+      runningEffects.length = 0
+    }
+    runCleanups()
+  }
+
+  cleanup(): void {
+    for (const effect of this.effects) {
+      effect.unsubscribe()
+    }
+    this.effects.length = 0
+    for (const child of this.children) {
+      child.cleanup()
+    }
+    this.children.clear()
+    runCleanups()
+  }
+
+  runInScope<R>(func: () => R): R {
+    const prevScope = currentScope
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
+    currentScope = this
+    try {
+      return func()
+    } finally {
+      currentScope = prevScope
+    }
+  }
+}
+
+export const createScope = () => {
+  assertIsNotInComputing("Creating scope in compute function")
+
+  return new ObservableScope(currentScope)
+}
+
 /**
  * Reactive observable node to manage subscribers.
  */
-export class ObservableImpl<
-  out T extends ReactiveData = ReactiveData,
-> implements Observable<T> {
+export class ObservableImpl<out T extends ReactiveData = ReactiveData>
+  implements Observable<T>, Observer
+{
+  readonly _scope: ObservableScope
+
   /**
    * Status of current value actuality
    */
@@ -102,12 +165,25 @@ export class ObservableImpl<
   /**
    * List of nodes that depends on this node.
    */
-  readonly _subscribers: Observer[] // TODO: Use Set?
+  readonly _subscribers: Set<Observer>
 
   constructor() {
+    this._scope = currentScope
     this._status = DANGLING
     this._current = undefined
-    this._subscribers = []
+    this._subscribers = new Set()
+  }
+
+  _cleanup(): void {
+    // do nothing
+  }
+
+  _run(): void {
+    // do nothing
+  }
+
+  _schedule(): void {
+    this._scope.scheduleEffect(this)
   }
 
   /**
@@ -121,7 +197,6 @@ export class ObservableImpl<
     return this._current as T
   }
 
-
   /**
    * Set CHANGED state and propagate POSSIBLY_CHANGED recursively to subscribers.
    */
@@ -129,7 +204,11 @@ export class ObservableImpl<
     if (this._status !== CHANGED) {
       if (this._status !== POSSIBLY_CHANGED) {
         for (const subscriber of this._subscribers) {
-          subscriber._markPossiblyChanged()
+          if (subscriber._scope !== this._scope) {
+            subscriber._schedule()
+          } else {
+            subscriber._markPossiblyChanged()
+          }
         }
       }
       this._status = CHANGED
@@ -164,10 +243,7 @@ export class ObservableImpl<
    * @param subscriber Subscriber (effect or computed)
    */
   _subscribe(subscriber: Observer): void {
-    const index = this._subscribers.indexOf(subscriber)
-    if (index < 0) {
-      this._subscribers.push(subscriber)
-    }
+    this._subscribers.add(subscriber)
   }
 
   /**
@@ -176,11 +252,8 @@ export class ObservableImpl<
    * @param subscriber Subscriber (effect or computed)
    */
   _unsubscribe(subscriber: Observer): void {
-    const index = this._subscribers.indexOf(subscriber)
-    if (index >= 0) {
-      this._subscribers.splice(index, 1)
-    }
-    if (this._subscribers.length === 0) {
+    this._subscribers.delete(subscriber)
+    if (this._subscribers.size === 0) {
       this._onDangling()
     }
   }
@@ -219,16 +292,24 @@ export const assertIsObservable = (
   observableAssert(isObservable(observable), message)
 }
 
-interface Observer {
+interface Cleanup {
+  readonly _cleanup: () => void
+}
+
+interface Observer extends Cleanup {
   readonly _markChanged: () => void
   readonly _markPossiblyChanged: () => void
-  readonly _cleanup: () => void
+  readonly _schedule: () => void
+  readonly _run: () => void
+  readonly _scope: ObservableScope
 }
 
 /**
  * Reactive mutable source node for scalar value types
  */
-export interface Source<T extends ReactiveData = ReactiveData> extends Observable<T> {
+export interface Source<
+  T extends ReactiveData = ReactiveData,
+> extends Observable<T> {
   /**
    * Modifier of the value.
    *
@@ -318,6 +399,10 @@ class ComputedImpl<out T extends ReactiveData = ReactiveData>
     this._computeFunc = computeFunc
     this._deps = []
     this._depsCount = 0
+  }
+
+  override _run(): void {
+    this._markPossiblyChanged()
   }
 
   /**
@@ -422,8 +507,8 @@ class ComputedImpl<out T extends ReactiveData = ReactiveData>
     this._status = NOT_CHANGED // The value is now in actual state
   }
 
-  _cleanup(): void {
-    if (this._subscribers.length === 0) {
+  override _cleanup(): void {
+    if (this._subscribers.size === 0) {
       for (const dependency of this._deps) {
         dependency._unsubscribe(this)
       }
@@ -480,7 +565,7 @@ class StaticComputedImpl<
   }
 
   override _cleanup(): void {
-    if (this._subscribers.length === 0) {
+    if (this._subscribers.size === 0) {
       for (const dependency of this._deps) {
         dependency._unsubscribe(this)
       }
@@ -575,7 +660,7 @@ class ConditionallyComputedImpl<
   }
 
   override _cleanup(): void {
-    if (this._subscribers.length === 0) {
+    if (this._subscribers.size === 0) {
       this._condition._unsubscribe(this)
       if (this._conditionValue) {
         this._trueBranch._unsubscribe(this)
@@ -590,132 +675,105 @@ class ConditionallyComputedImpl<
 
 export interface Effect {
   readonly unsubscribe: () => void
-  readonly suspend: () => void
-  readonly resume: () => void
-}
-
-interface RunnableEffect extends Effect {
-  _run(): void
 }
 
 class EffectImpl<T extends ReactiveData = ReactiveData>
-  implements Observer, RunnableEffect
+  implements Observer, Effect
 {
+  readonly _scope: ObservableScope
   _status: ChangedStatus
   readonly _trigger: ObservableImpl<T>
   readonly _effectFunc: (value: T) => void
   constructor(trigger: ObservableImpl<T>, effectFunc: (value: T) => void) {
-    this._status = DANGLING
+    if (trigger._status !== NOT_CHANGED) {
+      trigger._recompute()
+    }
+    trigger._subscribe(this)
+
+    this._scope = currentScope
+    this._status = NOT_CHANGED
     this._trigger = trigger
     this._effectFunc = effectFunc
-    this._run()
+    currentScope.effects.push(this)
   }
 
   _markChanged(): void {
-    if (this._status !== SUSPENDED) {
-      if (this._status !== CHANGED && this._status !== POSSIBLY_CHANGED) {
-        this._schedule()
-      }
-      this._status = CHANGED
+    if (this._status !== CHANGED && this._status !== POSSIBLY_CHANGED) {
+      this._schedule()
     }
+    this._status = CHANGED
   }
 
   _markPossiblyChanged(): void {
-    if (this._status !== SUSPENDED) {
-      if (this._status !== CHANGED && this._status !== POSSIBLY_CHANGED) {
-        this._schedule()
-        this._status = POSSIBLY_CHANGED
-      }
+    if (this._status !== CHANGED && this._status !== POSSIBLY_CHANGED) {
+      this._schedule()
+      this._status = POSSIBLY_CHANGED
     }
   }
 
   _run(): void {
-    if (this._status !== SUSPENDED) {
-      const current = this._trigger.current()
-      if (this._status === DANGLING) {
-        this._trigger._subscribe(this)
-      } else if (this._status === CHANGED) {
-        this._effectFunc(current)
-      }
-      this._status = NOT_CHANGED
+    const current = this._trigger.current()
+    if (this._status === DANGLING) {
+      this._trigger._subscribe(this)
+    } else if (this._status === CHANGED) {
+      this._effectFunc(current)
     }
+    this._status = NOT_CHANGED
   }
 
   _schedule(): void {
-    effectsQueue.push(this)
-  }
-
-  suspend(): void {
-    assertIsNotInComputing("Suspending effect in compute function")
-
-    if (this._status !== DANGLING) {
-      this._trigger._unsubscribe(this)
-    }
-    this._status = SUSPENDED
-  }
-
-  resume(): void {
-    assertIsNotInComputing("Resuming effect in compute function")
-
-    if (this._status === SUSPENDED) {
-      this._schedule()
-      this._status = DANGLING
-    }
+    this._scope.scheduleEffect(this)
   }
 
   _cleanup(): void {
-    if (this._status === SUSPENDED) {
-      this._trigger._unsubscribe(this)
-    }
+    this._trigger._unsubscribe(this)
+    this._status = DANGLING
   }
 
   unsubscribe(): void {
-    this._status = SUSPENDED
-    cleanupQueue.push(this)
+    this._cleanup()
   }
 }
 
 let trackingSubscriber: ComputedImpl | null = null
 
 let batchDepth = 0
+let runningEffects: Observer[] = []
 
-let effectsQueue: RunnableEffect[] = []
-let runningEffects: Array<RunnableEffect> = []
-let cleanupQueue: Array<Observer> = []
-let runningCleanup: Array<Observer> = []
+let cleanupQueue: Observer[] = []
+let runningCleanups: Observer[] = []
 
-export const runEffects = (): void => {
-  if (batchDepth === 0) {
-    batchDepth++
-    try {
-      while (cleanupQueue.length > 0 || effectsQueue.length > 0) {
-        if (cleanupQueue.length > 0) {
-          const tmp = runningCleanup
-          runningCleanup = cleanupQueue
-          cleanupQueue = tmp
-          for (const observer of runningCleanup) {
-            observer._cleanup()
-          }
-          runningCleanup.length = 0
-        }
+export const rootScope = new ObservableScope(null)
 
-        if (effectsQueue.length > 0) {
-          const tmp = runningEffects
-          runningEffects = effectsQueue
-          effectsQueue = tmp
-          for (const effect of runningEffects) {
-            try {
-              effect._run()
-            } catch (e) {
-              console.error(e)
-            }
-          }
-          runningEffects.length = 0
-        }
-      }
-    } finally {
-      batchDepth--
+let currentScope: ObservableScope = rootScope
+
+const runCleanups = (): void => {
+  while (cleanupQueue.length > 0) {
+    const tmp = runningCleanups
+    runningCleanups = cleanupQueue
+    cleanupQueue = tmp
+    for (const observer of runningCleanups) {
+      observer._cleanup()
     }
+    runningCleanups.length = 0
+  }
+}
+
+let scopeQueue: ObservableScope[] = []
+let runningScopes: ObservableScope[] = []
+
+const runScopes = (): void => {
+  while (scopeQueue.length > 0) {
+    const tmp = runningScopes
+    runningScopes = scopeQueue
+    scopeQueue = tmp
+    runningScopes.sort((a, b) => a.depth - b.depth)
+
+    for (const scope of runningScopes) {
+      scope.runEffects()
+    }
+
+    runningScopes.length = 0
   }
 }
 
@@ -725,7 +783,9 @@ export const source = <T extends ReactiveData>(initValue: T): Source<T> => {
   return new SourceImpl<T>(initValue)
 }
 
-export const computed = <T extends ReactiveData>(func: () => T): Observable<T> => {
+export const computed = <T extends ReactiveData>(
+  func: () => T,
+): Observable<T> => {
   assertIsNotInComputing("Creating computed in compute function")
 
   return new ComputedImpl(func)
@@ -736,8 +796,9 @@ export const computed = <T extends ReactiveData>(func: () => T): Observable<T> =
  * @param value Plain value or Observable node.
  * @returns Current value of Observable or value as is.
  */
-export const currentOf = <T extends ReactiveData>(value: ReactiveValue<T>): T =>
-  isObservable(value) ? value.current() : value
+export const currentOf = <T extends ReactiveData>(
+  value: ReactiveValue<T>,
+): T => (isObservable(value) ? value.current() : value)
 
 export const staticComputed = <T extends ReactiveData>(
   dependencies: Observable[],
@@ -778,13 +839,9 @@ export const condComputed = <T extends ReactiveData, F extends ReactiveData>(
   )
 }
 
-const noop = () => {
-  // do nothing
-}
-
 export const effect = <T extends ReactiveData>(
   trigger: Observable<T>,
-  effectFunc: (value: T) => void = noop,
+  effectFunc: (value: T) => void,
 ): Effect => {
   observableAssert(
     trigger instanceof ObservableImpl,
@@ -810,6 +867,8 @@ export const batch = <T>(func: () => T): T => {
     return func()
   } finally {
     batchDepth--
-    runEffects()
+    if (batchDepth === 0) {
+      runScopes()
+    }
   }
 }

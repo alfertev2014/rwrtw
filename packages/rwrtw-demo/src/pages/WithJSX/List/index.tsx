@@ -47,8 +47,8 @@ type Item = {
 }
 
 type ItemFormValues = {
-  readonly checked: Source<boolean>
-  readonly text: Source<string>
+  readonly checked: boolean
+  readonly text: string
 }
 
 let idGenerator = 0
@@ -72,8 +72,8 @@ const ItemForm = ({
   const handleClick = () => {
     batch(() => {
       onSave({
-        text: source<string>(itemForm.text.current()),
-        checked: source<boolean>(itemForm.checked.current()),
+        text: itemForm.text.current(),
+        checked: itemForm.checked.current(),
       })
     })
   }
@@ -209,13 +209,13 @@ const ListContent = ({
           initItem={selectedItem}
           onSave={(newItem) => {
             if (selectedItem.current() !== null) {
-              selectedItem.current()?.checked.change(newItem.checked.current())
-              selectedItem.current()?.text.change(newItem.text.current())
+              selectedItem.current()?.checked.change(newItem.checked)
+              selectedItem.current()?.text.change(newItem.text)
             } else {
               items.insertItem(items.current().length, {
                 id: selectedItem.current()?.id ?? ++idGenerator,
-                checked: newItem.checked,
-                text: newItem.text,
+                checked: source(newItem.checked),
+                text: source(newItem.text),
                 children: listSource<Item>([]),
               })
             }

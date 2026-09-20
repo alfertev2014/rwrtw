@@ -177,7 +177,7 @@ export const ref = <T>(ref: TemplateRef<T>): TemplateHandler<T> => {
     return (value, context) => {
       ref(value)
       context.registerLifecycle({
-        dispose() {
+        unmount() {
           ref(undefined)
         },
       })
@@ -186,7 +186,7 @@ export const ref = <T>(ref: TemplateRef<T>): TemplateHandler<T> => {
     return (value, context) => {
       ref.current = value
       context.registerLifecycle({
-        dispose() {
+        unmount() {
           ref.current = undefined
         },
       })
