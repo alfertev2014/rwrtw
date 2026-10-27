@@ -1,11 +1,11 @@
 import { dce, setAttr, txt } from "../dom/helpers.js"
 import {
-  type PlaceholderList,
-  type Placeholder,
+  type DynamicList,
+  type DynamicNode,
   placeAtBeginningOf,
-  type PlaceholderComponent,
+  type RenderableComponent,
   type Lifecycle,
-  type PlaceholderContent,
+  type DynamicContent,
   type Renderer,
 } from "../core/index.js"
 import type {
@@ -20,25 +20,25 @@ export const el: {
     tag: K,
     attrs?: TemplateElementAttrsConfig | null,
     ...handlers: Array<TemplateHandler<TagToHTMLElement<K>>>
-  ): (...children: TemplateContent[]) => PlaceholderComponent
+  ): (...children: TemplateContent[]) => RenderableComponent
   /** @deprecated */
   <K extends keyof HTMLElementDeprecatedTagNameMap>(
     tag: K,
     attrs?: TemplateElementAttrsConfig | null,
     ...handlers: Array<TemplateHandler<HTMLElementDeprecatedTagNameMap[K]>>
-  ): (...children: TemplateContent[]) => PlaceholderComponent
+  ): (...children: TemplateContent[]) => RenderableComponent
   (
     tag: string,
     attrs?: TemplateElementAttrsConfig | null,
     ...handlers: Array<TemplateHandler<HTMLElement>>
-  ): (...children: TemplateContent[]) => PlaceholderComponent
+  ): (...children: TemplateContent[]) => RenderableComponent
 } =
   (
     tag: string,
     attrs?: TemplateElementAttrsConfig | null,
     ...handlers: Array<TemplateHandler<HTMLElement>>
   ) =>
-  (...children: TemplateContent[]): PlaceholderComponent =>
+  (...children: TemplateContent[]): RenderableComponent =>
   (renderer) => {
     const element = dce(tag)
 
@@ -62,28 +62,28 @@ export const el: {
     renderer.insertNode(element)
   }
 
-export const plh =
+export const dyn =
   (
-    content: PlaceholderContent,
-    handler?: TemplateHandler<Placeholder>,
-  ): PlaceholderComponent =>
+    content: DynamicContent,
+    handler?: TemplateHandler<DynamicNode>,
+  ): RenderableComponent =>
   (renderer) => {
-    const res = renderer.insertPlaceholder(content)
+    const res = renderer.insertDynamicNode(content)
     handler?.(res, renderer.context)
   }
 
-export const plhList =
+export const dynList =
   (
-    contents: PlaceholderContent[],
-    handler?: TemplateHandler<PlaceholderList>,
-  ): PlaceholderComponent =>
+    contents: DynamicContent[],
+    handler?: TemplateHandler<DynamicList>,
+  ): RenderableComponent =>
   (renderer) => {
     const list = renderer.insertList(contents)
     handler?.(list, renderer.context)
   }
 
 export const lc =
-  (lifecycle: Lifecycle): PlaceholderComponent =>
+  (lifecycle: Lifecycle): RenderableComponent =>
   (renderer: Renderer) => {
     renderer.registerLifecycle(lifecycle)
   }
@@ -109,12 +109,12 @@ const renderTemplateContent = (
 }
 
 export const cmpnt =
-  (component: () => PlaceholderContent): PlaceholderContent =>
+  (component: () => DynamicContent): DynamicContent =>
   (renderer) =>
     component()?.(renderer)
 
 export const fr =
-  (...content: TemplateContent[]): PlaceholderComponent =>
+  (...content: TemplateContent[]): RenderableComponent =>
   (renderer) => {
     renderTemplateContent(renderer, content)
   }

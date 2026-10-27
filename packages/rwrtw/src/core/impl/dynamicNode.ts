@@ -1,25 +1,25 @@
 import type {
   Lifecycle,
-  Placeholder,
-  PlaceholderContent,
-  PlaceholderContext,
-  PlaceholderList,
+  DynamicNode,
+  DynamicContent,
+  RenderingContext,
+  DynamicList,
   Renderer,
 } from "../types.js"
-import { createListAt } from "./list.js"
+import { createListAt } from "./dynamicList.js"
 import {
   type DOMPlace,
   type Place,
   removeNodesAt,
   lastDOMPlaceOf,
-  type PlaceholderNode,
+  type DynamicFragment,
   insertNodeAt,
 } from "./place.js"
 
 class RendererImpl implements Renderer {
   _place: Place
-  _context: PlaceholderContext
-  constructor(place: Place, context: PlaceholderContext) {
+  _context: RenderingContext
+  constructor(place: Place, context: RenderingContext) {
     this._place = place
     this._context = context
   }
@@ -28,7 +28,7 @@ class RendererImpl implements Renderer {
     return this._place
   }
 
-  get context(): PlaceholderContext {
+  get context(): RenderingContext {
     return this._context
   }
 
@@ -40,15 +40,15 @@ class RendererImpl implements Renderer {
     return (this._place = insertNodeAt(this._place, node))
   }
 
-  insertPlaceholder(content: PlaceholderContent): Placeholder {
-    return (this._place = createChildPlaceholderAt(
+  insertDynamicNode(content: DynamicContent): DynamicNode {
+    return (this._place = createChildDynamicNodeAt(
       this._place,
       this._context,
       content,
     ))
   }
 
-  insertList(contents: PlaceholderContent[]): PlaceholderList {
+  insertList(contents: DynamicContent[]): DynamicList {
     return (this._place = createListAt(this._place, this._context, contents))
   }
 
@@ -57,9 +57,9 @@ class RendererImpl implements Renderer {
   }
 }
 
-export class ParentPlaceholderPlace implements PlaceholderNode {
-  parent: PlaceholderImpl
-  constructor(parent: PlaceholderImpl) {
+export class ParentDynamicNodePlace implements DynamicFragment {
+  parent: DynamicNodeImpl
+  constructor(parent: DynamicNodeImpl) {
     this.parent = parent
   }
 
@@ -68,11 +68,11 @@ export class ParentPlaceholderPlace implements PlaceholderNode {
   }
 }
 
-export class PlaceholderImpl implements Placeholder, Lifecycle {
+export class DynamicNodeImpl implements DynamicNode, Lifecycle {
   readonly _lifecycles: Lifecycle[]
   _place: Place
   _lastPlace: Place
-  constructor(place: Place, content: PlaceholderContent) {
+  constructor(place: Place, content: DynamicContent) {
     this._lifecycles = []
     this._place = place
     this._lastPlace = place
@@ -95,9 +95,9 @@ export class PlaceholderImpl implements Placeholder, Lifecycle {
     }
   }
 
-  _renderContent(content: PlaceholderContent): void {
+  _renderContent(content: DynamicContent): void {
     if (content != null) {
-      const renderer = new RendererImpl(new ParentPlaceholderPlace(this), this)
+      const renderer = new RendererImpl(new ParentDynamicNodePlace(this), this)
       // TODO: Handle exceptions
       content(renderer)
       this._lastPlace = renderer.lastPlace
@@ -110,7 +110,7 @@ export class PlaceholderImpl implements Placeholder, Lifecycle {
     this._lastPlace = this._place
   }
 
-  replaceContent(content: PlaceholderContent): void {
+  replaceContent(content: DynamicContent): void {
     this.erase()
     // TODO: Use DocumentFragment
     this._renderContent(content)
@@ -123,17 +123,17 @@ export class PlaceholderImpl implements Placeholder, Lifecycle {
   }
 }
 
-export const createChildPlaceholderAt = (
+export const createChildDynamicNodeAt = (
   place: Place,
-  context: PlaceholderContext,
-  content: PlaceholderContent,
-): Placeholder => {
-  return context.registerLifecycle(new PlaceholderImpl(place, content))
+  context: RenderingContext,
+  content: DynamicContent,
+): DynamicNode => {
+  return context.registerLifecycle(new DynamicNodeImpl(place, content))
 }
 
-export const createRootPlaceholderAt = (
+export const createRootDynamicNodeAt = (
   place: Place,
-  content: PlaceholderContent,
-): Placeholder & Lifecycle => {
-  return new PlaceholderImpl(place, content)
+  content: DynamicContent,
+): DynamicNode & Lifecycle => {
+  return new DynamicNodeImpl(place, content)
 }

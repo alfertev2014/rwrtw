@@ -1,21 +1,21 @@
 export {
   type DOMPlace,
   placeAtBeginningOf,
-  type PlaceholderNode,
+  type DynamicFragment,
   type Place,
   insertNodeAt,
 } from "./impl/place.js"
 export {
-  createRootPlaceholderAt,
-  createChildPlaceholderAt,
-} from "./impl/placeholder.js"
-export { createListAt } from "./impl/list.js"
+  createRootDynamicNodeAt,
+  createChildDynamicNodeAt,
+} from "./impl/dynamicNode.js"
+export { createListAt } from "./impl/dynamicList.js"
 export type {
   Lifecycle,
-  Placeholder,
-  PlaceholderComponent,
-  PlaceholderContent,
-  PlaceholderList,
-  PlaceholderContext,
+  DynamicNode,
+  RenderableComponent,
+  DynamicContent,
+  DynamicList as DynamicList,
+  RenderingContext,
   Renderer,
 } from "./types.js"

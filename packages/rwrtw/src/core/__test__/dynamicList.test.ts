@@ -2,11 +2,11 @@ import assert from "node:assert"
 import test, { describe, beforeEach } from "node:test"
 
 import {
-  createRootPlaceholderAt,
+  createRootDynamicNodeAt,
   type DOMPlace,
   placeAtBeginningOf,
-  type PlaceholderContent,
-  type PlaceholderList,
+  type DynamicContent,
+  type DynamicList,
 } from "../index.js"
 
 describe("Dynamic list", () => {
@@ -22,8 +22,8 @@ describe("Dynamic list", () => {
     test("with empty content - should do nothing with DOM", (t) => {
       for (const listContent of [[], [null], [null, null]]) {
         t.test(() => {
-          let list: PlaceholderList | undefined
-          const placeholder = createRootPlaceholderAt(
+          let list: DynamicList | undefined
+          const dynamicNode = createRootDynamicNodeAt(
             PARENT_PLACE,
             (renderer) => {
               list = renderer.insertList(listContent)
@@ -32,7 +32,7 @@ describe("Dynamic list", () => {
 
           assert.strictEqual(list?.length, listContent.length)
           assert.strictEqual(list.lastDOMPlace(), PARENT_PLACE)
-          assert.strictEqual(placeholder.lastDOMPlace(), PARENT_PLACE)
+          assert.strictEqual(dynamicNode.lastDOMPlace(), PARENT_PLACE)
           assert.strictEqual(PARENT_NODE.childNodes.length, 0)
         })
       }
@@ -41,8 +41,8 @@ describe("Dynamic list", () => {
     test("with one item with one child Node inside - should insert this node at place", () => {
       const innerNode = document.createElement("div")
 
-      let list: PlaceholderList | undefined
-      const placeholder = createRootPlaceholderAt(PARENT_PLACE, (renderer) => {
+      let list: DynamicList | undefined
+      const dynamicNode = createRootDynamicNodeAt(PARENT_PLACE, (renderer) => {
         list = renderer.insertList([
           (renderer) => renderer.insertNode(innerNode),
         ])
@@ -50,7 +50,7 @@ describe("Dynamic list", () => {
 
       assert.strictEqual(list?.length, 1)
       assert.strictEqual(list.lastDOMPlace(), innerNode)
-      assert.strictEqual(placeholder.lastDOMPlace(), innerNode)
+      assert.strictEqual(dynamicNode.lastDOMPlace(), innerNode)
       assert.strictEqual(innerNode.parentNode, PARENT_NODE)
       assert.strictEqual(PARENT_NODE.firstChild, innerNode)
     })
@@ -61,7 +61,7 @@ describe("Dynamic list", () => {
 
       const NODES_COUNT = 10
 
-      const placeholder = createRootPlaceholderAt(PARENT_PLACE, (renderer) => {
+      const dynamicNode = createRootDynamicNodeAt(PARENT_PLACE, (renderer) => {
         renderer.insertList([
           (renderer) => {
             renderer.insertNode(node)
@@ -72,7 +72,7 @@ describe("Dynamic list", () => {
         ])
       })
 
-      assert.strictEqual(placeholder.lastDOMPlace(), node)
+      assert.strictEqual(dynamicNode.lastDOMPlace(), node)
       assert.strictEqual(firstNode.parentNode, PARENT_NODE)
       assert.strictEqual(node.parentNode, PARENT_NODE)
       assert.strictEqual(PARENT_NODE.firstChild, firstNode)
@@ -85,8 +85,8 @@ describe("Dynamic list", () => {
 
       const NODES_COUNT = 10
 
-      const placeholder = createRootPlaceholderAt(PARENT_PLACE, (renderer) => {
-        const listContent: PlaceholderContent[] = [
+      const dynamicNode = createRootDynamicNodeAt(PARENT_PLACE, (renderer) => {
+        const listContent: DynamicContent[] = [
           (renderer) => {
             renderer.insertNode(node)
           },
@@ -101,7 +101,7 @@ describe("Dynamic list", () => {
         renderer.insertList(listContent)
       })
 
-      assert.strictEqual(placeholder.lastDOMPlace(), node)
+      assert.strictEqual(dynamicNode.lastDOMPlace(), node)
       assert.strictEqual(firstNode.parentNode, PARENT_NODE)
       assert.strictEqual(PARENT_NODE.firstChild, firstNode)
       assert.strictEqual(PARENT_NODE.childNodes.length, NODES_COUNT)

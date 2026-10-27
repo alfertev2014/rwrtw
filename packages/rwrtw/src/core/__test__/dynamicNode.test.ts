@@ -1,13 +1,13 @@
 import assert from "node:assert"
 import test, { beforeEach, describe, mock, type Mock } from "node:test"
 import {
-  type Placeholder,
-  createRootPlaceholderAt,
+  type DynamicNode,
+  createRootDynamicNodeAt,
   placeAtBeginningOf,
   type DOMPlace,
 } from "../index.js"
 
-describe("Placeholder", () => {
+describe("DynamicNode", () => {
   let PARENT_NODE: HTMLElement
   let PARENT_PLACE: DOMPlace
 
@@ -16,22 +16,22 @@ describe("Placeholder", () => {
     PARENT_PLACE = placeAtBeginningOf(PARENT_NODE)
   })
 
-  describe("Create root placeholder inside regular DOM Node", () => {
+  describe("Create root dynamicNode inside regular DOM Node", () => {
     test("with empty content - should do nothing with DOM", () => {
-      const placeholder = createRootPlaceholderAt(PARENT_PLACE, null)
+      const dynamicNode = createRootDynamicNodeAt(PARENT_PLACE, null)
 
-      assert.strictEqual(placeholder.lastDOMPlace(), PARENT_PLACE)
+      assert.strictEqual(dynamicNode.lastDOMPlace(), PARENT_PLACE)
       assert.strictEqual(PARENT_NODE.childNodes.length, 0)
     })
 
     test("with one child Node - should insert this node at place", () => {
       const innerNode = document.createElement("div")
 
-      const placeholder = createRootPlaceholderAt(PARENT_PLACE, (renderer) =>
+      const dynamicNode = createRootDynamicNodeAt(PARENT_PLACE, (renderer) =>
         renderer.insertNode(innerNode),
       )
 
-      assert.strictEqual(placeholder.lastDOMPlace(), innerNode)
+      assert.strictEqual(dynamicNode.lastDOMPlace(), innerNode)
       assert.strictEqual(innerNode.parentNode, PARENT_NODE)
       assert.strictEqual(PARENT_NODE.firstChild, innerNode)
     })
@@ -42,14 +42,14 @@ describe("Placeholder", () => {
 
       const NODES_COUNT = 10
 
-      const placeholder = createRootPlaceholderAt(PARENT_PLACE, (renderer) => {
+      const dynamicNode = createRootDynamicNodeAt(PARENT_PLACE, (renderer) => {
         renderer.insertNode(node)
         for (let i = 1; i < NODES_COUNT; ++i) {
           node = renderer.insertNode(document.createTextNode("some text"))
         }
       })
 
-      assert.strictEqual(placeholder.lastDOMPlace(), node)
+      assert.strictEqual(dynamicNode.lastDOMPlace(), node)
       assert.strictEqual(firstNode.parentNode, PARENT_NODE)
       assert.strictEqual(node.parentNode, PARENT_NODE)
       assert.strictEqual(PARENT_NODE.firstChild, firstNode)
@@ -57,50 +57,50 @@ describe("Placeholder", () => {
     })
   })
 
-  describe("Create child placeholder", () => {
-    test("at start of placeholder - should be at starting place", () => {
-      let childPlaceholder: Placeholder | undefined
+  describe("Create child dynamicNode", () => {
+    test("at start of dynamicNode - should be at starting place", () => {
+      let childDynamicNode: DynamicNode | undefined
 
-      createRootPlaceholderAt(PARENT_PLACE, (renderer) => {
-        childPlaceholder = renderer.insertPlaceholder(null)
+      createRootDynamicNodeAt(PARENT_PLACE, (renderer) => {
+        childDynamicNode = renderer.insertDynamicNode(null)
       })
 
-      assert.strictEqual(childPlaceholder?.lastDOMPlace(), PARENT_PLACE)
+      assert.strictEqual(childDynamicNode?.lastDOMPlace(), PARENT_PLACE)
       assert.strictEqual(PARENT_NODE.childNodes.length, 0)
     })
 
     test("with content - should insert the content into parent", () => {
-      let childPlaceholder: Placeholder | undefined
+      let childDynamicNode: DynamicNode | undefined
       let innerNode: Node | undefined
 
-      const parentPlaceholder = createRootPlaceholderAt(
+      const parentDynamicNode = createRootDynamicNodeAt(
         PARENT_PLACE,
         (renderer) => {
-          childPlaceholder = renderer.insertPlaceholder((renderer) => {
+          childDynamicNode = renderer.insertDynamicNode((renderer) => {
             innerNode = renderer.insertNode(document.createElement("div"))
           })
         },
       )
 
-      assert.strictEqual(childPlaceholder?.lastDOMPlace(), innerNode)
-      assert.strictEqual(parentPlaceholder.lastDOMPlace(), innerNode)
+      assert.strictEqual(childDynamicNode?.lastDOMPlace(), innerNode)
+      assert.strictEqual(parentDynamicNode.lastDOMPlace(), innerNode)
       assert.strictEqual(PARENT_NODE.childNodes.length, 1)
       assert.strictEqual(PARENT_NODE.firstChild, innerNode)
     })
 
-    test("with two child placeholders - should insert the content of both into parent", () => {
-      let childPlaceholder1: Placeholder | undefined
-      let childPlaceholder2: Placeholder | undefined
+    test("with two child dynamicNodes - should insert the content of both into parent", () => {
+      let childDynamicNode1: DynamicNode | undefined
+      let childDynamicNode2: DynamicNode | undefined
       let innerNode1: Node | undefined
       let innerNode2: Node | undefined
 
-      const parentPlaceholder = createRootPlaceholderAt(
+      const parentDynamicNode = createRootDynamicNodeAt(
         PARENT_PLACE,
         (renderer) => {
-          childPlaceholder1 = renderer.insertPlaceholder((renderer) => {
+          childDynamicNode1 = renderer.insertDynamicNode((renderer) => {
             innerNode1 = renderer.insertNode(document.createElement("div"))
           })
-          childPlaceholder2 = renderer.insertPlaceholder((renderer) => {
+          childDynamicNode2 = renderer.insertDynamicNode((renderer) => {
             innerNode2 = renderer.insertNode(document.createElement("div"))
           })
         },
@@ -109,133 +109,133 @@ describe("Placeholder", () => {
       assert.strictEqual(PARENT_NODE.childNodes.length, 2)
       assert.strictEqual(PARENT_NODE.firstChild, innerNode1)
       assert.strictEqual(PARENT_NODE.lastChild, innerNode2)
-      assert.strictEqual(childPlaceholder1?.lastDOMPlace(), innerNode1)
-      assert.strictEqual(childPlaceholder2?.lastDOMPlace(), innerNode2)
+      assert.strictEqual(childDynamicNode1?.lastDOMPlace(), innerNode1)
+      assert.strictEqual(childDynamicNode2?.lastDOMPlace(), innerNode2)
 
-      assert.strictEqual(parentPlaceholder.lastDOMPlace(), innerNode2)
+      assert.strictEqual(parentDynamicNode.lastDOMPlace(), innerNode2)
     })
   })
 
-  describe("Replace placeholder content", () => {
-    test("instead of empty - should insert new content and correct lastDOMPlace of parent placeholder", () => {
-      let childPlaceholder: Placeholder | undefined
+  describe("Replace dynamicNode content", () => {
+    test("instead of empty - should insert new content and correct lastDOMPlace of parent dynamicNode", () => {
+      let childDynamicNode: DynamicNode | undefined
       let innerNode: Node | undefined
 
-      const parentPlaceholder = createRootPlaceholderAt(
+      const parentDynamicNode = createRootDynamicNodeAt(
         PARENT_PLACE,
         (renderer) => {
-          childPlaceholder = renderer.insertPlaceholder(null)
+          childDynamicNode = renderer.insertDynamicNode(null)
         },
       )
 
-      childPlaceholder?.replaceContent((renderer) => {
+      childDynamicNode?.replaceContent((renderer) => {
         innerNode = renderer.insertNode(document.createElement("div"))
       })
 
       assert.strictEqual(PARENT_NODE.childNodes.length, 1)
       assert.strictEqual(PARENT_NODE.firstChild, innerNode)
 
-      assert.strictEqual(childPlaceholder?.lastDOMPlace(), innerNode)
-      assert.strictEqual(parentPlaceholder.lastDOMPlace(), innerNode)
+      assert.strictEqual(childDynamicNode?.lastDOMPlace(), innerNode)
+      assert.strictEqual(parentDynamicNode.lastDOMPlace(), innerNode)
     })
 
-    test("instead of nodes - should insert new content and correct lastDOMPlace of parent placeholder", () => {
-      let childPlaceholder: Placeholder | undefined
+    test("instead of nodes - should insert new content and correct lastDOMPlace of parent dynamicNode", () => {
+      let childDynamicNode: DynamicNode | undefined
       let innerNode: Node | undefined
 
-      const parentPlaceholder = createRootPlaceholderAt(
+      const parentDynamicNode = createRootDynamicNodeAt(
         PARENT_PLACE,
         (renderer) => {
-          childPlaceholder = renderer.insertPlaceholder((renderer) => {
+          childDynamicNode = renderer.insertDynamicNode((renderer) => {
             renderer.insertNode(document.createElement("div"))
           })
         },
       )
 
-      childPlaceholder?.replaceContent((renderer) => {
+      childDynamicNode?.replaceContent((renderer) => {
         innerNode = renderer.insertNode(document.createElement("div"))
       })
 
       assert.strictEqual(PARENT_NODE.childNodes.length, 1)
       assert.strictEqual(PARENT_NODE.firstChild, innerNode)
 
-      assert.strictEqual(childPlaceholder?.lastDOMPlace(), innerNode)
-      assert.strictEqual(parentPlaceholder.lastDOMPlace(), innerNode)
+      assert.strictEqual(childDynamicNode?.lastDOMPlace(), innerNode)
+      assert.strictEqual(parentDynamicNode.lastDOMPlace(), innerNode)
     })
 
-    test("empty content instead of nodes - should remove old content and correct lastDOMPlace of parent placeholder", () => {
-      let childPlaceholder: Placeholder | undefined
+    test("empty content instead of nodes - should remove old content and correct lastDOMPlace of parent dynamicNode", () => {
+      let childDynamicNode: DynamicNode | undefined
 
-      const parentPlaceholder = createRootPlaceholderAt(
+      const parentDynamicNode = createRootDynamicNodeAt(
         PARENT_PLACE,
         (renderer) => {
-          childPlaceholder = renderer.insertPlaceholder((renderer) => {
+          childDynamicNode = renderer.insertDynamicNode((renderer) => {
             renderer.insertNode(document.createElement("div"))
           })
         },
       )
 
-      childPlaceholder?.replaceContent(null)
+      childDynamicNode?.replaceContent(null)
 
       assert.strictEqual(PARENT_NODE.firstChild, null)
 
-      assert.strictEqual(childPlaceholder?.lastDOMPlace(), PARENT_PLACE)
-      assert.strictEqual(parentPlaceholder.lastDOMPlace(), PARENT_PLACE)
+      assert.strictEqual(childDynamicNode?.lastDOMPlace(), PARENT_PLACE)
+      assert.strictEqual(parentDynamicNode.lastDOMPlace(), PARENT_PLACE)
     })
 
-    test("removing content of last child placeholder - should correct parent lastDOMPlace to first child placeholder", () => {
-      let childPlaceholder1: Placeholder | undefined
-      let childPlaceholder2: Placeholder | undefined
+    test("removing content of last child dynamicNode - should correct parent lastDOMPlace to first child dynamicNode", () => {
+      let childDynamicNode1: DynamicNode | undefined
+      let childDynamicNode2: DynamicNode | undefined
       let innerNode1: Node | undefined
 
-      const parentPlaceholder = createRootPlaceholderAt(
+      const parentDynamicNode = createRootDynamicNodeAt(
         PARENT_PLACE,
         (renderer) => {
-          childPlaceholder1 = renderer.insertPlaceholder((renderer) => {
+          childDynamicNode1 = renderer.insertDynamicNode((renderer) => {
             innerNode1 = renderer.insertNode(document.createElement("div"))
           })
-          childPlaceholder2 = renderer.insertPlaceholder((renderer) => {
+          childDynamicNode2 = renderer.insertDynamicNode((renderer) => {
             renderer.insertNode(document.createElement("div"))
           })
         },
       )
 
-      childPlaceholder2?.replaceContent(null)
+      childDynamicNode2?.replaceContent(null)
 
       assert.strictEqual(PARENT_NODE.childNodes.length, 1)
       assert.strictEqual(PARENT_NODE.firstChild, innerNode1)
       assert.strictEqual(innerNode1?.nextSibling, null)
-      assert.strictEqual(childPlaceholder1?.lastDOMPlace(), innerNode1)
-      assert.strictEqual(childPlaceholder2?.lastDOMPlace(), innerNode1)
+      assert.strictEqual(childDynamicNode1?.lastDOMPlace(), innerNode1)
+      assert.strictEqual(childDynamicNode2?.lastDOMPlace(), innerNode1)
 
-      assert.strictEqual(parentPlaceholder.lastDOMPlace(), innerNode1)
+      assert.strictEqual(parentDynamicNode.lastDOMPlace(), innerNode1)
     })
 
-    test("removing content of first child placeholder - should correct second's lastDOMPlace to parent place", () => {
-      let childPlaceholder1: Placeholder | undefined
-      let childPlaceholder2: Placeholder | undefined
+    test("removing content of first child dynamicNode - should correct second's lastDOMPlace to parent place", () => {
+      let childDynamicNode1: DynamicNode | undefined
+      let childDynamicNode2: DynamicNode | undefined
       let innerNode2: Node | undefined
 
-      const parentPlaceholder = createRootPlaceholderAt(
+      const parentDynamicNode = createRootDynamicNodeAt(
         PARENT_PLACE,
         (renderer) => {
-          childPlaceholder1 = renderer.insertPlaceholder((renderer) => {
+          childDynamicNode1 = renderer.insertDynamicNode((renderer) => {
             renderer.insertNode(document.createElement("div"))
           })
-          childPlaceholder2 = renderer.insertPlaceholder((renderer) => {
+          childDynamicNode2 = renderer.insertDynamicNode((renderer) => {
             innerNode2 = renderer.insertNode(document.createElement("div"))
           })
         },
       )
 
-      childPlaceholder1?.replaceContent(null)
+      childDynamicNode1?.replaceContent(null)
 
       assert.strictEqual(PARENT_NODE.childNodes.length, 1)
       assert.strictEqual(PARENT_NODE.firstChild, innerNode2)
-      assert.strictEqual(childPlaceholder1?.lastDOMPlace(), PARENT_PLACE)
-      assert.strictEqual(childPlaceholder2?.lastDOMPlace(), innerNode2)
+      assert.strictEqual(childDynamicNode1?.lastDOMPlace(), PARENT_PLACE)
+      assert.strictEqual(childDynamicNode2?.lastDOMPlace(), innerNode2)
 
-      assert.strictEqual(parentPlaceholder.lastDOMPlace(), innerNode2)
+      assert.strictEqual(parentDynamicNode.lastDOMPlace(), innerNode2)
     })
   })
 
@@ -253,8 +253,8 @@ describe("Placeholder", () => {
     })
 
     describe("Registration of one lifecycle", () => {
-      test("should call handlers in order on placeholder's handler", () => {
-        const placeholder = createRootPlaceholderAt(
+      test("should call handlers in order on dynamicNode's handler", () => {
+        const dynamicNode = createRootDynamicNodeAt(
           PARENT_PLACE,
           (renderer) => {
             renderer.registerLifecycle(LIFECYCLE)
@@ -264,17 +264,17 @@ describe("Placeholder", () => {
         assert.strictEqual(LIFECYCLE.mount.mock.callCount(), 0)
         assert.strictEqual(LIFECYCLE.unmount.mock.callCount(), 0)
 
-        placeholder.mount?.()
+        dynamicNode.mount?.()
         assert.strictEqual(LIFECYCLE.mount.mock.callCount(), 1)
         assert.strictEqual(LIFECYCLE.unmount.mock.callCount(), 0)
 
-        placeholder.unmount?.()
+        dynamicNode.unmount?.()
         assert.strictEqual(LIFECYCLE.mount.mock.callCount(), 1)
         assert.strictEqual(LIFECYCLE.unmount.mock.callCount(), 1)
       })
 
-      test("double registration should call handlers twice in order on placeholder's handler", () => {
-        const placeholder = createRootPlaceholderAt(
+      test("double registration should call handlers twice in order on dynamicNode's handler", () => {
+        const dynamicNode = createRootDynamicNodeAt(
           PARENT_PLACE,
           (renderer) => {
             renderer.registerLifecycle(LIFECYCLE)
@@ -285,36 +285,36 @@ describe("Placeholder", () => {
         assert.strictEqual(LIFECYCLE.mount.mock.callCount(), 0)
         assert.strictEqual(LIFECYCLE.unmount.mock.callCount(), 0)
 
-        placeholder.mount?.()
+        dynamicNode.mount?.()
         assert.strictEqual(LIFECYCLE.mount.mock.callCount(), 2)
         assert.strictEqual(LIFECYCLE.unmount.mock.callCount(), 0)
 
-        placeholder.unmount?.()
+        dynamicNode.unmount?.()
         assert.strictEqual(LIFECYCLE.mount.mock.callCount(), 2)
         assert.strictEqual(LIFECYCLE.unmount.mock.callCount(), 2)
       })
 
-      test("should call handlers in order on parent placeholder's handlers", () => {
-        let childPlaceholder: Placeholder | undefined
+      test("should call handlers in order on parent dynamicNode's handlers", () => {
+        let childDynamicNode: DynamicNode | undefined
 
-        const parentPlaceholder = createRootPlaceholderAt(
+        const parentDynamicNode = createRootDynamicNodeAt(
           PARENT_PLACE,
           (renderer) => {
-            childPlaceholder = renderer.insertPlaceholder((renderer) => {
+            childDynamicNode = renderer.insertDynamicNode((renderer) => {
               renderer.registerLifecycle(LIFECYCLE)
             })
-            return childPlaceholder
+            return childDynamicNode
           },
         )
 
         assert.strictEqual(LIFECYCLE.mount.mock.callCount(), 0)
         assert.strictEqual(LIFECYCLE.unmount.mock.callCount(), 0)
 
-        parentPlaceholder.mount?.()
+        parentDynamicNode.mount?.()
         assert.strictEqual(LIFECYCLE.mount.mock.callCount(), 1)
         assert.strictEqual(LIFECYCLE.unmount.mock.callCount(), 0)
 
-        parentPlaceholder.unmount?.()
+        parentDynamicNode.unmount?.()
         assert.strictEqual(LIFECYCLE.mount.mock.callCount(), 1)
         assert.strictEqual(LIFECYCLE.unmount.mock.callCount(), 1)
       })
@@ -322,27 +322,27 @@ describe("Placeholder", () => {
 
     describe("Lifecycle on replacing content", () => {
       test("should call unmount for old content", () => {
-        const placeholder = createRootPlaceholderAt(
+        const dynamicNode = createRootDynamicNodeAt(
           PARENT_PLACE,
           (renderer) => {
             renderer.registerLifecycle(LIFECYCLE)
           },
         )
 
-        placeholder.mount?.()
+        dynamicNode.mount?.()
         assert.strictEqual(LIFECYCLE.mount.mock.callCount(), 1)
 
-        placeholder.replaceContent(null)
+        dynamicNode.replaceContent(null)
 
         assert.strictEqual(LIFECYCLE.unmount.mock.callCount(), 1)
       })
 
       test("should call mount for new content", () => {
-        const placeholder = createRootPlaceholderAt(PARENT_PLACE, null)
+        const dynamicNode = createRootDynamicNodeAt(PARENT_PLACE, null)
 
-        placeholder.mount?.()
+        dynamicNode.mount?.()
 
-        placeholder.replaceContent((renderer) => {
+        dynamicNode.replaceContent((renderer) => {
           renderer.registerLifecycle(LIFECYCLE)
         })
 
@@ -358,16 +358,16 @@ describe("Placeholder", () => {
           unmount: mock.fn(),
         }
 
-        const placeholder = createRootPlaceholderAt(
+        const dynamicNode = createRootDynamicNodeAt(
           PARENT_PLACE,
           (renderer) => {
             renderer.registerLifecycle(oldLifecycle)
           },
         )
 
-        placeholder.mount?.()
+        dynamicNode.mount?.()
 
-        placeholder.replaceContent((renderer) => {
+        dynamicNode.replaceContent((renderer) => {
           renderer.registerLifecycle(newLifecycle)
         })
 
@@ -382,7 +382,7 @@ describe("Placeholder", () => {
         // )
       })
 
-      test("for child placeholder should call unmount for old content and mount for new content", () => {
+      test("for child dynamicNode should call unmount for old content and mount for new content", () => {
         const oldLifecycle = LIFECYCLE
 
         const newLifecycle = {
@@ -390,19 +390,19 @@ describe("Placeholder", () => {
           unmount: mock.fn(),
         }
 
-        const placeholder = createRootPlaceholderAt(
+        const dynamicNode = createRootDynamicNodeAt(
           PARENT_PLACE,
           (renderer) => {
-            const placeholder = renderer.insertPlaceholder((renderer) => {
+            const dynamicNode = renderer.insertDynamicNode((renderer) => {
               renderer.registerLifecycle(oldLifecycle)
             })
-            return placeholder
+            return dynamicNode
           },
         )
 
-        placeholder.mount?.()
+        dynamicNode.mount?.()
 
-        placeholder.replaceContent((renderer) => {
+        dynamicNode.replaceContent((renderer) => {
           renderer.registerLifecycle(newLifecycle)
         })
 

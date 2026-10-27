@@ -1,35 +1,35 @@
-import type { Place, PlaceholderNode } from "./impl/place.js"
+import type { Place, DynamicFragment } from "./impl/place.js"
 
 export interface Lifecycle {
   readonly mount?: () => void
   readonly unmount?: () => void
 }
 
-export interface PlaceholderContext {
+export interface RenderingContext {
   readonly registerLifecycle: <L extends Lifecycle>(lifecycle: L) => L
 }
 
 export interface Renderer {
   readonly registerLifecycle: <L extends Lifecycle>(lifecycle: L) => L
   readonly insertNode: <T extends Node>(node: T) => T
-  readonly insertPlaceholder: (content: PlaceholderContent) => Placeholder
-  readonly insertList: (contents: PlaceholderContent[]) => PlaceholderList
+  readonly insertDynamicNode: (content: DynamicContent) => DynamicNode
+  readonly insertList: (contents: DynamicContent[]) => DynamicList
   readonly lastPlace: Place
-  readonly context: PlaceholderContext
+  readonly context: RenderingContext
   readonly createRendererAt: (place: Place) => Renderer
 }
 
-export type PlaceholderComponent = (renderer: Renderer) => void
+export type RenderableComponent = (renderer: Renderer) => void
 
-export type PlaceholderContent = PlaceholderComponent | null
+export type DynamicContent = RenderableComponent | null
 
-export interface Placeholder extends PlaceholderNode, PlaceholderContext {
-  readonly replaceContent: (content: PlaceholderContent) => void
+export interface DynamicNode extends DynamicFragment, RenderingContext {
+  readonly replaceContent: (content: DynamicContent) => void
 }
 
-export interface PlaceholderList extends PlaceholderNode {
+export interface DynamicList extends DynamicFragment {
   readonly length: number
-  readonly insert: (index: number, content: PlaceholderContent) => void
+  readonly insert: (index: number, content: DynamicContent) => void
   readonly removeAt: (index: number) => void
   readonly moveFromTo: (fromIndex: number, toIndex: number) => void
 }

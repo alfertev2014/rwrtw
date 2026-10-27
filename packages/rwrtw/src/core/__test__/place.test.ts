@@ -7,8 +7,8 @@ import {
   type Place,
   insertNodeAt,
 } from "../impl/place.js"
-import { createRootPlaceholderAt } from "../impl/placeholder.js"
-import { type PlaceholderList, type Placeholder } from "../index.js"
+import { createRootDynamicNodeAt } from "../impl/dynamicNode.js"
+import { type DynamicList, type DynamicNode } from "../index.js"
 
 describe("Place", () => {
   let PARENT_NODE: HTMLElement
@@ -39,119 +39,119 @@ describe("Place", () => {
       })
     })
 
-    describe("of empty placeholder", () => {
+    describe("of empty dynamic node", () => {
       test("after DOM Node - should return that node", () => {
-        const placeholder = createRootPlaceholderAt(CHILD_NODE, null)
+        const dynamicNode = createRootDynamicNodeAt(CHILD_NODE, null)
 
-        assert.strictEqual(lastDOMPlaceOf(placeholder), CHILD_NODE)
+        assert.strictEqual(lastDOMPlaceOf(dynamicNode), CHILD_NODE)
       })
 
       test("at beginning of DOM Node - should return beginning of that node", () => {
         const beginning = placeAtBeginningOf(PARENT_NODE)
-        const placeholder = createRootPlaceholderAt(beginning, null)
+        const dynamicNode = createRootDynamicNodeAt(beginning, null)
 
-        assert.strictEqual(lastDOMPlaceOf(placeholder), beginning)
+        assert.strictEqual(lastDOMPlaceOf(dynamicNode), beginning)
       })
 
-      test("after DOM Node followed by other empty placeholder - should return that node", () => {
-        const beforePlaceholder = createRootPlaceholderAt(CHILD_NODE, null)
+      test("after DOM Node followed by other empty dynamicNode - should return that node", () => {
+        const beforeDynamicNode = createRootDynamicNodeAt(CHILD_NODE, null)
 
-        const placeholder = createRootPlaceholderAt(beforePlaceholder, null)
+        const dynamicNode = createRootDynamicNodeAt(beforeDynamicNode, null)
 
-        assert.strictEqual(lastDOMPlaceOf(placeholder), CHILD_NODE)
+        assert.strictEqual(lastDOMPlaceOf(dynamicNode), CHILD_NODE)
       })
 
-      test("after DOM Node followed by other not empty placeholder - should return last DOM Node of content of that placeholder", () => {
+      test("after DOM Node followed by other not empty dynamicNode - should return last DOM Node of content of that dynamicNode", () => {
         const innerNode = document.createElement("div")
 
-        const beforePlaceholder = createRootPlaceholderAt(
+        const beforeDynamicNode = createRootDynamicNodeAt(
           CHILD_NODE,
           (renderer) => {
             renderer.insertNode(innerNode)
           },
         )
 
-        const placeholder = createRootPlaceholderAt(beforePlaceholder, null)
+        const dynamicNode = createRootDynamicNodeAt(beforeDynamicNode, null)
 
-        assert.strictEqual(lastDOMPlaceOf(placeholder), innerNode)
+        assert.strictEqual(lastDOMPlaceOf(dynamicNode), innerNode)
       })
 
-      test("at the beginning of other placeholder which follows a DOM Node - should return that node", () => {
-        let placeholder: Placeholder | undefined
-        createRootPlaceholderAt(CHILD_NODE, (renderer) => {
-          placeholder = renderer.insertPlaceholder(null)
+      test("at the beginning of other dynamicNode which follows a DOM Node - should return that node", () => {
+        let dynamicNode: DynamicNode | undefined
+        createRootDynamicNodeAt(CHILD_NODE, (renderer) => {
+          dynamicNode = renderer.insertDynamicNode(null)
         })
 
-        if (placeholder != null) {
-          assert.strictEqual(lastDOMPlaceOf(placeholder), CHILD_NODE)
+        if (dynamicNode != null) {
+          assert.strictEqual(lastDOMPlaceOf(dynamicNode), CHILD_NODE)
         } else {
-          throw new Error("placeholder is not initialized")
+          throw new Error("dynamicNode is not initialized")
         }
       })
 
-      test("at the beginning of other placeholder which follows a third placeholder - should return last DOM Node of content of that placeholder", () => {
+      test("at the beginning of other dynamicNode which follows a third dynamicNode - should return last DOM Node of content of that dynamicNode", () => {
         const innerNode = document.createElement("div")
 
-        const beforePlaceholder = createRootPlaceholderAt(
+        const beforeDynamicNode = createRootDynamicNodeAt(
           CHILD_NODE,
           (renderer) => {
             renderer.insertNode(innerNode)
           },
         )
 
-        let placeholder: Placeholder | undefined
-        createRootPlaceholderAt(beforePlaceholder, (renderer) => {
-          placeholder = renderer.insertPlaceholder(null)
+        let dynamicNode: DynamicNode | undefined
+        createRootDynamicNodeAt(beforeDynamicNode, (renderer) => {
+          dynamicNode = renderer.insertDynamicNode(null)
         })
 
-        if (placeholder != null) {
-          assert.strictEqual(lastDOMPlaceOf(placeholder), innerNode)
+        if (dynamicNode != null) {
+          assert.strictEqual(lastDOMPlaceOf(dynamicNode), innerNode)
         } else {
-          throw new Error("placeholder is not initialized")
+          throw new Error("dynamicNode is not initialized")
         }
       })
     })
 
-    describe("of not empty placeholder", () => {
-      test("when placeholder's content ends with Node - should return this Node", () => {
+    describe("of not empty dynamicNode", () => {
+      test("when dynamicNode's content ends with Node - should return this Node", () => {
         const innerNode = document.createElement("div")
 
-        const placeholder = createRootPlaceholderAt(CHILD_NODE, (renderer) => {
+        const dynamicNode = createRootDynamicNodeAt(CHILD_NODE, (renderer) => {
           renderer.insertNode(innerNode)
         })
 
-        assert.strictEqual(lastDOMPlaceOf(placeholder), innerNode)
+        assert.strictEqual(lastDOMPlaceOf(dynamicNode), innerNode)
       })
 
-      test("when placeholder contains only empty Placeholder - should return DOM place of itself", () => {
-        const placeholder = createRootPlaceholderAt(CHILD_NODE, (renderer) => {
-          renderer.insertPlaceholder(null)
+      test("when dynamicNode contains only empty DynamicNode - should return DOM place of itself", () => {
+        const dynamicNode = createRootDynamicNodeAt(CHILD_NODE, (renderer) => {
+          renderer.insertDynamicNode(null)
         })
 
-        assert.strictEqual(lastDOMPlaceOf(placeholder), CHILD_NODE)
+        assert.strictEqual(lastDOMPlaceOf(dynamicNode), CHILD_NODE)
       })
 
-      test("when placeholder's content ends with Node and empty Placeholder - should return that Node", () => {
+      test("when dynamicNode's content ends with Node and empty DynamicNode - should return that Node", () => {
         const innerNode = document.createElement("div")
 
-        const placeholder = createRootPlaceholderAt(CHILD_NODE, (renderer) => {
+        const dynamicNode = createRootDynamicNodeAt(CHILD_NODE, (renderer) => {
           renderer.insertNode(innerNode)
-          renderer.insertPlaceholder(null)
+          renderer.insertDynamicNode(null)
         })
 
-        assert.strictEqual(lastDOMPlaceOf(placeholder), innerNode)
+        assert.strictEqual(lastDOMPlaceOf(dynamicNode), innerNode)
       })
 
-      test("when placeholder content ends with Placeholder with Node inside -  should return that Node", () => {
+      test("when dynamicNode content ends with DynamicNode with Node inside -  should return that Node", () => {
         const innerNode = document.createElement("div")
 
-        const placeholder = createRootPlaceholderAt(CHILD_NODE, (renderer) => {
-          renderer.insertPlaceholder((renderer) => {
+        const dynamicNode = createRootDynamicNodeAt(CHILD_NODE, (renderer) => {
+          renderer.insertDynamicNode((renderer) => {
             renderer.insertNode(innerNode)
           })
         })
 
-        assert.strictEqual(lastDOMPlaceOf(placeholder), innerNode)
+        assert.strictEqual(lastDOMPlaceOf(dynamicNode), innerNode)
       })
     })
 
@@ -166,9 +166,9 @@ describe("Place", () => {
         test((t) => {
           for (const LIST_ITEMS of [[], [null], [null, null]]) {
             t.test("when list after Node - should return that Node", () => {
-              let list: PlaceholderList | undefined
+              let list: DynamicList | undefined
 
-              createRootPlaceholderAt(CHILD_NODE, (renderer) => {
+              createRootDynamicNodeAt(CHILD_NODE, (renderer) => {
                 renderer.insertNode(INNER_CHILD_NODE)
                 list = renderer.insertList(LIST_ITEMS)
               })
@@ -181,10 +181,10 @@ describe("Place", () => {
             })
 
             test("when list at the beginning of Node - should return the beginning of than Node", () => {
-              let list: PlaceholderList | undefined
+              let list: DynamicList | undefined
               let listPlace: Place | undefined
 
-              createRootPlaceholderAt(CHILD_NODE, (renderer) => {
+              createRootDynamicNodeAt(CHILD_NODE, (renderer) => {
                 renderer.insertNode(INNER_CHILD_NODE)
 
                 listPlace = placeAtBeginningOf(INNER_CHILD_NODE)
@@ -199,11 +199,11 @@ describe("Place", () => {
               }
             })
 
-            test("when list after Placeholder with Node inside - should return that Node", () => {
-              let list: PlaceholderList | undefined
+            test("when list after DynamicNode with Node inside - should return that Node", () => {
+              let list: DynamicList | undefined
 
-              createRootPlaceholderAt(CHILD_NODE, (renderer) => {
-                renderer.insertPlaceholder((renderer) => {
+              createRootDynamicNodeAt(CHILD_NODE, (renderer) => {
+                renderer.insertDynamicNode((renderer) => {
                   renderer.insertNode(INNER_CHILD_NODE)
                 })
                 list = renderer.insertList(LIST_ITEMS)
@@ -216,11 +216,11 @@ describe("Place", () => {
               }
             })
 
-            test("when list at the beginning of Placeholder", () => {
-              let list: PlaceholderList | undefined
+            test("when list at the beginning of DynamicNode", () => {
+              let list: DynamicList | undefined
 
-              createRootPlaceholderAt(CHILD_NODE, (renderer) => {
-                renderer.insertPlaceholder((renderer) => {
+              createRootDynamicNodeAt(CHILD_NODE, (renderer) => {
+                renderer.insertDynamicNode((renderer) => {
                   renderer.insertNode(INNER_CHILD_NODE)
                 })
                 list = renderer.insertList(LIST_ITEMS)
@@ -281,54 +281,54 @@ describe("Place", () => {
     })
   })
 
-  describe("Inserting nodes after placeholder", () => {
-    test("if placeholder is empty it should insert nodes at lastDOMPlace of placeholder", () => {
-      const placeholder = createRootPlaceholderAt(CHILD_NODE, null)
+  describe("Inserting nodes after dynamicNode", () => {
+    test("if dynamicNode is empty it should insert nodes at lastDOMPlace of dynamicNode", () => {
+      const dynamicNode = createRootDynamicNodeAt(CHILD_NODE, null)
       const node = document.createElement("div")
 
-      insertNodeAt(placeholder, node)
+      insertNodeAt(dynamicNode, node)
 
       assert.strictEqual(node.previousSibling, CHILD_NODE)
-      assert.strictEqual(placeholder.lastDOMPlace(), CHILD_NODE)
+      assert.strictEqual(dynamicNode.lastDOMPlace(), CHILD_NODE)
     })
 
-    test("if placeholder contains nodes it should insert nodes after content of placeholder", () => {
+    test("if dynamicNode contains nodes it should insert nodes after content of dynamicNode", () => {
       const innerNode = document.createElement("div")
-      const placeholder = createRootPlaceholderAt(CHILD_NODE, (renderer) => {
+      const dynamicNode = createRootDynamicNodeAt(CHILD_NODE, (renderer) => {
         renderer.insertNode(innerNode)
       })
       const node = document.createElement("div")
 
-      insertNodeAt(placeholder, node)
+      insertNodeAt(dynamicNode, node)
 
       assert.strictEqual(node.previousSibling, innerNode)
-      assert.strictEqual(placeholder.lastDOMPlace(), innerNode)
+      assert.strictEqual(dynamicNode.lastDOMPlace(), innerNode)
     })
   })
 
-  describe("Inserting nodes at the beginning of placeholder", () => {
-    test("if placeholder is empty it should insert nodes at lastDOMPlace of placeholder", () => {
+  describe("Inserting nodes at the beginning of dynamicNode", () => {
+    test("if dynamicNode is empty it should insert nodes at lastDOMPlace of dynamicNode", () => {
       const node = document.createElement("div")
 
-      const placeholder = createRootPlaceholderAt(CHILD_NODE, (renderer) => {
+      const dynamicNode = createRootDynamicNodeAt(CHILD_NODE, (renderer) => {
         renderer.insertNode(node)
       })
 
       assert.strictEqual(node.previousSibling, CHILD_NODE)
-      assert.strictEqual(placeholder.lastDOMPlace(), node)
+      assert.strictEqual(dynamicNode.lastDOMPlace(), node)
     })
 
-    test("if placeholder contains nodes it should insert nodes before content of placeholder", () => {
+    test("if dynamicNode contains nodes it should insert nodes before content of dynamicNode", () => {
       const innerNode = document.createElement("div")
       const innerAfterNode = document.createElement("div")
-      const placeholder = createRootPlaceholderAt(CHILD_NODE, (renderer) => {
+      const dynamicNode = createRootDynamicNodeAt(CHILD_NODE, (renderer) => {
         renderer.insertNode(innerNode)
         renderer.insertNode(innerAfterNode)
       })
 
       assert.strictEqual(innerNode.previousSibling, CHILD_NODE)
       assert.strictEqual(innerNode.nextSibling, innerAfterNode)
-      assert.strictEqual(placeholder.lastDOMPlace(), innerAfterNode)
+      assert.strictEqual(dynamicNode.lastDOMPlace(), innerAfterNode)
     })
   })
 })

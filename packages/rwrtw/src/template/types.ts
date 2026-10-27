@@ -1,15 +1,15 @@
-import type { PlaceholderComponent, PlaceholderContext } from "../core/index.js"
+import type { RenderableComponent, RenderingContext } from "../core/index.js"
 import type { ScalarData } from "../dom/types.js"
 
 export type TemplateHandler<T> = (
   element: T,
-  context: PlaceholderContext,
+  context: RenderingContext,
 ) => void
 
 export type TemplateElementAttrsConfig = {
   [key: string]: ScalarData
 }
 
-export type TemplateItem = ScalarData | PlaceholderComponent
+export type TemplateItem = ScalarData | RenderableComponent
 
 export type TemplateContent = TemplateContent[] | TemplateItem

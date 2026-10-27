@@ -10,11 +10,11 @@ export const placeAtBeginningOf = (node: ParentNode): DOMPlace =>
 
 export type DOMPlace = Node | ParentNodePlace
 
-export type PlaceholderNode = {
+export type DynamicFragment = {
   readonly lastDOMPlace: () => DOMPlace
 }
 
-export type Place = DOMPlace | PlaceholderNode
+export type Place = DOMPlace | DynamicFragment
 
 export const lastDOMPlaceOf = (place: Place): DOMPlace => {
   if (place instanceof Node || place instanceof ParentNodePlace) {

@@ -1,6 +1,6 @@
 import {
   type TemplateContent,
-  createRootPlaceholderAt,
+  createRootDynamicNodeAt,
   fr,
   placeAtBeginningOf,
 } from "rwrtw"
@@ -18,7 +18,7 @@ const App = (): TemplateContent => {
   )
 }
 
-const root = createRootPlaceholderAt(
+const root = createRootDynamicNodeAt(
   placeAtBeginningOf(document.body),
   fr(<App />),
 )

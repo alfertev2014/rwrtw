@@ -1,5 +1,5 @@
 import { setAttr, toText, txt } from "../dom/helpers.js"
-import type { PlaceholderComponent, PlaceholderContent } from "../index.js"
+import type { RenderableComponent, DynamicContent } from "../index.js"
 import type { ListObservable, ListObserver } from "../reactive/list.js"
 import {
   type Observable,
@@ -30,7 +30,7 @@ export const reEffect =
   <T extends ReactiveData>(
     trigger: ReactiveValue<T>,
     effectFunc: (value: T) => void,
-  ): PlaceholderContent =>
+  ): DynamicContent =>
   () => {
     reCompute(trigger, effectFunc)
   }
@@ -88,7 +88,7 @@ export const reStyle =
   }
 
 const contentInScope =
-  (contentFunc: () => TemplateContent): PlaceholderComponent =>
+  (contentFunc: () => TemplateContent): RenderableComponent =>
   (renderer) => {
     const scope: ObservableScope = createScope()
     scope.runInScope(() => {
@@ -107,11 +107,11 @@ export const reContent = <T extends ReactiveData>(
 ): TemplateContent => {
   if (isObservable(trigger)) {
     return (renderer) => {
-      const placeholder = renderer.insertPlaceholder(
+      const dynamicNode = renderer.insertDynamicNode(
         contentInScope(() => contentFunc(trigger.current())),
       )
       effect(trigger, (value) => {
-        placeholder.replaceContent(contentInScope(() => contentFunc(value)))
+        dynamicNode.replaceContent(contentInScope(() => contentFunc(value)))
       })
     }
   } else {
@@ -121,7 +121,7 @@ export const reContent = <T extends ReactiveData>(
 
 export const reText = (
   value: ReactiveValue<ScalarData>,
-): PlaceholderComponent => {
+): RenderableComponent => {
   if (isObservable(value)) {
     return (renderer) => {
       const t = renderer.insertNode(txt(value.current()))
@@ -147,7 +147,7 @@ export const reIf = (
 export const reList = <T extends ReactiveData>(
   listModel: ListObservable<T>,
   elementComponentFunc: (value: Observable<T>) => TemplateContent,
-): PlaceholderComponent => {
+): RenderableComponent => {
   return (renderer) => {
     const list = renderer.insertList(
       listModel
