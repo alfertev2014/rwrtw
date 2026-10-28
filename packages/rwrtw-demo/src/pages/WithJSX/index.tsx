@@ -6,7 +6,7 @@ const WithJSX = (): TemplateContent => {
   const selectedApp = state<string>("Counter")
 
   const handleClick = (selectedValue: string) => () => {
-    selectedApp.change(selectedValue)
+    selectedApp.set(selectedValue)
   }
 
   const TabButton = ({
@@ -18,7 +18,7 @@ const WithJSX = (): TemplateContent => {
   }) => (
     <button
       p:className={computed(() =>
-        selectedApp.current() === app ? "app-selected" : undefined,
+        selectedApp.get() === app ? "app-selected" : undefined,
       )}
       on:click={handleClick(app)}
     >

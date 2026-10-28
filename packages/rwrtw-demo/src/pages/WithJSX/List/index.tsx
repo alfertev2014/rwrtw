@@ -21,7 +21,7 @@ const TextInput = ({ value }: { value: State<string> }): TemplateContent => {
       type="text"
       p:value={value}
       on:change={(e) => {
-        value.change((e.target as HTMLInputElement).value)
+        value.set((e.target as HTMLInputElement).value)
       }}
     />
   )
@@ -33,7 +33,7 @@ const Checkbox = ({ value }: { value: State<boolean> }): TemplateContent => {
       type="checkbox"
       p:checked={value}
       on:change={(e) => {
-        value.change((e.target as HTMLInputElement).checked)
+        value.set((e.target as HTMLInputElement).checked)
       }}
     />
   )
@@ -65,15 +65,15 @@ const ItemForm = ({
   onCancel,
 }: ItemFormProps): TemplateContent => {
   const itemForm = {
-    text: state<string>(initItem.current()?.text.current() ?? ""),
-    checked: state<boolean>(initItem.current()?.checked.current() ?? false),
+    text: state<string>(initItem.get()?.text.get() ?? ""),
+    checked: state<boolean>(initItem.get()?.checked.get() ?? false),
   }
 
   const handleClick = () => {
     batch(() => {
       onSave({
-        text: itemForm.text.current(),
-        checked: itemForm.checked.current(),
+        text: itemForm.text.get(),
+        checked: itemForm.checked.get(),
       })
     })
   }
@@ -82,15 +82,15 @@ const ItemForm = ({
     <>
       {reEffect(initItem, (initValue) => {
         if (initValue) {
-          itemForm.text.change(initValue.text.current())
-          itemForm.checked.change(initValue.checked.current())
+          itemForm.text.set(initValue.text.get())
+          itemForm.checked.set(initValue.checked.get())
         } else {
-          itemForm.text.change("")
-          itemForm.checked.change(false)
+          itemForm.text.set("")
+          itemForm.checked.set(false)
         }
       })}
       {reContent(
-        computed(() => initItem.current()?.id),
+        computed(() => initItem.get()?.id),
         (id) => (id ? <span>[{id}]</span> : null),
       )}
       <Checkbox value={itemForm.checked} />
@@ -107,40 +107,40 @@ const ListContent = ({
   items: ListState<Item>
 }): TemplateContent => {
   const selectedItem = state<Item | null>(null)
-  const count = computed(() => items.current().length)
+  const count = computed(() => items.get().length)
   const checkedCount = computed(
     () =>
-      items.current().filter((item) => item.current().checked.current()).length,
+      items.get().filter((item) => item.get().checked.get()).length,
   )
 
   return (
     <>
       <ol class="list-content">
         {reList(items, (item) => {
-          const id = computed(() => item.current().id)
+          const id = computed(() => item.get().id)
           return (
             <li
               class={computed(
                 () =>
-                  `list-item ${selectedItem.current()?.id === id.current() ? "list-item-selected" : ""}`,
+                  `list-item ${selectedItem.get()?.id === id.get() ? "list-item-selected" : ""}`,
               )}
             >
               <div class="list-item-header">
                 <span class="list-item-id">
-                  {reText(computed(() => `[${id.current()}]`))}
+                  {reText(computed(() => `[${id.get()}]`))}
                 </span>
                 <span class="list-item-value">
                   {reText(
                     computed(
                       () =>
-                        `[${item.current().checked.current() ? "x" : " "}] ${item.current().text.current()}`,
+                        `[${item.get().checked.get() ? "x" : " "}] ${item.get().text.get()}`,
                     ),
                   )}
                 </span>
                 <span class="list-item-actions">
                   <button
                     on:click={() => {
-                      selectedItem.change(item.current())
+                      selectedItem.set(item.get())
                     }}
                     data-id={id}
                   >
@@ -149,8 +149,8 @@ const ListContent = ({
                   <button
                     on:click={() => {
                       const index = items
-                        .current()
-                        .findIndex((item) => item.current().id === id.current())
+                        .get()
+                        .findIndex((item) => item.get().id === id.get())
 
                       if (index >= 0) {
                         items.moveItem(index, 0)
@@ -163,11 +163,11 @@ const ListContent = ({
                   <button
                     on:click={() => {
                       const index = items
-                        .current()
-                        .findIndex((item) => item.current().id === id.current())
+                        .get()
+                        .findIndex((item) => item.get().id === id.get())
 
                       if (index >= 0) {
-                        items.moveItem(index, items.current().length - 1)
+                        items.moveItem(index, items.get().length - 1)
                       }
                     }}
                     data-id={id}
@@ -178,8 +178,8 @@ const ListContent = ({
                   <button
                     on:click={() => {
                       const index = items
-                        .current()
-                        .findIndex((item) => item.current().id === id.current())
+                        .get()
+                        .findIndex((item) => item.get().id === id.get())
 
                       items.removeItem(index)
                     }}
@@ -190,7 +190,7 @@ const ListContent = ({
                 </span>
               </div>
               <div>
-                <ListContent items={item.current().children} />
+                <ListContent items={item.get().children} />
               </div>
             </li>
           )
@@ -199,7 +199,7 @@ const ListContent = ({
         <div>
           <span>
             {reText(
-              computed(() => `${checkedCount.current()} / ${count.current()}`),
+              computed(() => `${checkedCount.get()} / ${count.get()}`),
             )}
           </span>
         </div>
@@ -208,12 +208,12 @@ const ListContent = ({
         <ItemForm
           initItem={selectedItem}
           onSave={(newItem) => {
-            if (selectedItem.current() !== null) {
-              selectedItem.current()?.checked.change(newItem.checked)
-              selectedItem.current()?.text.change(newItem.text)
+            if (selectedItem.get() !== null) {
+              selectedItem.get()?.checked.set(newItem.checked)
+              selectedItem.get()?.text.set(newItem.text)
             } else {
-              items.insertItem(items.current().length, {
-                id: selectedItem.current()?.id ?? ++idGenerator,
+              items.insertItem(items.get().length, {
+                id: selectedItem.get()?.id ?? ++idGenerator,
                 checked: state(newItem.checked),
                 text: state(newItem.text),
                 children: listState<Item>([]),
@@ -221,7 +221,7 @@ const ListContent = ({
             }
           }}
           onCancel={() => {
-            selectedItem.change(null)
+            selectedItem.set(null)
           }}
         />
       </div>

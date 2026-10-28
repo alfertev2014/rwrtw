@@ -3,7 +3,7 @@ import { computed, reIf, reText, state, type TemplateContent } from "rwrtw"
 const Counter = (): TemplateContent => {
   const counter = state<number>(0)
 
-  const counterText = computed(() => `Hello world ${counter.current()} times!`)
+  const counterText = computed(() => `Hello world ${counter.get()} times!`)
 
   return (
     <div>
@@ -21,7 +21,7 @@ const Counter = (): TemplateContent => {
       </button>
       <div>
         {reIf(
-          computed(() => counter.current() % 2 === 0),
+          computed(() => counter.get() % 2 === 0),
           <p>Even!</p>,
           <p>Odd!</p>,
         )}

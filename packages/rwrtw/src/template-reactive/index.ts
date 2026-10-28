@@ -19,7 +19,7 @@ export const reCompute = <T extends ReactiveData>(
   initFunc = effectFunc,
 ): void => {
   if (isSignal(trigger)) {
-    initFunc(trigger.current())
+    initFunc(trigger.get())
     effect(trigger, effectFunc)
   } else {
     initFunc(trigger)
@@ -108,7 +108,7 @@ export const reContent = <T extends ReactiveData>(
   if (isSignal(trigger)) {
     return (renderer) => {
       const dynamicNode = renderer.insertDynamicNode(
-        contentInScope(() => contentFunc(trigger.current())),
+        contentInScope(() => contentFunc(trigger.get())),
       )
       effect(trigger, (value) => {
         dynamicNode.replaceContent(contentInScope(() => contentFunc(value)))
@@ -124,7 +124,7 @@ export const reText = (
 ): RenderableComponent => {
   if (isSignal(value)) {
     return (renderer) => {
-      const t = renderer.insertNode(txt(value.current()))
+      const t = renderer.insertNode(txt(value.get()))
       effect(value, (value) => {
         t.textContent = toText(value)
       })
@@ -151,7 +151,7 @@ export const reList = <T extends ReactiveData>(
   return (renderer) => {
     const list = renderer.insertList(
       listModel
-        .current()
+        .get()
         .map((item) => contentInScope(() => elementComponentFunc(item))),
     )
     const mutations: (() => void)[] = []

@@ -12,7 +12,7 @@ export interface Signal<out T extends ReactiveData = ReactiveData> {
    *
    * @returns current value
    */
-  readonly current: () => T
+  readonly get: () => T
 }
 
 /**
@@ -187,9 +187,9 @@ export class SignalImpl<out T extends ReactiveData = ReactiveData>
   }
 
   /**
-   * @see Signal.current
+   * @see Signal.get
    */
-  current(): T {
+  get(): T {
     if (trackingSubscriber !== null) {
       trackingSubscriber._subscribeTo(this)
     }
@@ -320,12 +320,12 @@ export interface State<
    *
    * @param value New value
    */
-  readonly change: (value: T) => void
+  readonly set: (value: T) => void
 
   /**
    * Modifier of the value with updating function.
    *
-   * Updater function applies to previous value. The new value is passed to State.change. @see State.change
+   * Updater function applies to previous value. The new value is passed to State.set. @see State.set
    *
    * @param updater Updater function.
    */
@@ -346,9 +346,9 @@ export class StateImpl<T extends ReactiveData = ReactiveData>
   }
 
   /**
-   * @see State.change
+   * @see State.set
    */
-  change(value: T): void {
+  set(value: T): void {
     assertIsNotInComputing("Changing state value in a compute function")
 
     if (value !== this._current) {
@@ -363,7 +363,7 @@ export class StateImpl<T extends ReactiveData = ReactiveData>
    * @see State.update
    */
   update(updater: (prev: T) => T): void {
-    this.change(updater(this._current))
+    this.set(updater(this._current))
   }
 }
 
@@ -619,7 +619,7 @@ class ConditionallyComputedImpl<
 
   _callCondition(): T | F {
     const prevCondition = this._conditionValue
-    this._conditionValue = this._condition.current()
+    this._conditionValue = this._condition.get()
     if (this._conditionValue !== prevCondition) {
       if (prevCondition === true) {
         this._trueBranch._unsubscribe(this)
@@ -633,8 +633,8 @@ class ConditionallyComputedImpl<
       }
     }
     return this._conditionValue
-      ? this._trueBranch.current()
-      : this._falseBranch.current()
+      ? this._trueBranch.get()
+      : this._falseBranch.get()
   }
 
   override _callComputeFunc(): void {
@@ -712,7 +712,7 @@ class EffectImpl<T extends ReactiveData = ReactiveData>
   }
 
   _run(): void {
-    const current = this._trigger.current()
+    const current = this._trigger.get()
     if (this._status === DANGLING) {
       this._trigger._subscribe(this)
     } else if (this._status === CHANGED) {
@@ -798,7 +798,7 @@ export const computed = <T extends ReactiveData>(
  */
 export const currentOf = <T extends ReactiveData>(
   value: ReactiveValue<T>,
-): T => (isSignal(value) ? value.current() : value)
+): T => (isSignal(value) ? value.get() : value)
 
 export const staticComputed = <T extends ReactiveData>(
   dependencies: Signal[],

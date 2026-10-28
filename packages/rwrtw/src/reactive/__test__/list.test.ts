@@ -23,7 +23,7 @@ describe("List", () => {
 
       l.registerObserver(observer)
 
-      assert.strictEqual(l.current().length, 0)
+      assert.strictEqual(l.get().length, 0)
     })
 
     test("Non empty list", () => {
@@ -31,10 +31,10 @@ describe("List", () => {
 
       l.registerObserver(observer)
 
-      assert.strictEqual(l.current().length, 3)
-      assert.strictEqual(l.current()[0].current(), "1")
-      assert.strictEqual(l.current()[1].current(), "2")
-      assert.strictEqual(l.current()[2].current(), "3")
+      assert.strictEqual(l.get().length, 3)
+      assert.strictEqual(l.get()[0].get(), "1")
+      assert.strictEqual(l.get()[1].get(), "2")
+      assert.strictEqual(l.get()[2].get(), "3")
     })
   })
 
@@ -44,13 +44,13 @@ describe("List", () => {
       l.registerObserver(observer)
       l.insertItem(0, "bla")
 
-      assert.strictEqual(l.current().length, 1)
-      assert.strictEqual(l.current()[0].current(), "bla")
+      assert.strictEqual(l.get().length, 1)
+      assert.strictEqual(l.get()[0].get(), "bla")
       assert.strictEqual(observer.onInsert.mock.callCount(), 1)
       assert.strictEqual(observer.onInsert.mock.calls[0].arguments[0], 0)
       assert.strictEqual(
         observer.onInsert.mock.calls[0].arguments[1],
-        l.current()[0],
+        l.get()[0],
       )
     })
 
@@ -60,15 +60,15 @@ describe("List", () => {
 
       l.insertItem(0, "bla")
 
-      assert.strictEqual(l.current().length, 3)
-      assert.strictEqual(l.current()[0].current(), "bla")
-      assert.strictEqual(l.current()[1].current(), "1")
-      assert.strictEqual(l.current()[2].current(), "2")
+      assert.strictEqual(l.get().length, 3)
+      assert.strictEqual(l.get()[0].get(), "bla")
+      assert.strictEqual(l.get()[1].get(), "1")
+      assert.strictEqual(l.get()[2].get(), "2")
       assert.strictEqual(observer.onInsert.mock.callCount(), 1)
       assert.strictEqual(observer.onInsert.mock.calls[0].arguments[0], 0)
       assert.strictEqual(
         observer.onInsert.mock.calls[0].arguments[1],
-        l.current()[0],
+        l.get()[0],
       )
     })
 
@@ -78,15 +78,15 @@ describe("List", () => {
 
       l.insertItem(1, "bla")
 
-      assert.strictEqual(l.current().length, 3)
-      assert.strictEqual(l.current()[0].current(), "1")
-      assert.strictEqual(l.current()[1].current(), "bla")
-      assert.strictEqual(l.current()[2].current(), "2")
+      assert.strictEqual(l.get().length, 3)
+      assert.strictEqual(l.get()[0].get(), "1")
+      assert.strictEqual(l.get()[1].get(), "bla")
+      assert.strictEqual(l.get()[2].get(), "2")
       assert.strictEqual(observer.onInsert.mock.callCount(), 1)
       assert.strictEqual(observer.onInsert.mock.calls[0].arguments[0], 1)
       assert.strictEqual(
         observer.onInsert.mock.calls[0].arguments[1],
-        l.current()[1],
+        l.get()[1],
       )
     })
 
@@ -96,15 +96,15 @@ describe("List", () => {
 
       l.insertItem(2, "bla")
 
-      assert.strictEqual(l.current().length, 3)
-      assert.strictEqual(l.current()[0].current(), "1")
-      assert.strictEqual(l.current()[1].current(), "2")
-      assert.strictEqual(l.current()[2].current(), "bla")
+      assert.strictEqual(l.get().length, 3)
+      assert.strictEqual(l.get()[0].get(), "1")
+      assert.strictEqual(l.get()[1].get(), "2")
+      assert.strictEqual(l.get()[2].get(), "bla")
       assert.strictEqual(observer.onInsert.mock.callCount(), 1)
       assert.strictEqual(observer.onInsert.mock.calls[0].arguments[0], 2)
       assert.strictEqual(
         observer.onInsert.mock.calls[0].arguments[1],
-        l.current()[2],
+        l.get()[2],
       )
     })
   })
@@ -115,7 +115,7 @@ describe("List", () => {
       l.registerObserver(observer)
       l.removeItem(0)
 
-      assert.strictEqual(l.current().length, 0)
+      assert.strictEqual(l.get().length, 0)
       assert.strictEqual(observer.onRemove.mock.callCount(), 1)
       assert.strictEqual(observer.onRemove.mock.calls[0].arguments[0], 0)
     })
@@ -126,9 +126,9 @@ describe("List", () => {
 
       l.removeItem(0)
 
-      assert.strictEqual(l.current().length, 2)
-      assert.strictEqual(l.current()[0].current(), "2")
-      assert.strictEqual(l.current()[1].current(), "3")
+      assert.strictEqual(l.get().length, 2)
+      assert.strictEqual(l.get()[0].get(), "2")
+      assert.strictEqual(l.get()[1].get(), "3")
       assert.strictEqual(observer.onRemove.mock.callCount(), 1)
       assert.strictEqual(observer.onRemove.mock.calls[0].arguments[0], 0)
     })
@@ -139,9 +139,9 @@ describe("List", () => {
 
       l.removeItem(1)
 
-      assert.strictEqual(l.current().length, 2)
-      assert.strictEqual(l.current()[0].current(), "1")
-      assert.strictEqual(l.current()[1].current(), "3")
+      assert.strictEqual(l.get().length, 2)
+      assert.strictEqual(l.get()[0].get(), "1")
+      assert.strictEqual(l.get()[1].get(), "3")
       assert.strictEqual(observer.onRemove.mock.callCount(), 1)
       assert.strictEqual(observer.onRemove.mock.calls[0].arguments[0], 1)
     })
@@ -152,9 +152,9 @@ describe("List", () => {
 
       l.removeItem(2)
 
-      assert.strictEqual(l.current().length, 2)
-      assert.strictEqual(l.current()[0].current(), "1")
-      assert.strictEqual(l.current()[1].current(), "2")
+      assert.strictEqual(l.get().length, 2)
+      assert.strictEqual(l.get()[0].get(), "1")
+      assert.strictEqual(l.get()[1].get(), "2")
       assert.strictEqual(observer.onRemove.mock.callCount(), 1)
       assert.strictEqual(observer.onRemove.mock.calls[0].arguments[0], 2)
     })
@@ -166,8 +166,8 @@ describe("List", () => {
       l.registerObserver(observer)
       l.moveItem(0, 0)
 
-      assert.strictEqual(l.current().length, 1)
-      assert.strictEqual(l.current()[0].current(), "bla")
+      assert.strictEqual(l.get().length, 1)
+      assert.strictEqual(l.get()[0].get(), "bla")
       assert.strictEqual(observer.onMove.mock.callCount(), 0)
     })
 
@@ -177,10 +177,10 @@ describe("List", () => {
 
       l.moveItem(0, 1)
 
-      assert.strictEqual(l.current().length, 3)
-      assert.strictEqual(l.current()[0].current(), "2")
-      assert.strictEqual(l.current()[1].current(), "1")
-      assert.strictEqual(l.current()[2].current(), "3")
+      assert.strictEqual(l.get().length, 3)
+      assert.strictEqual(l.get()[0].get(), "2")
+      assert.strictEqual(l.get()[1].get(), "1")
+      assert.strictEqual(l.get()[2].get(), "3")
       assert.strictEqual(observer.onMove.mock.callCount(), 1)
       assert.strictEqual(observer.onMove.mock.calls[0].arguments[0], 0)
       assert.strictEqual(observer.onMove.mock.calls[0].arguments[1], 1)
@@ -192,10 +192,10 @@ describe("List", () => {
 
       l.moveItem(0, 2)
 
-      assert.strictEqual(l.current().length, 3)
-      assert.strictEqual(l.current()[0].current(), "2")
-      assert.strictEqual(l.current()[1].current(), "3")
-      assert.strictEqual(l.current()[2].current(), "1")
+      assert.strictEqual(l.get().length, 3)
+      assert.strictEqual(l.get()[0].get(), "2")
+      assert.strictEqual(l.get()[1].get(), "3")
+      assert.strictEqual(l.get()[2].get(), "1")
       assert.strictEqual(observer.onMove.mock.callCount(), 1)
       assert.strictEqual(observer.onMove.mock.calls[0].arguments[0], 0)
       assert.strictEqual(observer.onMove.mock.calls[0].arguments[1], 2)
@@ -207,10 +207,10 @@ describe("List", () => {
 
       l.moveItem(2, 1)
 
-      assert.strictEqual(l.current().length, 3)
-      assert.strictEqual(l.current()[0].current(), "1")
-      assert.strictEqual(l.current()[1].current(), "3")
-      assert.strictEqual(l.current()[2].current(), "2")
+      assert.strictEqual(l.get().length, 3)
+      assert.strictEqual(l.get()[0].get(), "1")
+      assert.strictEqual(l.get()[1].get(), "3")
+      assert.strictEqual(l.get()[2].get(), "2")
       assert.strictEqual(observer.onMove.mock.callCount(), 1)
       assert.strictEqual(observer.onMove.mock.calls[0].arguments[0], 2)
       assert.strictEqual(observer.onMove.mock.calls[0].arguments[1], 1)
@@ -222,10 +222,10 @@ describe("List", () => {
 
       l.moveItem(2, 0)
 
-      assert.strictEqual(l.current().length, 3)
-      assert.strictEqual(l.current()[0].current(), "3")
-      assert.strictEqual(l.current()[1].current(), "1")
-      assert.strictEqual(l.current()[2].current(), "2")
+      assert.strictEqual(l.get().length, 3)
+      assert.strictEqual(l.get()[0].get(), "3")
+      assert.strictEqual(l.get()[1].get(), "1")
+      assert.strictEqual(l.get()[2].get(), "2")
       assert.strictEqual(observer.onMove.mock.callCount(), 1)
       assert.strictEqual(observer.onMove.mock.calls[0].arguments[0], 2)
       assert.strictEqual(observer.onMove.mock.calls[0].arguments[1], 0)
@@ -240,7 +240,7 @@ describe("List", () => {
 
       l.change([])
 
-      assert.strictEqual(l.current().length, 0)
+      assert.strictEqual(l.get().length, 0)
     })
 
     test("Clear with empty list", () => {
@@ -250,7 +250,7 @@ describe("List", () => {
 
       l.change([])
 
-      assert.strictEqual(l.current().length, 0)
+      assert.strictEqual(l.get().length, 0)
       assert.strictEqual(observer.onRemove.mock.callCount(), 3)
       assert.strictEqual(observer.onRemove.mock.calls[0].arguments[0], 0)
     })
@@ -262,26 +262,26 @@ describe("List", () => {
 
       l.change(["1", "2", "3"])
 
-      assert.strictEqual(l.current().length, 3)
-      assert.strictEqual(l.current()[0].current(), "1")
-      assert.strictEqual(l.current()[1].current(), "2")
-      assert.strictEqual(l.current()[2].current(), "3")
+      assert.strictEqual(l.get().length, 3)
+      assert.strictEqual(l.get()[0].get(), "1")
+      assert.strictEqual(l.get()[1].get(), "2")
+      assert.strictEqual(l.get()[2].get(), "3")
 
       assert.strictEqual(observer.onInsert.mock.callCount(), 3)
       assert.strictEqual(observer.onInsert.mock.calls[0].arguments[0], 0)
       assert.strictEqual(
         observer.onInsert.mock.calls[0].arguments[1],
-        l.current()[0],
+        l.get()[0],
       )
       assert.strictEqual(observer.onInsert.mock.calls[1].arguments[0], 1)
       assert.strictEqual(
         observer.onInsert.mock.calls[1].arguments[1],
-        l.current()[1],
+        l.get()[1],
       )
       assert.strictEqual(observer.onInsert.mock.calls[2].arguments[0], 2)
       assert.strictEqual(
         observer.onInsert.mock.calls[2].arguments[1],
-        l.current()[2],
+        l.get()[2],
       )
     })
 
@@ -292,10 +292,10 @@ describe("List", () => {
 
       l.change(["1", "2", "3"])
 
-      assert.strictEqual(l.current().length, 3)
-      assert.strictEqual(l.current()[0].current(), "1")
-      assert.strictEqual(l.current()[1].current(), "2")
-      assert.strictEqual(l.current()[2].current(), "3")
+      assert.strictEqual(l.get().length, 3)
+      assert.strictEqual(l.get()[0].get(), "1")
+      assert.strictEqual(l.get()[1].get(), "2")
+      assert.strictEqual(l.get()[2].get(), "3")
     })
 
     test("Apply list with swapped adjacent items", () => {
@@ -305,10 +305,10 @@ describe("List", () => {
 
       l.change(["2", "1", "3"])
 
-      assert.strictEqual(l.current().length, 3)
-      assert.strictEqual(l.current()[0].current(), "2")
-      assert.strictEqual(l.current()[1].current(), "1")
-      assert.strictEqual(l.current()[2].current(), "3")
+      assert.strictEqual(l.get().length, 3)
+      assert.strictEqual(l.get()[0].get(), "2")
+      assert.strictEqual(l.get()[1].get(), "1")
+      assert.strictEqual(l.get()[2].get(), "3")
 
       assert.strictEqual(observer.onMove.mock.callCount(), 1)
       assert.strictEqual(observer.onMove.mock.calls[0].arguments[0], 1)
@@ -322,10 +322,10 @@ describe("List", () => {
 
       l.change(["3", "1", "2"])
 
-      assert.strictEqual(l.current().length, 3)
-      assert.strictEqual(l.current()[0].current(), "3")
-      assert.strictEqual(l.current()[1].current(), "1")
-      assert.strictEqual(l.current()[2].current(), "2")
+      assert.strictEqual(l.get().length, 3)
+      assert.strictEqual(l.get()[0].get(), "3")
+      assert.strictEqual(l.get()[1].get(), "1")
+      assert.strictEqual(l.get()[2].get(), "2")
 
       assert.strictEqual(observer.onMove.mock.callCount(), 1)
       assert.strictEqual(observer.onMove.mock.calls[0].arguments[0], 2)

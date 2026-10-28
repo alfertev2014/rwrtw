@@ -51,7 +51,7 @@ export interface ListState<
   readonly removeItem: (i: number) => void
   readonly moveItem: (from: number, to: number) => void
   readonly insertItem: (i: number, item: T) => void
-  readonly current: () => readonly State<T>[]
+  readonly get: () => readonly State<T>[]
   readonly change: (newData: readonly T[]) => void
 }
 
@@ -61,8 +61,8 @@ export class ListStateImpl<T extends ReactiveData = ReactiveData>
 {
   override readonly _current: State<T>[]
 
-  override current(): readonly State<T>[] {
-    return super.current() as readonly State<T>[]
+  override get(): readonly State<T>[] {
+    return super.get() as readonly State<T>[]
   }
 
   constructor(initialData: readonly T[]) {
@@ -73,7 +73,7 @@ export class ListStateImpl<T extends ReactiveData = ReactiveData>
   _change(newData: readonly T[]): void {
     for (let i = 0; i < this._current.length;) {
       const element = this._current[i]
-      if (newData.findIndex((el) => el === element.current()) < 0) {
+      if (newData.findIndex((el) => el === element.get()) < 0) {
         this._removeItem(i)
       } else {
         ++i
@@ -83,13 +83,13 @@ export class ListStateImpl<T extends ReactiveData = ReactiveData>
     for (let i = 0; i < newData.length; ++i) {
       const element = newData[i]
       const elementIndex = this._current.findIndex(
-        (el) => el.current() === element,
+        (el) => el.get() === element,
       )
       if (elementIndex >= 0) {
         if (elementIndex !== i) {
           this._moveItem(elementIndex, i)
         }
-        this._current[i].change(element)
+        this._current[i].set(element)
       } else {
         this._insertItem(i, element)
       }
