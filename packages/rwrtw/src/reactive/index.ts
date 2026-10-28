@@ -1,10 +1,10 @@
-export { type ListObserver, type ListSource, listSource } from "./list.js"
+export { type ListObserver, type ListState, listState } from "./list.js"
 export {
   type Signal,
-  type Source,
+  type State,
   type Computed,
   type Effect,
-  source,
+  state,
   effect,
   computed,
   batch,

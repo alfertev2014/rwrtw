@@ -1,6 +1,6 @@
 import assert from "node:assert"
 import test, { beforeEach, describe, mock, type Mock } from "node:test"
-import { listSource, type ListObserver } from "../list.js"
+import { listState, type ListObserver } from "../list.js"
 
 describe("List", () => {
   let observer: {
@@ -19,7 +19,7 @@ describe("List", () => {
 
   describe("Initialize", () => {
     test("Empty list", () => {
-      const l = listSource([])
+      const l = listState([])
 
       l.registerObserver(observer)
 
@@ -27,7 +27,7 @@ describe("List", () => {
     })
 
     test("Non empty list", () => {
-      const l = listSource<string>(["1", "2", "3"])
+      const l = listState<string>(["1", "2", "3"])
 
       l.registerObserver(observer)
 
@@ -40,7 +40,7 @@ describe("List", () => {
 
   describe("Insert", () => {
     test("Insert item into empty list", () => {
-      const l = listSource<string>([])
+      const l = listState<string>([])
       l.registerObserver(observer)
       l.insertItem(0, "bla")
 
@@ -55,7 +55,7 @@ describe("List", () => {
     })
 
     test("Insert item at index 0", () => {
-      const l = listSource<string>(["1", "2"])
+      const l = listState<string>(["1", "2"])
       l.registerObserver(observer)
 
       l.insertItem(0, "bla")
@@ -73,7 +73,7 @@ describe("List", () => {
     })
 
     test("Insert item into the middle", () => {
-      const l = listSource<string>(["1", "2"])
+      const l = listState<string>(["1", "2"])
       l.registerObserver(observer)
 
       l.insertItem(1, "bla")
@@ -91,7 +91,7 @@ describe("List", () => {
     })
 
     test("Insert item at the end", () => {
-      const l = listSource<string>(["1", "2"])
+      const l = listState<string>(["1", "2"])
       l.registerObserver(observer)
 
       l.insertItem(2, "bla")
@@ -111,7 +111,7 @@ describe("List", () => {
 
   describe("Remove", () => {
     test("Remove the only element", () => {
-      const l = listSource<string>(["bla"])
+      const l = listState<string>(["bla"])
       l.registerObserver(observer)
       l.removeItem(0)
 
@@ -121,7 +121,7 @@ describe("List", () => {
     })
 
     test("Remove item at index 0", () => {
-      const l = listSource<string>(["1", "2", "3"])
+      const l = listState<string>(["1", "2", "3"])
       l.registerObserver(observer)
 
       l.removeItem(0)
@@ -134,7 +134,7 @@ describe("List", () => {
     })
 
     test("Remove item into the middle", () => {
-      const l = listSource<string>(["1", "2", "3"])
+      const l = listState<string>(["1", "2", "3"])
       l.registerObserver(observer)
 
       l.removeItem(1)
@@ -147,7 +147,7 @@ describe("List", () => {
     })
 
     test("Remove item at the end", () => {
-      const l = listSource<string>(["1", "2", "3"])
+      const l = listState<string>(["1", "2", "3"])
       l.registerObserver(observer)
 
       l.removeItem(2)
@@ -162,7 +162,7 @@ describe("List", () => {
 
   describe("Move item", () => {
     test("Move to the same position", () => {
-      const l = listSource<string>(["bla"])
+      const l = listState<string>(["bla"])
       l.registerObserver(observer)
       l.moveItem(0, 0)
 
@@ -172,7 +172,7 @@ describe("List", () => {
     })
 
     test("Move item to one position to the end", () => {
-      const l = listSource<string>(["1", "2", "3"])
+      const l = listState<string>(["1", "2", "3"])
       l.registerObserver(observer)
 
       l.moveItem(0, 1)
@@ -187,7 +187,7 @@ describe("List", () => {
     })
 
     test("Move item to many positions to the end", () => {
-      const l = listSource<string>(["1", "2", "3"])
+      const l = listState<string>(["1", "2", "3"])
       l.registerObserver(observer)
 
       l.moveItem(0, 2)
@@ -202,7 +202,7 @@ describe("List", () => {
     })
 
     test("Move item to one position to the beginning", () => {
-      const l = listSource<string>(["1", "2", "3"])
+      const l = listState<string>(["1", "2", "3"])
       l.registerObserver(observer)
 
       l.moveItem(2, 1)
@@ -217,7 +217,7 @@ describe("List", () => {
     })
 
     test("Move item to many positions to the beginning", () => {
-      const l = listSource<string>(["1", "2", "3"])
+      const l = listState<string>(["1", "2", "3"])
       l.registerObserver(observer)
 
       l.moveItem(2, 0)
@@ -234,7 +234,7 @@ describe("List", () => {
 
   describe("Apply new data", () => {
     test("Apply empty list", () => {
-      const l = listSource([])
+      const l = listState([])
 
       l.registerObserver(observer)
 
@@ -244,7 +244,7 @@ describe("List", () => {
     })
 
     test("Clear with empty list", () => {
-      const l = listSource(["1", "2", "3"])
+      const l = listState(["1", "2", "3"])
 
       l.registerObserver(observer)
 
@@ -256,7 +256,7 @@ describe("List", () => {
     })
 
     test("Apply non empty list", () => {
-      const l = listSource<string>([])
+      const l = listState<string>([])
 
       l.registerObserver(observer)
 
@@ -286,7 +286,7 @@ describe("List", () => {
     })
 
     test("Apply the same list", () => {
-      const l = listSource<string>(["1", "2", "3"])
+      const l = listState<string>(["1", "2", "3"])
 
       l.registerObserver(observer)
 
@@ -299,7 +299,7 @@ describe("List", () => {
     })
 
     test("Apply list with swapped adjacent items", () => {
-      const l = listSource<string>(["1", "2", "3"])
+      const l = listState<string>(["1", "2", "3"])
 
       l.registerObserver(observer)
 
@@ -316,7 +316,7 @@ describe("List", () => {
     })
 
     test("Apply list with moved item with shift", () => {
-      const l = listSource<string>(["1", "2", "3"])
+      const l = listState<string>(["1", "2", "3"])
 
       l.registerObserver(observer)
 

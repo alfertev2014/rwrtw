@@ -1,6 +1,6 @@
 import type { ScalarData } from "../dom/types.js"
-import type { ListSignal, ListSource } from "./list.js"
-import type { Signal, Source } from "./signal.js"
+import type { ListSignal, ListState } from "./list.js"
+import type { Signal, State } from "./signal.js"
 
 export type ReactiveSignal = Signal | ListSignal
 
@@ -14,9 +14,9 @@ export type ReactiveData =
 export type ReadonlyReactiveOf<Data extends ReactiveData | ReactiveSignal> =
   Data extends ScalarData
     ? Data
-    : Data extends Source<infer Content extends ReactiveData>
+    : Data extends State<infer Content extends ReactiveData>
       ? Signal<ReadonlyReactiveOf<Content>>
-      : Data extends ListSource<infer Content extends ReactiveData>
+      : Data extends ListState<infer Content extends ReactiveData>
         ? ListSignal<ReadonlyReactiveOf<Content>>
         : Data extends {
               readonly [key: string | number]: infer Content extends

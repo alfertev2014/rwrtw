@@ -305,15 +305,15 @@ interface Observer extends Cleanup {
 }
 
 /**
- * Reactive mutable source node for scalar value types
+ * Reactive mutable state node for scalar value types
  */
-export interface Source<
+export interface State<
   T extends ReactiveData = ReactiveData,
 > extends Signal<T> {
   /**
    * Modifier of the value.
    *
-   * Store new value into the source.
+   * Store new value into the state.
    * Checks if value has changed.
    * Mark as changed and propagate changed sign to subscribers.
    * If called not in a batch, run effects.
@@ -325,7 +325,7 @@ export interface Source<
   /**
    * Modifier of the value with updating function.
    *
-   * Updater function applies to previous value. The new value is passed to Source.change. @see Source.change
+   * Updater function applies to previous value. The new value is passed to State.change. @see State.change
    *
    * @param updater Updater function.
    */
@@ -333,11 +333,11 @@ export interface Source<
 }
 
 /**
- * @see Source
+ * @see State
  */
-export class SourceImpl<T extends ReactiveData = ReactiveData>
+export class StateImpl<T extends ReactiveData = ReactiveData>
   extends SignalImpl<T>
-  implements Source<T>
+  implements State<T>
 {
   override _current: T
   constructor(initValue: T) {
@@ -346,10 +346,10 @@ export class SourceImpl<T extends ReactiveData = ReactiveData>
   }
 
   /**
-   * @see Source.change
+   * @see State.change
    */
   change(value: T): void {
-    assertIsNotInComputing("Changing source value in a compute function")
+    assertIsNotInComputing("Changing state value in a compute function")
 
     if (value !== this._current) {
       batch(() => {
@@ -360,7 +360,7 @@ export class SourceImpl<T extends ReactiveData = ReactiveData>
   }
 
   /**
-   * @see Source.update
+   * @see State.update
    */
   update(updater: (prev: T) => T): void {
     this.change(updater(this._current))
@@ -777,10 +777,10 @@ const runScopes = (): void => {
   }
 }
 
-export const source = <T extends ReactiveData>(initValue: T): Source<T> => {
-  assertIsNotInComputing("Creating source in compute function")
+export const state = <T extends ReactiveData>(initValue: T): State<T> => {
+  assertIsNotInComputing("Creating state in compute function")
 
-  return new SourceImpl<T>(initValue)
+  return new StateImpl<T>(initValue)
 }
 
 export const computed = <T extends ReactiveData>(
@@ -856,7 +856,7 @@ export const effect = <T extends ReactiveData>(
  * Do some actions in batch and defer all effects to the end of batch.
  * If batch is called inside other batch, the effects will be deferred to the end of the root batch.
  *
- * @param func Function with mutations of source values in graph.
+ * @param func Function with mutations of state values in graph.
  * @returns The value func will return.
  */
 export const batch = <T>(func: () => T): T => {

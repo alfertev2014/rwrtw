@@ -1,9 +1,9 @@
-import { computed, reContent, source, type TemplateContent } from "rwrtw"
+import { computed, reContent, state, type TemplateContent } from "rwrtw"
 import Counter from "./Counter.js"
 import List from "./List/index.js"
 
 const WithJSX = (): TemplateContent => {
-  const selectedApp = source<string>("Counter")
+  const selectedApp = state<string>("Counter")
 
   const handleClick = (selectedValue: string) => () => {
     selectedApp.change(selectedValue)

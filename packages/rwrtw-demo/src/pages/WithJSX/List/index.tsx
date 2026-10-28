@@ -1,21 +1,21 @@
 import {
   batch,
   computed,
-  type ListSource,
-  listSource,
+  type ListState,
+  listState,
   type Signal,
   reContent,
   reEffect,
   reList,
   reText,
-  type Source,
-  source,
+  type State,
+  state,
   type TemplateContent,
 } from "rwrtw"
 
 import "./style.css"
 
-const TextInput = ({ value }: { value: Source<string> }): TemplateContent => {
+const TextInput = ({ value }: { value: State<string> }): TemplateContent => {
   return (
     <input
       type="text"
@@ -27,7 +27,7 @@ const TextInput = ({ value }: { value: Source<string> }): TemplateContent => {
   )
 }
 
-const Checkbox = ({ value }: { value: Source<boolean> }): TemplateContent => {
+const Checkbox = ({ value }: { value: State<boolean> }): TemplateContent => {
   return (
     <input
       type="checkbox"
@@ -41,9 +41,9 @@ const Checkbox = ({ value }: { value: Source<boolean> }): TemplateContent => {
 
 type Item = {
   readonly id: number
-  readonly checked: Source<boolean>
-  readonly text: Source<string>
-  readonly children: ListSource<Item>
+  readonly checked: State<boolean>
+  readonly text: State<string>
+  readonly children: ListState<Item>
 }
 
 type ItemFormValues = {
@@ -65,8 +65,8 @@ const ItemForm = ({
   onCancel,
 }: ItemFormProps): TemplateContent => {
   const itemForm = {
-    text: source<string>(initItem.current()?.text.current() ?? ""),
-    checked: source<boolean>(initItem.current()?.checked.current() ?? false),
+    text: state<string>(initItem.current()?.text.current() ?? ""),
+    checked: state<boolean>(initItem.current()?.checked.current() ?? false),
   }
 
   const handleClick = () => {
@@ -104,9 +104,9 @@ const ItemForm = ({
 const ListContent = ({
   items,
 }: {
-  items: ListSource<Item>
+  items: ListState<Item>
 }): TemplateContent => {
-  const selectedItem = source<Item | null>(null)
+  const selectedItem = state<Item | null>(null)
   const count = computed(() => items.current().length)
   const checkedCount = computed(
     () =>
@@ -214,9 +214,9 @@ const ListContent = ({
             } else {
               items.insertItem(items.current().length, {
                 id: selectedItem.current()?.id ?? ++idGenerator,
-                checked: source(newItem.checked),
-                text: source(newItem.text),
-                children: listSource<Item>([]),
+                checked: state(newItem.checked),
+                text: state(newItem.text),
+                children: listState<Item>([]),
               })
             }
           }}
@@ -230,12 +230,12 @@ const ListContent = ({
 }
 
 const List = (): TemplateContent => {
-  const items = listSource<Item>(
+  const items = listState<Item>(
     ["One", "Two", "Three", "Four", "Five", "Six", "Seven"].map((text) => ({
       id: ++idGenerator,
-      text: source<string>(text),
-      checked: source<boolean>(false),
-      children: listSource<Item>([]),
+      text: state<string>(text),
+      checked: state<boolean>(false),
+      children: listState<Item>([]),
     })),
   )
 

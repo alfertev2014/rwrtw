@@ -1,19 +1,19 @@
 import assert from "node:assert"
 import test, { describe, mock } from "node:test"
-import { computed, effect, source, batch } from "../signal.js"
+import { computed, effect, state, batch } from "../signal.js"
 import type { ReactiveData } from "../types.js"
 
 describe("Signal", () => {
-  describe("Source", () => {
-    test("Creating source with value should store this value", () => {
+  describe("State", () => {
+    test("Creating state with value should store this value", () => {
       const value = "s"
-      const s = source<string>(value)
+      const s = state<string>(value)
 
       assert.strictEqual(s.current(), value)
     })
 
-    test("Changing source value should change stored value", () => {
-      const s = source<string>("s")
+    test("Changing state value should change stored value", () => {
+      const s = state<string>("s")
 
       const value = "sChanged"
 
@@ -84,18 +84,18 @@ describe("Signal", () => {
   })
 
   describe("Dependencies", () => {
-    describe("One computed depends on one source", () => {
+    describe("One computed depends on one state", () => {
       // s <-- c
 
       test("should return computed value", () => {
-        const s = source<string>("s")
+        const s = state<string>("s")
         const c = computed(() => "c-" + s.current())
 
         assert.strictEqual(c.current(), "c-s")
       })
 
-      test("should recalculate value if source changed", () => {
-        const s = source<string>("s")
+      test("should recalculate value if state changed", () => {
+        const s = state<string>("s")
         const c = computed(() => "c-" + s.current())
 
         c.current()
@@ -104,8 +104,8 @@ describe("Signal", () => {
         assert.strictEqual(c.current(), "c-sChanged")
       })
 
-      test("Computed function should not be called after source changed", () => {
-        const s = source<string>("s")
+      test("Computed function should not be called after state changed", () => {
+        const s = state<string>("s")
         const computedFunc = mock.fn(() => "c-" + s.current())
         const c = computed(computedFunc)
 
@@ -115,7 +115,7 @@ describe("Signal", () => {
       })
 
       test("Computed function should be called when requesting current value", () => {
-        const s = source<string>("s")
+        const s = state<string>("s")
         const computedFunc = mock.fn(() => "c-" + s.current())
         const c = computed(computedFunc)
 
@@ -126,10 +126,10 @@ describe("Signal", () => {
         assert.strictEqual(computedFunc.mock.callCount(), 1)
       })
 
-      test("Computed function should be called only once if source value changed to the same value", (t) => {
+      test("Computed function should be called only once if state value changed to the same value", (t) => {
         for (const callCount of [1, 2, 10]) {
           t.test(() => {
-            const s = source<string>("s")
+            const s = state<string>("s")
             const computedFunc = mock.fn(() => "c-" + s.current())
             const c = computed(computedFunc)
             c.current()
@@ -144,10 +144,10 @@ describe("Signal", () => {
         }
       })
 
-      test("Computed function should be called every time when source value changed to a different value", (t) => {
+      test("Computed function should be called every time when state value changed to a different value", (t) => {
         for (const callCount of [1, 2, 10]) {
           t.test(() => {
-            const s = source<string>("s")
+            const s = state<string>("s")
             const computedFunc = mock.fn(() => "c-" + s.current())
             const c = computed(computedFunc)
             c.current()
@@ -162,8 +162,8 @@ describe("Signal", () => {
         }
       })
 
-      test("Computed function should be called when requesting current value even if source is used multiple times", () => {
-        const s = source<string>("s")
+      test("Computed function should be called when requesting current value even if state is used multiple times", () => {
+        const s = state<string>("s")
         const computedFunc = mock.fn(() => "c-" + s.current() + s.current())
         const c = computed(computedFunc)
 
@@ -175,12 +175,12 @@ describe("Signal", () => {
       })
     })
 
-    describe("Two computed depends on one source", () => {
+    describe("Two computed depends on one state", () => {
       //  s <-- c1
       //   \-- c2
 
-      test("should recalculate if source changed", () => {
-        const s = source<string>("s")
+      test("should recalculate if state changed", () => {
+        const s = state<string>("s")
         const c1 = computed(() => "c1-" + s.current())
         const c2 = computed(() => "c2-" + s.current())
 
@@ -193,7 +193,7 @@ describe("Signal", () => {
       })
 
       test("Computed function should be called only if computed value called", () => {
-        const s = source<string>("s")
+        const s = state<string>("s")
         const computedFunc1 = mock.fn(() => "c1-" + s.current())
         const c1 = computed(computedFunc1)
         const computedFunc2 = mock.fn(() => "c2-" + s.current())
@@ -207,11 +207,11 @@ describe("Signal", () => {
       })
     })
 
-    describe("Transitive dependency with one source and two computed", () => {
+    describe("Transitive dependency with one state and two computed", () => {
       // s <-- c1 <-- c2
 
       test("computed should return values returned by its computed functions", () => {
-        const s = source<string>("s")
+        const s = state<string>("s")
         const c1 = computed(() => "c1-" + s.current())
         const c2 = computed(() => "c2-" + c1.current())
 
@@ -219,8 +219,8 @@ describe("Signal", () => {
         assert.strictEqual(c2.current(), "c2-c1-s")
       })
 
-      test("should recalculate transient dependency if source changed", () => {
-        const s = source<string>("s")
+      test("should recalculate transient dependency if state changed", () => {
+        const s = state<string>("s")
         const c1 = computed(() => "c1-" + s.current())
         const c2 = computed(() => "c2-" + c1.current())
 
@@ -231,8 +231,8 @@ describe("Signal", () => {
         assert.strictEqual(c2.current(), "c2-c1-sChanged")
       })
 
-      test("should recalculate final computed if source changed", () => {
-        const s = source<string>("s")
+      test("should recalculate final computed if state changed", () => {
+        const s = state<string>("s")
         const c1 = computed(() => "c1-" + s.current())
         const c2 = computed(() => "c2-" + c1.current())
 
@@ -245,7 +245,7 @@ describe("Signal", () => {
       })
 
       test("Computed function should be called only if computed value called", () => {
-        const s = source<string>("s")
+        const s = state<string>("s")
         const computedFunc1 = mock.fn(() => "c1-" + s.current())
         const c1 = computed(computedFunc1)
         const computedFunc2 = mock.fn(() => "c2-" + c1.current())
@@ -263,10 +263,10 @@ describe("Signal", () => {
         assert.strictEqual(computedFunc2.mock.callCount(), 1)
       })
 
-      test("Computed function should be called only once after source change", (t) => {
+      test("Computed function should be called only once after state change", (t) => {
         for (const callCount of [1, 2, 10]) {
           t.test(() => {
-            const s = source<string>("s")
+            const s = state<string>("s")
             const computedFunc1 = mock.fn(() => "c1-" + s.current())
             const c1 = computed(computedFunc1)
             const computedFunc2 = mock.fn(() => "c2-" + c1.current())
@@ -285,12 +285,12 @@ describe("Signal", () => {
       })
     })
 
-    describe("One source, two transient computed and one dependent computed", () => {
+    describe("One state, two transient computed and one dependent computed", () => {
       // s <-- c1 <-- c3
       //  \-- c2 <---/
 
       test("computed should return values returned by its computed functions", () => {
-        const s = source<string>("s")
+        const s = state<string>("s")
         const c1 = computed(() => "c1-" + s.current())
         const c2 = computed(() => "c2-" + s.current())
         const c3 = computed(() => `c3 ${c1.current()} ${c2.current()}`)
@@ -300,8 +300,8 @@ describe("Signal", () => {
         assert.strictEqual(c3.current(), "c3 c1-s c2-s")
       })
 
-      test("should recalculate if source changed", () => {
-        const s = source<string>("s")
+      test("should recalculate if state changed", () => {
+        const s = state<string>("s")
         const c1 = computed(() => "c1-" + s.current())
         const c2 = computed(() => "c2-" + s.current())
         const c3 = computed(() => `c3 ${c1.current()} ${c2.current()}`)
@@ -315,7 +315,7 @@ describe("Signal", () => {
       })
 
       test("Computed function should be called only if computed value called", () => {
-        const s = source<string>("s")
+        const s = state<string>("s")
         const computedFunc1 = mock.fn(() => "c1-" + s.current())
         const c1 = computed(computedFunc1)
         const computedFunc2 = mock.fn(() => "c2-" + s.current())
@@ -339,10 +339,10 @@ describe("Signal", () => {
         assert.strictEqual(computedFunc3.mock.callCount(), 1)
       })
 
-      test("Computed function should be called only once after source change", (t) => {
+      test("Computed function should be called only once after state change", (t) => {
         for (const callCount of [1, 2, 10]) {
           t.test(() => {
-            const s = source<string>("s")
+            const s = state<string>("s")
             const computedFunc1 = mock.fn(() => "c1-" + s.current())
             const c1 = computed(computedFunc1)
             const computedFunc2 = mock.fn(() => "c2-" + s.current())
@@ -366,12 +366,12 @@ describe("Signal", () => {
       })
     })
 
-    describe("One source, two dependent computed and third computed conditionally depends on second computed if first computed is falsy", () => {
+    describe("One state, two dependent computed and third computed conditionally depends on second computed if first computed is falsy", () => {
       // s <-- c1 <---------- c3
       //  \-- c2 (if c1) <---/
 
       test("in true case computed should return values returned by its computed functions", () => {
-        const s = source<string>("s")
+        const s = state<string>("s")
         const c1 = computed(() => "c1-" + s.current())
         const c2 = computed(() =>
           s.current() !== "" ? "c2-" + s.current() : "",
@@ -386,7 +386,7 @@ describe("Signal", () => {
       })
 
       test("in false case computed should return values returned by its computed functions", () => {
-        const s = source<string>("")
+        const s = state<string>("")
         const c1 = computed(() =>
           s.current() !== "" ? "c1-" + s.current() : "",
         )
@@ -400,8 +400,8 @@ describe("Signal", () => {
         assert.strictEqual(c3.current(), "c3 false")
       })
 
-      test("should recalculate if source changed", () => {
-        const s = source<string>("s")
+      test("should recalculate if state changed", () => {
+        const s = state<string>("s")
         const c1 = computed(() =>
           s.current() !== "" ? "c1-" + s.current() : "",
         )
@@ -419,7 +419,7 @@ describe("Signal", () => {
       })
 
       test("in true case computed function should be called only if computed value called", () => {
-        const s = source<string>("s")
+        const s = state<string>("s")
         const computedFunc1 = mock.fn(() =>
           s.current() !== "" ? "c1-" + s.current() : "",
         )
@@ -446,7 +446,7 @@ describe("Signal", () => {
       })
 
       test("in false case computed function should be called only if computed value called", () => {
-        const s = source<string>("s")
+        const s = state<string>("s")
         const computedFunc1 = mock.fn(() =>
           s.current() !== "" ? "c1-" + s.current() : "",
         )
@@ -475,7 +475,7 @@ describe("Signal", () => {
       test("in false case after true case computed should unsubscribe from non needed dependency and and its compute function should not be called any more", (t) => {
         for (const callCount of [1, 2, 10]) {
           t.test(() => {
-            const s = source<string>("s")
+            const s = state<string>("s")
             const computedFunc1 = mock.fn(() =>
               s.current() !== "" ? "c1-" + s.current() : "",
             )
@@ -509,11 +509,11 @@ describe("Signal", () => {
   })
 
   describe("Effects", () => {
-    describe("One effect depends on one source", () => {
+    describe("One effect depends on one state", () => {
       // s <-- e
 
       test("Effect function should not be called after creation", () => {
-        const s = source<string>("s")
+        const s = state<string>("s")
         const effectFunc = mock.fn()
         const e = effect(s, effectFunc)
 
@@ -523,7 +523,7 @@ describe("Signal", () => {
       test("Effect function should not be called after batch end", () => {
         const effectFunc = mock.fn()
         batch(() => {
-          const s = source<string>("s")
+          const s = state<string>("s")
           const e = effect(s, effectFunc)
 
           assert.strictEqual(effectFunc.mock.callCount(), 0)
@@ -534,7 +534,7 @@ describe("Signal", () => {
       test("Effect function should not be called for unsubscribed effect after batch end", () => {
         const effectFunc = mock.fn()
         batch(() => {
-          const s = source<string>("s")
+          const s = state<string>("s")
           const e = effect(s, effectFunc)
 
           assert.strictEqual(effectFunc.mock.callCount(), 0)
@@ -544,10 +544,10 @@ describe("Signal", () => {
         assert.strictEqual(effectFunc.mock.callCount(), 0)
       })
 
-      test("Effect function should be called after every source change", (t) => {
+      test("Effect function should be called after every state change", (t) => {
         for (const callCount of [1, 2, 10]) {
           t.test(() => {
-            const s = source<string>("s")
+            const s = state<string>("s")
             const effectFunc = mock.fn()
             const e = effect(s, effectFunc)
 
@@ -560,10 +560,10 @@ describe("Signal", () => {
         }
       })
 
-      test("Effect function should be called after batch end with source changes", (t) => {
+      test("Effect function should be called after batch end with state changes", (t) => {
         for (const callCount of [1, 2, 10]) {
           t.test(() => {
-            const s = source<string>("s")
+            const s = state<string>("s")
             const effectFunc = mock.fn()
 
             const e = effect(s, effectFunc)
@@ -582,7 +582,7 @@ describe("Signal", () => {
       test("Effect function should not be called after unsubscribe", (t) => {
         for (const callCount of [1, 2, 10]) {
           t.test(() => {
-            const s = source<string>("s")
+            const s = state<string>("s")
             const effectFunc = mock.fn()
             const e = effect(s, effectFunc)
             e.unsubscribe()
@@ -597,13 +597,13 @@ describe("Signal", () => {
       })
     })
 
-    describe("One effect depends transitively on one source", () => {
+    describe("One effect depends transitively on one state", () => {
       // s <-- c <-- e
 
-      test("Effect function should be called after every source change", (t) => {
+      test("Effect function should be called after every state change", (t) => {
         for (const callCount of [1, 2, 10]) {
           t.test(() => {
-            const s = source<string>("s")
+            const s = state<string>("s")
             const c = computed(() => s.current())
             const effectFunc = mock.fn()
             const e = effect(c, effectFunc)
@@ -617,10 +617,10 @@ describe("Signal", () => {
         }
       })
 
-      test("Effect function should be called after batch end with source changes", (t) => {
+      test("Effect function should be called after batch end with state changes", (t) => {
         for (const callCount of [1, 2, 10]) {
           t.test(() => {
-            const s = source<string>("s")
+            const s = state<string>("s")
             const c = computed(() => s.current())
             const effectFunc = mock.fn()
 
@@ -640,7 +640,7 @@ describe("Signal", () => {
       test("Effect function should not be called after unsubscribe", (t) => {
         for (const callCount of [1, 2, 10]) {
           t.test(() => {
-            const s = source<string>("s")
+            const s = state<string>("s")
             const c = computed(() => s.current())
             const effectFunc = mock.fn()
             const e = effect(c, effectFunc)
@@ -656,14 +656,14 @@ describe("Signal", () => {
       })
     })
 
-    describe("One effect depends on two computed and transitively on one source", () => {
+    describe("One effect depends on two computed and transitively on one state", () => {
       // s <-- c1 <-- e
       //  \-- c2 <---/
 
-      test("Effect function should be called after every source change", (t) => {
+      test("Effect function should be called after every state change", (t) => {
         for (const callCount of [1, 2, 10]) {
           t.test(() => {
-            const s = source<string>("s")
+            const s = state<string>("s")
             const c1 = computed(() => s.current())
             const c2 = computed(() => s.current())
             const effectFunc = mock.fn()
@@ -681,10 +681,10 @@ describe("Signal", () => {
         }
       })
 
-      test("Effect function should be called once after batch end with source changes", (t) => {
+      test("Effect function should be called once after batch end with state changes", (t) => {
         for (const callCount of [1, 2, 10]) {
           t.test(() => {
-            const s = source<string>("s")
+            const s = state<string>("s")
             const c1 = computed(() => s.current())
             const c2 = computed(() => s.current())
             const effectFunc = mock.fn()
@@ -708,7 +708,7 @@ describe("Signal", () => {
       test("Effect function should not be called after unsubscribe", (t) => {
         for (const callCount of [1, 2, 10]) {
           t.test(() => {
-            const s = source<string>("s")
+            const s = state<string>("s")
             const c1 = computed(() => s.current())
             const c2 = computed(() => s.current())
             const effectFunc = mock.fn()

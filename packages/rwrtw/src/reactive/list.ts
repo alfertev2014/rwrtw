@@ -3,8 +3,8 @@ import {
   batch,
   type Signal,
   SignalImpl,
-  source,
-  type Source,
+  state,
+  type State,
 } from "./signal.js"
 import type { ReactiveData } from "./types.js"
 
@@ -45,29 +45,29 @@ export const isListSignal = <T extends ReactiveData = ReactiveData>(
   list: readonly T[] | ListSignal<T>,
 ): list is ListSignal<T> => list instanceof ListSignalImpl
 
-export interface ListSource<
+export interface ListState<
   T extends ReactiveData = ReactiveData,
 > extends ListSignal<T> {
   readonly removeItem: (i: number) => void
   readonly moveItem: (from: number, to: number) => void
   readonly insertItem: (i: number, item: T) => void
-  readonly current: () => readonly Source<T>[]
+  readonly current: () => readonly State<T>[]
   readonly change: (newData: readonly T[]) => void
 }
 
-export class ListSourceImpl<T extends ReactiveData = ReactiveData>
+export class ListStateImpl<T extends ReactiveData = ReactiveData>
   extends ListSignalImpl<T>
-  implements ListSource<T>
+  implements ListState<T>
 {
-  override readonly _current: Source<T>[]
+  override readonly _current: State<T>[]
 
-  override current(): readonly Source<T>[] {
-    return super.current() as readonly Source<T>[]
+  override current(): readonly State<T>[] {
+    return super.current() as readonly State<T>[]
   }
 
   constructor(initialData: readonly T[]) {
     super()
-    this._current = initialData.map((item) => source(item))
+    this._current = initialData.map((item) => state(item))
   }
 
   _change(newData: readonly T[]): void {
@@ -146,7 +146,7 @@ export class ListSourceImpl<T extends ReactiveData = ReactiveData>
   }
 
   _insertItem(i: number, item: T): void {
-    const s = source(item)
+    const s = state(item)
     this._current.splice(i, 0, s)
     this._observers.forEach((o) => {
       o.onInsert(i, s)
@@ -163,10 +163,10 @@ export class ListSourceImpl<T extends ReactiveData = ReactiveData>
   }
 }
 
-export const listSource = <T extends ReactiveData>(
+export const listState = <T extends ReactiveData>(
   initialData: readonly T[],
-): ListSource<T> => {
+): ListState<T> => {
   assertIsNotInComputing("Creating list in compute function")
 
-  return new ListSourceImpl<T>(initialData)
+  return new ListStateImpl<T>(initialData)
 }

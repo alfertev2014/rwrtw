@@ -1,7 +1,7 @@
-import { computed, reIf, reText, source, type TemplateContent } from "rwrtw"
+import { computed, reIf, reText, state, type TemplateContent } from "rwrtw"
 
 const Counter = (): TemplateContent => {
-  const counter = source<number>(0)
+  const counter = state<number>(0)
 
   const counterText = computed(() => `Hello world ${counter.current()} times!`)
 
