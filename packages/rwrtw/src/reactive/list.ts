@@ -1,29 +1,29 @@
 import {
   assertIsNotInComputing,
   batch,
-  type Observable,
-  ObservableImpl,
+  type Signal,
+  SignalImpl,
   source,
   type Source,
-} from "./observable.js"
+} from "./signal.js"
 import type { ReactiveData } from "./types.js"
 
 export interface ListObserver<T extends ReactiveData = ReactiveData> {
-  onInsert: (i: number, item: Observable<T>) => void
+  onInsert: (i: number, item: Signal<T>) => void
   onMove: (from: number, to: number) => void
   onRemove: (i: number) => void
 }
 
-export interface ListObservable<
+export interface ListSignal<
   T extends ReactiveData = ReactiveData,
-> extends Observable<readonly Observable<T>[]> {
+> extends Signal<readonly Signal<T>[]> {
   registerObserver: (observer: ListObserver<T>) => void
   unregisterObserver: (observer: ListObserver<T>) => void
 }
 
-export class ListObservableImpl<T extends ReactiveData = ReactiveData>
-  extends ObservableImpl<readonly Observable<T>[]>
-  implements ListObservable<T>
+export class ListSignalImpl<T extends ReactiveData = ReactiveData>
+  extends SignalImpl<readonly Signal<T>[]>
+  implements ListSignal<T>
 {
   _observers: ListObserver<T>[] = []
 
@@ -41,13 +41,13 @@ export class ListObservableImpl<T extends ReactiveData = ReactiveData>
   }
 }
 
-export const isListObservable = <T extends ReactiveData = ReactiveData>(
-  list: readonly T[] | ListObservable<T>,
-): list is ListObservable<T> => list instanceof ListObservableImpl
+export const isListSignal = <T extends ReactiveData = ReactiveData>(
+  list: readonly T[] | ListSignal<T>,
+): list is ListSignal<T> => list instanceof ListSignalImpl
 
 export interface ListSource<
   T extends ReactiveData = ReactiveData,
-> extends ListObservable<T> {
+> extends ListSignal<T> {
   readonly removeItem: (i: number) => void
   readonly moveItem: (from: number, to: number) => void
   readonly insertItem: (i: number, item: T) => void
@@ -56,7 +56,7 @@ export interface ListSource<
 }
 
 export class ListSourceImpl<T extends ReactiveData = ReactiveData>
-  extends ListObservableImpl<T>
+  extends ListSignalImpl<T>
   implements ListSource<T>
 {
   override readonly _current: Source<T>[]
@@ -105,7 +105,7 @@ export class ListSourceImpl<T extends ReactiveData = ReactiveData>
     })
   }
 
-  update(updater: (prev: readonly Observable<T>[]) => readonly T[]): void {
+  update(updater: (prev: readonly Signal<T>[]) => readonly T[]): void {
     this.change(updater(this._current))
   }
 

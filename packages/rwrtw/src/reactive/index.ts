@@ -1,6 +1,6 @@
 export { type ListObserver, type ListSource, listSource } from "./list.js"
 export {
-  type Observable,
+  type Signal,
   type Source,
   type Computed,
   type Effect,
@@ -8,4 +8,4 @@ export {
   effect,
   computed,
   batch,
-} from "./observable.js"
+} from "./signal.js"

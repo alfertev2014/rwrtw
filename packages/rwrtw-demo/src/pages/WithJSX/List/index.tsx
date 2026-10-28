@@ -3,7 +3,7 @@ import {
   computed,
   type ListSource,
   listSource,
-  type Observable,
+  type Signal,
   reContent,
   reEffect,
   reList,
@@ -54,7 +54,7 @@ type ItemFormValues = {
 let idGenerator = 0
 
 type ItemFormProps = {
-  readonly initItem: Observable<Item | null>
+  readonly initItem: Signal<Item | null>
   readonly onSave: (item: ItemFormValues) => void
   readonly onCancel: () => void
 }

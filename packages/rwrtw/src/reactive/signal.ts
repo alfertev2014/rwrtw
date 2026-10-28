@@ -1,14 +1,14 @@
 import type { ReactiveData, ReactiveValue } from "./types.js"
 
 /**
- * Abstract observable node of reactive graph. Notifies its subscribers when stored value is changed.
+ * Abstract signal node of reactive graph. Notifies its subscribers when stored value is changed.
  */
-export interface Observable<out T extends ReactiveData = ReactiveData> {
+export interface Signal<out T extends ReactiveData = ReactiveData> {
   /**
    * Accessor for current value.
    *
    * Actualize current value if needed and remove changed sign from node.
-   * If called in compute function or as a dependency of effect, the dependent node will subscribe on this observable.
+   * If called in compute function or as a dependency of effect, the dependent node will subscribe on this signal.
    *
    * @returns current value
    */
@@ -33,12 +33,12 @@ const POSSIBLY_CHANGED = 1
 const CHANGED = 2
 
 /**
- * Observable node is dangling and not connected to reactive graph.
+ * Signal node is dangling and not connected to reactive graph.
  */
 const DANGLING = -1
 
 /**
- * Status of observable node in reactive graph.
+ * Status of signal node in reactive graph.
  */
 type ChangedStatus =
   | typeof NOT_CHANGED
@@ -49,7 +49,7 @@ type ChangedStatus =
 /**
  * Internal assertion error in reactive
  */
-class ObservableAssertionError extends Error {}
+class SignalAssertionError extends Error {}
 
 /**
  * Assert that condition is true.
@@ -58,9 +58,9 @@ class ObservableAssertionError extends Error {}
  * @param condition Condition to check
  * @param message Error message if condition is not true
  */
-export const observableAssert = (condition: boolean, message: string) => {
+export const signalAssert = (condition: boolean, message: string) => {
   if (!condition) {
-    throw new ObservableAssertionError(message)
+    throw new SignalAssertionError(message)
   }
 }
 
@@ -72,17 +72,17 @@ export const observableAssert = (condition: boolean, message: string) => {
 export const assertIsNotInComputing = (
   message = "Doing something in compute function",
 ) => {
-  observableAssert(trackingSubscriber === null, message)
+  signalAssert(trackingSubscriber === null, message)
 }
 
-export class ObservableScope {
-  parent: ObservableScope | null
+export class SignalScope {
+  parent: SignalScope | null
   depth: number
   effectsQueue: Observer[] = []
   effects: Effect[] = []
-  children: Set<ObservableScope> = new Set<ObservableScope>()
+  children: Set<SignalScope> = new Set<SignalScope>()
 
-  constructor(parent: ObservableScope | null) {
+  constructor(parent: SignalScope | null) {
     this.parent = parent
     this.depth = parent === null ? 0 : parent.depth + 1
     parent?.children.add(this)
@@ -139,16 +139,16 @@ export class ObservableScope {
 export const createScope = () => {
   assertIsNotInComputing("Creating scope in compute function")
 
-  return new ObservableScope(currentScope)
+  return new SignalScope(currentScope)
 }
 
 /**
- * Reactive observable node to manage subscribers.
+ * Reactive signal node to manage subscribers.
  */
-export class ObservableImpl<out T extends ReactiveData = ReactiveData>
-  implements Observable<T>, Observer
+export class SignalImpl<out T extends ReactiveData = ReactiveData>
+  implements Signal<T>, Observer
 {
-  readonly _scope: ObservableScope
+  readonly _scope: SignalScope
 
   /**
    * Status of current value actuality
@@ -187,7 +187,7 @@ export class ObservableImpl<out T extends ReactiveData = ReactiveData>
   }
 
   /**
-   * @see Observable.current
+   * @see Signal.current
    */
   current(): T {
     if (trackingSubscriber !== null) {
@@ -270,26 +270,26 @@ export class ObservableImpl<out T extends ReactiveData = ReactiveData>
 }
 
 /**
- * Check that value is Observable node
- * @param value Plain value or Observable node.
- * @returns True if value is Observable node.
+ * Check that value is Signal node
+ * @param value Plain value or Signal node.
+ * @returns True if value is Signal node.
  */
-export const isObservable = <T extends ReactiveData = ReactiveData>(
-  value: ReactiveData | Observable<T>,
-): value is Observable<T> => value instanceof ObservableImpl
+export const isSignal = <T extends ReactiveData = ReactiveData>(
+  value: ReactiveData | Signal<T>,
+): value is Signal<T> => value instanceof SignalImpl
 
 /**
- * Assert that observable is Observable node
+ * Assert that signal is Signal node
  * Throw exception with message otherwise.
  *
  * @param condition Condition to check
  * @param message Error message if condition is not true
  */
-export const assertIsObservable = (
-  observable: Observable,
-  message = "Expected that object is Observable node",
+export const assertIsSignal = (
+  signal: Signal,
+  message = "Expected that object is Signal node",
 ) => {
-  observableAssert(isObservable(observable), message)
+  signalAssert(isSignal(signal), message)
 }
 
 interface Cleanup {
@@ -301,7 +301,7 @@ interface Observer extends Cleanup {
   readonly _markPossiblyChanged: () => void
   readonly _schedule: () => void
   readonly _run: () => void
-  readonly _scope: ObservableScope
+  readonly _scope: SignalScope
 }
 
 /**
@@ -309,7 +309,7 @@ interface Observer extends Cleanup {
  */
 export interface Source<
   T extends ReactiveData = ReactiveData,
-> extends Observable<T> {
+> extends Signal<T> {
   /**
    * Modifier of the value.
    *
@@ -336,7 +336,7 @@ export interface Source<
  * @see Source
  */
 export class SourceImpl<T extends ReactiveData = ReactiveData>
-  extends ObservableImpl<T>
+  extends SignalImpl<T>
   implements Source<T>
 {
   override _current: T
@@ -369,18 +369,18 @@ export class SourceImpl<T extends ReactiveData = ReactiveData>
 
 /**
  * Computed value node in reactive graph.
- * Caches its current value if observable dependencies are not changed.
+ * Caches its current value if signal dependencies are not changed.
  */
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type, @typescript-eslint/no-empty-object-type
 export interface Computed<
   out T extends ReactiveData = ReactiveData,
-> extends Observable<T> {}
+> extends Signal<T> {}
 
 /**
  * @see Computed
  */
 class ComputedImpl<out T extends ReactiveData = ReactiveData>
-  extends ObservableImpl<T>
+  extends SignalImpl<T>
   implements Computed<T>, Observer
 {
   /**
@@ -389,9 +389,9 @@ class ComputedImpl<out T extends ReactiveData = ReactiveData>
   readonly _computeFunc: () => T
 
   /**
-   * Observable dependencies needed to compute value ordered by occurrences in compute function body
+   * Signal dependencies needed to compute value ordered by occurrences in compute function body
    */
-  readonly _deps: ObservableImpl[]
+  readonly _deps: SignalImpl[]
   _depsCount: number
 
   constructor(computeFunc: () => T) {
@@ -406,15 +406,15 @@ class ComputedImpl<out T extends ReactiveData = ReactiveData>
   }
 
   /**
-   * Add itself to set of subscribers of observable dependency.
-   * Add the observable to list of dependencies if it is not already there.
+   * Add itself to set of subscribers of signal dependency.
+   * Add the signal to list of dependencies if it is not already there.
    * Dependencies are collected to list in order of the method calls
    * Dependencies are merged with old dependencies.
    * Not actual old dependencies will bubble to tail of the list.
    *
-   * @param dependency Observable dependency
+   * @param dependency Signal dependency
    */
-  _subscribeTo(dependency: ObservableImpl): void {
+  _subscribeTo(dependency: SignalImpl): void {
     const count = this._depsCount
     const index = this._deps.indexOf(dependency)
     if (index < 0) {
@@ -447,7 +447,7 @@ class ComputedImpl<out T extends ReactiveData = ReactiveData>
    * If value is POSSIBLY_CHANGED try to recompute dependencies and check if they actually changed.
    * If one of dependencies changed the computed value become CHANGED and need to call compute function
    *
-   * @see Observable.recompute
+   * @see Signal.recompute
    */
   override _recompute(): void {
     if (this._status !== NOT_CHANGED) {
@@ -526,7 +526,7 @@ class ComputedImpl<out T extends ReactiveData = ReactiveData>
 class StaticComputedImpl<
   out T extends ReactiveData = ReactiveData,
 > extends ComputedImpl<T> {
-  constructor(dependencies: ObservableImpl[], computeFunc: () => T) {
+  constructor(dependencies: SignalImpl[], computeFunc: () => T) {
     super(computeFunc)
     this._deps.push(...dependencies)
     this._depsCount = dependencies.length
@@ -582,14 +582,14 @@ class ConditionallyComputedImpl<
   out T extends ReactiveData = ReactiveData,
   out F extends ReactiveData = ReactiveData,
 > extends ComputedImpl<T | F> {
-  _condition: ObservableImpl<boolean>
-  _trueBranch: ObservableImpl<T>
-  _falseBranch: ObservableImpl<F>
+  _condition: SignalImpl<boolean>
+  _trueBranch: SignalImpl<T>
+  _falseBranch: SignalImpl<F>
   _conditionValue: boolean | null
   constructor(
-    condition: ObservableImpl<boolean>,
-    trueBranch: ObservableImpl<T>,
-    falseBranch: ObservableImpl<F>,
+    condition: SignalImpl<boolean>,
+    trueBranch: SignalImpl<T>,
+    falseBranch: SignalImpl<F>,
   ) {
     super(dummyFunc)
     this._condition = condition
@@ -680,11 +680,11 @@ export interface Effect {
 class EffectImpl<T extends ReactiveData = ReactiveData>
   implements Observer, Effect
 {
-  readonly _scope: ObservableScope
+  readonly _scope: SignalScope
   _status: ChangedStatus
-  readonly _trigger: ObservableImpl<T>
+  readonly _trigger: SignalImpl<T>
   readonly _effectFunc: (value: T) => void
-  constructor(trigger: ObservableImpl<T>, effectFunc: (value: T) => void) {
+  constructor(trigger: SignalImpl<T>, effectFunc: (value: T) => void) {
     if (trigger._status !== NOT_CHANGED) {
       trigger._recompute()
     }
@@ -743,9 +743,9 @@ let runningEffects: Observer[] = []
 let cleanupQueue: Observer[] = []
 let runningCleanups: Observer[] = []
 
-export const rootScope = new ObservableScope(null)
+export const rootScope = new SignalScope(null)
 
-let currentScope: ObservableScope = rootScope
+let currentScope: SignalScope = rootScope
 
 const runCleanups = (): void => {
   while (cleanupQueue.length > 0) {
@@ -759,8 +759,8 @@ const runCleanups = (): void => {
   }
 }
 
-let scopeQueue: ObservableScope[] = []
-let runningScopes: ObservableScope[] = []
+let scopeQueue: SignalScope[] = []
+let runningScopes: SignalScope[] = []
 
 const runScopes = (): void => {
   while (scopeQueue.length > 0) {
@@ -785,71 +785,71 @@ export const source = <T extends ReactiveData>(initValue: T): Source<T> => {
 
 export const computed = <T extends ReactiveData>(
   func: () => T,
-): Observable<T> => {
+): Signal<T> => {
   assertIsNotInComputing("Creating computed in compute function")
 
   return new ComputedImpl(func)
 }
 
 /**
- * Get current() of value if value is Observable. Returns value as is otherwise.
- * @param value Plain value or Observable node.
- * @returns Current value of Observable or value as is.
+ * Get current() of value if value is Signal. Returns value as is otherwise.
+ * @param value Plain value or Signal node.
+ * @returns Current value of Signal or value as is.
  */
 export const currentOf = <T extends ReactiveData>(
   value: ReactiveValue<T>,
-): T => (isObservable(value) ? value.current() : value)
+): T => (isSignal(value) ? value.current() : value)
 
 export const staticComputed = <T extends ReactiveData>(
-  dependencies: Observable[],
+  dependencies: Signal[],
   func: () => T,
-): Observable<T> => {
+): Signal<T> => {
   assertIsNotInComputing("Creating staticComputed in compute function")
 
-  observableAssert(
-    dependencies.every((d) => d instanceof ObservableImpl),
-    "Some of dependencies are not ObservableImpl",
+  signalAssert(
+    dependencies.every((d) => d instanceof SignalImpl),
+    "Some of dependencies are not SignalImpl",
   )
 
-  return new StaticComputedImpl(dependencies as ObservableImpl[], func)
+  return new StaticComputedImpl(dependencies as SignalImpl[], func)
 }
 
 export const condComputed = <T extends ReactiveData, F extends ReactiveData>(
-  condition: Observable<boolean>,
-  trueBranch: Observable<T>,
-  falseBranch: Observable<F>,
-): Observable<T | F> => {
-  observableAssert(
-    condition instanceof ObservableImpl,
-    "Condition is not observable",
+  condition: Signal<boolean>,
+  trueBranch: Signal<T>,
+  falseBranch: Signal<F>,
+): Signal<T | F> => {
+  signalAssert(
+    condition instanceof SignalImpl,
+    "Condition is not signal",
   )
-  observableAssert(
-    trueBranch instanceof ObservableImpl,
-    "trueBranch is not observable",
+  signalAssert(
+    trueBranch instanceof SignalImpl,
+    "trueBranch is not signal",
   )
-  observableAssert(
-    falseBranch instanceof ObservableImpl,
-    "falseBranch is not observable",
+  signalAssert(
+    falseBranch instanceof SignalImpl,
+    "falseBranch is not signal",
   )
 
   return new ConditionallyComputedImpl(
-    condition as ObservableImpl<boolean>,
-    trueBranch as unknown as ObservableImpl<T>,
-    falseBranch as unknown as ObservableImpl<F>,
+    condition as SignalImpl<boolean>,
+    trueBranch as unknown as SignalImpl<T>,
+    falseBranch as unknown as SignalImpl<F>,
   )
 }
 
 export const effect = <T extends ReactiveData>(
-  trigger: Observable<T>,
+  trigger: Signal<T>,
   effectFunc: (value: T) => void,
 ): Effect => {
-  observableAssert(
-    trigger instanceof ObservableImpl,
-    "Trigger of effect is not observable",
+  signalAssert(
+    trigger instanceof SignalImpl,
+    "Trigger of effect is not signal",
   )
   assertIsNotInComputing("Creating effect in compute function")
 
-  return new EffectImpl<T>(trigger as ObservableImpl<T>, effectFunc)
+  return new EffectImpl<T>(trigger as SignalImpl<T>, effectFunc)
 }
 
 /**

@@ -1,9 +1,9 @@
 import assert from "node:assert"
 import test, { describe, mock } from "node:test"
-import { computed, effect, source, batch } from "../observable.js"
+import { computed, effect, source, batch } from "../signal.js"
 import type { ReactiveData } from "../types.js"
 
-describe("Observable", () => {
+describe("Signal", () => {
   describe("Source", () => {
     test("Creating source with value should store this value", () => {
       const value = "s"

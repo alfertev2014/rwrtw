@@ -1,13 +1,13 @@
 import { setAttr, toText, txt } from "../dom/helpers.js"
 import type { RenderableComponent, DynamicContent } from "../index.js"
-import type { ListObservable, ListObserver } from "../reactive/list.js"
+import type { ListSignal, ListObserver } from "../reactive/list.js"
 import {
-  type Observable,
-  ObservableScope,
+  type Signal,
+  SignalScope,
   createScope,
   effect,
-  isObservable,
-} from "../reactive/observable.js"
+  isSignal,
+} from "../reactive/signal.js"
 import type { ReactiveData, ReactiveValue } from "../reactive/types.js"
 import { fr } from "../template/index.js"
 import type { TemplateContent, TemplateHandler } from "../template/types.js"
@@ -18,7 +18,7 @@ export const reCompute = <T extends ReactiveData>(
   effectFunc: (value: T) => void,
   initFunc = effectFunc,
 ): void => {
-  if (isObservable(trigger)) {
+  if (isSignal(trigger)) {
     initFunc(trigger.current())
     effect(trigger, effectFunc)
   } else {
@@ -90,7 +90,7 @@ export const reStyle =
 const contentInScope =
   (contentFunc: () => TemplateContent): RenderableComponent =>
   (renderer) => {
-    const scope: ObservableScope = createScope()
+    const scope: SignalScope = createScope()
     scope.runInScope(() => {
       fr(contentFunc())(renderer)
     })
@@ -105,7 +105,7 @@ export const reContent = <T extends ReactiveData>(
   trigger: ReactiveValue<T>,
   contentFunc: (value: T) => TemplateContent,
 ): TemplateContent => {
-  if (isObservable(trigger)) {
+  if (isSignal(trigger)) {
     return (renderer) => {
       const dynamicNode = renderer.insertDynamicNode(
         contentInScope(() => contentFunc(trigger.current())),
@@ -122,7 +122,7 @@ export const reContent = <T extends ReactiveData>(
 export const reText = (
   value: ReactiveValue<ScalarData>,
 ): RenderableComponent => {
-  if (isObservable(value)) {
+  if (isSignal(value)) {
     return (renderer) => {
       const t = renderer.insertNode(txt(value.current()))
       effect(value, (value) => {
@@ -145,8 +145,8 @@ export const reIf = (
 }
 
 export const reList = <T extends ReactiveData>(
-  listModel: ListObservable<T>,
-  elementComponentFunc: (value: Observable<T>) => TemplateContent,
+  listModel: ListSignal<T>,
+  elementComponentFunc: (value: Signal<T>) => TemplateContent,
 ): RenderableComponent => {
   return (renderer) => {
     const list = renderer.insertList(
